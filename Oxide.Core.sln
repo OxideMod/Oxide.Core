@@ -1,6 +1,7 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 15
+VisualStudioVersion = 15.0
+MinimumVisualStudioVersion = 15.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oxide.Core", "Oxide.Core\Oxide.Core.csproj", "{67F65F5D-A62A-4752-849D-BFF30D828107}"
 EndProject
 Global
