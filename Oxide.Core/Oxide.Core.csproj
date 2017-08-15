@@ -16,6 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.9.6.*" />
+    <PackageReference Include="Mono.Posix" Version="4.0.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
     <PackageReference Include="WebSocketSharpFork" Version="1.0.*" />
     <PackageReference Include="protobuf-net" Version="2.0.*" />
