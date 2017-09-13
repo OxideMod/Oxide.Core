@@ -28,8 +28,7 @@ TestResult.xml
 !**/packages/repositories.config
 
 # OS-specific files
-.*DS_Store
-._.*
+._*
 
 # Project-specific files
 !**/Dependencies/x64/
