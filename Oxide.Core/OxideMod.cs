@@ -133,26 +133,22 @@ namespace Oxide.Core
             if (ExtensionDirectory == null || !Directory.Exists(ExtensionDirectory)) throw new Exception("Could not identify extension directory");
 
             PluginDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("plugins"));
+            ConfigDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("config"));
             DataDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("data"));
             LangDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("lang"));
             LogDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("logs"));
-            ConfigDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("config"));
             if (!Directory.Exists(InstanceDirectory)) Directory.CreateDirectory(InstanceDirectory);
             if (!Directory.Exists(PluginDirectory)) Directory.CreateDirectory(PluginDirectory);
+            if (!Directory.Exists(ConfigDirectory)) Directory.CreateDirectory(ConfigDirectory);
             if (!Directory.Exists(DataDirectory)) Directory.CreateDirectory(DataDirectory);
             if (!Directory.Exists(LangDirectory)) Directory.CreateDirectory(LangDirectory);
             if (!Directory.Exists(LogDirectory)) Directory.CreateDirectory(LogDirectory);
-            if (!Directory.Exists(ConfigDirectory)) Directory.CreateDirectory(ConfigDirectory);
 
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
-            Cleanup.Add(Path.Combine(RootDirectory, "oxide.config.json"));
-
             var config = Path.Combine(InstanceDirectory, "oxide.config.json");
             if (File.Exists(config))
-            {
                 Config = ConfigFile.Load<OxideConfig>(config);
-            }
             else
             {
                 Config = new OxideConfig(config);
@@ -207,7 +203,6 @@ namespace Oxide.Core
                 watcher.OnPluginRemoved += watcher_OnPluginRemoved;
             }
 
-            if (CommandLine.HasVariable("load")) LogWarning("The 'load' variable is unused and can be removed");
             if (CommandLine.HasVariable("nolog")) LogWarning("Usage of the 'nolog' variable will prevent logging");
 
             Cleanup.Run();
