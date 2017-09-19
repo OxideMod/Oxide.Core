@@ -386,6 +386,11 @@ namespace Oxide.Core.Plugins
             AddCovalenceCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
         }
 
+        public void AddCovalenceCommand(string[] commands, string callback, string perm)
+        {
+            AddCovalenceCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+        }
+
         public void AddCovalenceCommand(string[] commands, string callback, string[] perms = null)
         {
             AddCovalenceCommand(commands, perms, (caller, command, args) =>
