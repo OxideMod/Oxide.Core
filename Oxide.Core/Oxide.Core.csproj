@@ -12,8 +12,6 @@
     <PackageTags>gaming modding plugins unity unity3d</PackageTags>
     <TargetFrameworks>net461;net45;net40;net35</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-  </PropertyGroup>
-  <PropertyGroup>
     <!--
       Workaround for building net35 with dotnet CLI
       https://github.com/Microsoft/msbuild/issues/1333#issuecomment-296346352
