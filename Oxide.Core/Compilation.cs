@@ -247,6 +247,7 @@ namespace Oxide.Plugins
                 var fullName = match.Groups[1].Value;
                 var name = match.Groups[2].Value;
                 if (extensionNames.Contains(name)) continue;
+
                 if (Directory.Exists(includePath))
                 {
                     var includeFilePath = Path.Combine(includePath, $"Ext.{name}.cs");
@@ -256,6 +257,7 @@ namespace Oxide.Plugins
                         continue;
                     }
                 }
+
                 var message = $"{fullName} is referenced by {plugin.Name} plugin but is not loaded! An appropriate include file needs to be saved to plugins\\include\\Ext.{name}.cs if this extension is not required.";
                 Interface.Oxide.LogError(message);
                 plugin.CompilerErrors = message;
@@ -286,7 +288,7 @@ namespace Oxide.Plugins
             var path = Path.Combine(Interface.Oxide.ExtensionDirectory, assemblyName + ".dll");
             if (!File.Exists(path))
             {
-                if (assemblyName.StartsWith("Oxide.Core.") || assemblyName.StartsWith("Oxide.Ext."))
+                if (assemblyName.StartsWith("Oxide."))
                 {
                     plugin.References.Add(assemblyName);
                     return;
