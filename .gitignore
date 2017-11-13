@@ -8,10 +8,6 @@
 [Oo]bj/
 [Rr]elease/
 [Rr]eleases/
-build/
-bld/
-x64/
-x86/
 
 # Build testing
 ## MSTest
@@ -30,14 +26,6 @@ TestResult.xml
 # OS-specific files
 .*DS_Store
 ._*
-
-# Project-specific files
-!**/Dependencies/x64/
-!**/Dependencies/x86/
-!**/Dependencies/Linux/x64/
-!**/Dependencies/Linux/x86/
-Bundles/
-.deploy
 
 # Roslyn caches
 *.ide/
