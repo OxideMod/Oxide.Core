@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Oxide.Core.Configuration;
+using Oxide.Core.Libraries;
+using Oxide.Core.Libraries.Covalence;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Oxide.Core.Configuration;
-using Oxide.Core.Libraries;
-using Oxide.Core.Libraries.Covalence;
 
 namespace Oxide.Core.Plugins
 {
@@ -248,7 +248,7 @@ namespace Oxide.Core.Plugins
                 {
                     stopwatch.Stop();
                     var duration = stopwatch.Elapsed.TotalSeconds;
-                    if (duration > 0.2)
+                    if (duration > 0.5)
                     {
                         var suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
                         Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
@@ -259,7 +259,7 @@ namespace Oxide.Core.Plugins
                     if (endedAt - averageAt > 10)
                     {
                         total /= endedAt - averageAt;
-                        if (total > 0.2)
+                        if (total > 0.5)
                         {
                             var suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
                             Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
@@ -368,7 +368,7 @@ namespace Oxide.Core.Plugins
             }
         }
 
-        #endregion
+        #endregion Config
 
         #region Lang
 
@@ -377,7 +377,7 @@ namespace Oxide.Core.Plugins
         /// </summary>
         protected virtual void LoadDefaultMessages() => CallHook("LoadDefaultMessages", null);
 
-        #endregion
+        #endregion Lang
 
         #region Covalence
 
@@ -440,18 +440,19 @@ namespace Oxide.Core.Plugins
                 Interface.Oxide.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
                 return false;
             }
-            if (cmdInfo.PermissionsRequired != null)
+
+            if (cmdInfo.PermissionsRequired != null && !caller.IsAdmin)
             {
                 foreach (var perm in cmdInfo.PermissionsRequired)
                 {
                     if (caller.HasPermission(perm)) continue;
-                    caller.Message($"You don\'t have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
+
+                    caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
                     return true;
                 }
             }
 
             cmdInfo.Callback(caller, cmd, args);
-
             return true;
         }
 
@@ -461,6 +462,6 @@ namespace Oxide.Core.Plugins
             foreach (var pair in commandInfos) covalence.UnregisterCommand(pair.Key, this);
         }
 
-        #endregion
+        #endregion Covalence
     }
 }

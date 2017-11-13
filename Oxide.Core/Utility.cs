@@ -13,8 +13,8 @@ namespace Oxide.Core
     /// <typeparam name="T"></typeparam>
     public class ConcurrentHashSet<T> : ICollection<T>
     {
-        readonly HashSet<T> collection;
-        readonly object syncRoot = new object();
+        private readonly HashSet<T> collection;
+        private readonly object syncRoot = new object();
 
         public ConcurrentHashSet()
         {
@@ -28,14 +28,35 @@ namespace Oxide.Core
 
         public bool IsReadOnly => false;
         public int Count { get { lock (syncRoot) return collection.Count; } }
-        public bool Contains(T value) { lock (syncRoot) return collection.Contains(value); }
-        public bool Add(T value) { lock (syncRoot) return collection.Add(value); }
-        public bool Remove(T value) { lock (syncRoot) return collection.Remove(value); }
-        public void Clear() { lock (syncRoot) collection.Clear(); }
-        public void CopyTo(T[] array, int index) { lock (syncRoot) collection.CopyTo(array, index); }
+        public bool Contains(T value)
+        {
+            lock (syncRoot) return collection.Contains(value);
+        }
+        public bool Add(T value)
+        {
+            lock (syncRoot) return collection.Add(value);
+        }
+        public bool Remove(T value)
+        {
+            lock (syncRoot) return collection.Remove(value);
+        }
+        public void Clear()
+        {
+            lock (syncRoot) collection.Clear();
+        }
+        public void CopyTo(T[] array, int index)
+        {
+            lock (syncRoot) collection.CopyTo(array, index);
+        }
         public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
-        public bool Any(Func<T, bool> callback) { lock (syncRoot) return collection.Any(callback); }
-        public T[] ToArray() { lock (syncRoot) return collection.ToArray(); }
+        public bool Any(Func<T, bool> callback)
+        {
+            lock (syncRoot) return collection.Any(callback);
+        }
+        public T[] ToArray()
+        {
+            lock (syncRoot) return collection.ToArray();
+        }
 
         public bool TryDequeue(out T value)
         {
@@ -142,59 +163,5 @@ namespace Oxide.Core
         {
             return path?.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         }
-    }
-
-    /// <summary>
-    /// A dictionary which returns null for non-existant keys and removes keys when setting an index to null.
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
-    public class Hash<TKey, TValue> : IDictionary<TKey, TValue>
-    {
-        readonly IDictionary<TKey, TValue> dictionary;
-
-        public Hash()
-        {
-            dictionary = new Dictionary<TKey, TValue>();
-        }
-
-        public TValue this[TKey key]
-        {
-            get
-            {
-                TValue value;
-                if (TryGetValue(key, out value))
-                    return value;
-                if (typeof(TValue).IsValueType)
-                    return (TValue)Activator.CreateInstance(typeof(TValue));
-                return default(TValue);
-            }
-
-            set
-            {
-                if (value == null)
-                    dictionary.Remove(key);
-                else
-                    dictionary[key] = value;
-            }
-        }
-
-        public ICollection<TKey> Keys => dictionary.Keys;
-        public ICollection<TValue> Values =>  dictionary.Values;
-        public int Count => dictionary.Count;
-        public bool IsReadOnly => dictionary.IsReadOnly;
-
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => dictionary.GetEnumerator();
-        public bool ContainsKey(TKey key) => dictionary.ContainsKey(key);
-        public bool Contains(KeyValuePair<TKey, TValue> item) => dictionary.Contains(item);
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int index) => dictionary.CopyTo(array, index);
-        public bool TryGetValue(TKey key, out TValue value) => dictionary.TryGetValue(key, out value);
-        public void Add(TKey key, TValue value) => dictionary.Add(key, value);
-        public void Add(KeyValuePair<TKey, TValue> item) => dictionary.Add(item);
-        public bool Remove(TKey key) => dictionary.Remove(key);
-        public bool Remove(KeyValuePair<TKey, TValue> item) => dictionary.Remove(item);
-        public void Clear() => dictionary.Clear();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

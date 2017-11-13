@@ -56,7 +56,12 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         DateTime Time { get; set; }
 
-        #endregion
+        /// <summary>
+        /// Gets information on the currently loaded save file
+        /// </summary>
+        SaveInfo SaveInfo { get; }
+
+        #endregion Information
 
         #region Administration
 
@@ -91,12 +96,20 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="id"></param>
         void Unban(string id);
 
-        #endregion
+        #endregion Administration
 
         #region Chat and Commands
 
         /// <summary>
-        /// Broadcasts a chat message to all players
+        /// Broadcasts the specified chat message and prefix to all players
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="prefix"></param>
+        /// <param name="args"></param>
+        void Broadcast(string message, string prefix, params object[] args);
+
+        /// <summary>
+        /// Broadcasts the specified chat message to all players
         /// </summary>
         /// <param name="message"></param>
         void Broadcast(string message);
@@ -108,6 +121,6 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="args"></param>
         void Command(string command, params object[] args);
 
-        #endregion
+        #endregion Chat and Commands
     }
 }

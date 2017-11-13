@@ -20,14 +20,14 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         CommandType LastCommand { get; set; }
 
-        #endregion
+        #endregion Objects
 
         #region Information
 
         /// <summary>
-        /// Gets the name for the player
+        /// Gets/sets the name for the player
         /// </summary>
-        string Name { get; }
+        string Name { get; set; }
 
         /// <summary>
         /// Gets the ID for the player (unique within the current game)
@@ -64,7 +64,7 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         bool IsServer { get; }
 
-        #endregion
+        #endregion Information
 
         #region Administration
 
@@ -137,12 +137,14 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="z"></param>
         void Teleport(float x, float y, float z);
 
+        void Teleport(GenericPosition pos);
+
         /// <summary>
         /// Unbans the player
         /// </summary>
         void Unban();
 
-        #endregion
+        #endregion Administration
 
         #region Location
 
@@ -160,22 +162,32 @@ namespace Oxide.Core.Libraries.Covalence
         /// <returns></returns>
         GenericPosition Position();
 
-        #endregion
+        #endregion Location
 
         #region Chat and Commands
 
         /// <summary>
-        /// Sends the specified message to the player
+        /// Sends the specified message and prefix to the player
         /// </summary>
         /// <param name="message"></param>
-        void Message(string message);
+        /// <param name="prefix"></param>
+        /// <param name="args"></param>
+        void Message(string message, string prefix, params object[] args);
 
         /// <summary>
         /// Sends the specified message to the player
         /// </summary>
         /// <param name="message"></param>
         /// <param name="args"></param>
-        void Message(string message, params object[] args);
+        void Message(string message);
+
+        /// <summary>
+        /// Replies to the player with the specified message and prefix
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="prefix"></param>
+        /// <param name="args"></param>
+        void Reply(string message, string prefix, params object[] args);
 
         /// <summary>
         /// Replies to the player with the specified message
@@ -184,20 +196,13 @@ namespace Oxide.Core.Libraries.Covalence
         void Reply(string message);
 
         /// <summary>
-        /// Replies to the player with the specified message
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="args"></param>
-        void Reply(string message, params object[] args);
-
-        /// <summary>
         /// Runs the specified console command on the player
         /// </summary>
         /// <param name="command"></param>
         /// <param name="args"></param>
         void Command(string command, params object[] args);
 
-        #endregion
+        #endregion Chat and Commands
 
         #region Permissions
 
@@ -239,7 +244,7 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="group"></param>
         void RemoveFromGroup(string group);
 
-        #endregion
+        #endregion Permissions
     }
 
     /// <summary>
@@ -247,7 +252,7 @@ namespace Oxide.Core.Libraries.Covalence
     /// </summary>
     public class GenericPosition
     {
-        public readonly float X, Y, Z;
+        public float X, Y, Z;
 
         public GenericPosition()
         {
@@ -263,6 +268,47 @@ namespace Oxide.Core.Libraries.Covalence
             if (!(obj is GenericPosition)) return false;
             var pos = (GenericPosition)obj;
             return X.Equals(pos.X) && Y.Equals(pos.Y) && Z.Equals(pos.Z);
+        }
+
+        public static bool operator ==(GenericPosition a, GenericPosition b)
+        {
+            if (ReferenceEquals(a, b))
+                return true;
+
+            if ((object)a == null || (object)b == null)
+                return false;
+
+            return a.X.Equals(b.X) && a.Y.Equals(b.Y) && a.Z.Equals(b.Z);
+        }
+
+        public static bool operator !=(GenericPosition a, GenericPosition b)
+        {
+            return !(a == b);
+        }
+
+        public static GenericPosition operator +(GenericPosition a, GenericPosition b)
+        {
+            return new GenericPosition(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+        }
+
+        public static GenericPosition operator -(GenericPosition a, GenericPosition b)
+        {
+            return new GenericPosition(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        }
+
+        public static GenericPosition operator *(float mult, GenericPosition a)
+        {
+            return new GenericPosition(a.X * mult, a.Y * mult, a.Z * mult);
+        }
+
+        public static GenericPosition operator *(GenericPosition a, float mult)
+        {
+            return new GenericPosition(a.X * mult, a.Y * mult, a.Z * mult);
+        }
+
+        public static GenericPosition operator /(GenericPosition a, float div)
+        {
+            return new GenericPosition(a.X / div, a.Y / div, a.Z / div);
         }
 
         public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode() << 2 ^ Z.GetHashCode() >> 2;

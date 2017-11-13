@@ -1,13 +1,15 @@
-﻿using System;
+﻿extern alias Oxide;
+
+using Oxide.Core.Extensions;
+using Oxide.Core.Libraries;
+using Oxide.Core.Plugins;
+using Oxide::Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
-using Oxide.Core.Extensions;
-using Oxide.Core.Libraries;
-using Oxide.Core.Plugins;
 
 namespace Oxide.Core
 {
@@ -211,7 +213,7 @@ namespace Oxide.Core
 
             var queuedReport = QueuedReports[0];
             submittingReports = true;
-            Webrequests.EnqueuePost(Url, queuedReport.Body, (code, response) =>
+            Webrequests.Enqueue(Url, queuedReport.Body, (code, response) =>
             {
                 if (code == 200)
                 {
@@ -223,7 +225,7 @@ namespace Oxide.Core
                 {
                     Timers.Once(5f, SubmitNextReport);
                 }
-            }, null, queuedReport.Headers);
+            }, null, RequestMethod.POST, queuedReport.Headers);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
