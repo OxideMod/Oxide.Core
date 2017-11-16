@@ -22,6 +22,12 @@ namespace Oxide.Core.Libraries.Covalence
         IEnumerable<IPlayer> Connected { get; }
 
         /// <summary>
+        /// Gets all sleeping players
+        /// </summary>
+        /// <returns></returns>
+        //IEnumerable<IPlayer> Sleeping { get; }
+
+        /// <summary>
         /// Finds a single player given unique ID
         /// </summary>
         /// <param name="id"></param>
@@ -49,6 +55,6 @@ namespace Oxide.Core.Libraries.Covalence
         /// <returns></returns>
         IEnumerable<IPlayer> FindPlayers(string partialNameOrId);
 
-        #endregion
+        #endregion Player Finding
     }
 }

@@ -22,8 +22,8 @@ namespace Oxide.Core
         /// </summary>
         public static void Initialize()
         {
+            // Create if not already created
             if (Oxide != null) return;
-
             Oxide = new OxideMod(DebugCallback);
             Oxide.Load();
         }
@@ -78,5 +78,11 @@ namespace Oxide.Core
         /// <param name="args"></param>
         /// <returns></returns>
         public static T Call<T>(string hook, params object[] args) => (T)Convert.ChangeType(CallHook(hook, args), typeof(T));
+
+        /// <summary>
+        /// Gets the Oxide mod
+        /// </summary>
+        /// <returns></returns>
+        public static OxideMod GetMod() => Oxide;
     }
 }
