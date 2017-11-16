@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿extern alias Oxide;
+
+using Oxide.Core.Plugins;
+using Oxide::Newtonsoft.Json;
+using Oxide::ProtoBuf;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
-using Oxide.Core.Plugins;
-using ProtoBuf;
 
 namespace Oxide.Core.Libraries
 {
@@ -35,7 +37,7 @@ namespace Oxide.Core.Libraries
             pluginRemovedFromManager = new Dictionary<Plugin, Event.Callback<Plugin, PluginManager>>();
         }
 
-        #endregion
+        #endregion Initialization
 
         #region Library Functions
 
@@ -72,7 +74,7 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Gets the language for a player, fall back to the default server language if no language is set
+        /// Gets the language for the player, fall back to the default server language if no language is set
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
@@ -85,19 +87,19 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Gets all available languages for a single plugin
+        /// Gets all available languages or only those for a single plugin
         /// </summary>
         /// <param name="plugin"></param>
         /// <returns></returns>
         [LibraryFunction("GetLanguages")]
-        public string[] GetLanguages(Plugin plugin)
+        public string[] GetLanguages(Plugin plugin = null)
         {
             var languages = new List<string>();
-            if (plugin == null) return languages.ToArray();
-
             foreach (var directory in Directory.GetDirectories(Interface.Oxide.LangDirectory))
             {
-                if (File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
+                if (Directory.GetFiles(directory).Length == 0) continue;
+
+                if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
                     languages.Add(directory.Substring(Interface.Oxide.LangDirectory.Length + 1));
             }
             return languages.ToArray();
@@ -148,7 +150,7 @@ namespace Oxide.Core.Libraries
         public string GetServerLanguage() => langData.Lang;
 
         /// <summary>
-        /// Sets the language preference for a player
+        /// Sets the language preference for the player
         /// </summary>
         /// <param name="lang"></param>
         /// <param name="userId"></param>
@@ -177,7 +179,7 @@ namespace Oxide.Core.Libraries
             SaveData();
         }
 
-        #endregion
+        #endregion Library Functions
 
         #region Lang Handling
 
@@ -297,6 +299,6 @@ namespace Oxide.Core.Libraries
             foreach (var lang in langs) langFiles.Remove($"{lang}{Path.DirectorySeparatorChar}{sender.Name}.json");
         }
 
-        #endregion
+        #endregion Lang Handling
     }
 }

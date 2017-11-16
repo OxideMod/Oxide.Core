@@ -1,9 +1,11 @@
-﻿using System;
+﻿extern alias Oxide;
+
+using Oxide.Core.Plugins;
+using Oxide::ProtoBuf;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Oxide.Core.Plugins;
-using ProtoBuf;
 
 namespace Oxide.Core.Libraries
 {
@@ -14,17 +16,17 @@ namespace Oxide.Core.Libraries
     public class UserData
     {
         /// <summary>
-        /// Gets or sets the last seen nickname for this user
+        /// Gets or sets the last seen nickname for this player
         /// </summary>
         public string LastSeenNickname { get; set; } = "Unnamed";
 
         /// <summary>
-        /// Gets or sets the individual permissions for this user
+        /// Gets or sets the individual permissions for this player
         /// </summary>
         public HashSet<string> Perms { get; set; } = new HashSet<string>();
 
         /// <summary>
-        /// Gets or sets the usergroup for this user
+        /// Gets or sets the group for this player
         /// </summary>
         public HashSet<string> Groups { get; set; } = new HashSet<string>();
     }
@@ -243,7 +245,7 @@ namespace Oxide.Core.Libraries
             return set.Contains(name);
         }
 
-        #endregion
+        #endregion Permission Management
 
         /// <summary>
         /// Called when a plugin has been unloaded
@@ -292,7 +294,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("UpdateNickname")]
         public void UpdateNickname(string id, string nickname)
         {
-            if (UserExists(id)) GetUserData(id).LastSeenNickname = nickname;
+            if (UserExists(id)) GetUserData(id).LastSeenNickname = nickname.Sanitize();
         }
 
         /// <summary>
@@ -340,7 +342,7 @@ namespace Oxide.Core.Libraries
             if (string.IsNullOrEmpty(perm)) return false;
             perm = perm.ToLower();
 
-            // First, get the user data
+            // First, get the player data
             var data = GetUserData(id);
 
             // Check if they have the perm
@@ -399,7 +401,7 @@ namespace Oxide.Core.Libraries
         public string[] GetPermissions() => new HashSet<string>(permset.Values.SelectMany(v => v)).ToArray();
 
         /// <summary>
-        /// Returns the users with given permission
+        /// Returns the players with given permission
         /// </summary>
         /// <returns></returns>
         [LibraryFunction("GetPermissionUsers")]
@@ -473,11 +475,10 @@ namespace Oxide.Core.Libraries
 
             // Call hook for plugins
             Interface.Call("OnUserGroupRemoved", id, name);
-
         }
 
         /// <summary>
-        /// Get if the user belongs to given group
+        /// Get if the player belongs to given group
         /// </summary>
         /// <param name="id"></param>
         /// <param name="name"></param>
@@ -557,7 +558,7 @@ namespace Oxide.Core.Libraries
             return data.Rank;
         }
 
-        #endregion
+        #endregion Querying
 
         #region User Permission
 
@@ -573,7 +574,7 @@ namespace Oxide.Core.Libraries
             // Check it's even a perm
             if (!PermissionExists(perm, owner)) return;
 
-            // Get the user data
+            // Get the player data
             var data = GetUserData(id);
 
             perm = perm.ToLower();
@@ -616,7 +617,7 @@ namespace Oxide.Core.Libraries
         {
             if (string.IsNullOrEmpty(perm)) return;
 
-            // Get the user data
+            // Get the player data
             var data = GetUserData(id);
 
             perm = perm.ToLower();
@@ -645,7 +646,7 @@ namespace Oxide.Core.Libraries
             Interface.Call("OnUserPermissionRevoked", id, perm);
         }
 
-        #endregion
+        #endregion User Permission
 
         #region Group Permission
 
@@ -735,7 +736,7 @@ namespace Oxide.Core.Libraries
             Interface.Call("OnGroupPermissionRevoked", name, perm);
         }
 
-        #endregion
+        #endregion Group Permission
 
         #region Group Management
 
@@ -798,6 +799,7 @@ namespace Oxide.Core.Libraries
 
             // Change and save
             if (data.Title == title) return true;
+
             data.Title = title;
             SaveGroups();
             return true;
@@ -812,12 +814,14 @@ namespace Oxide.Core.Libraries
         public bool SetGroupRank(string group, int rank)
         {
             if (!GroupExists(group)) return false;
+
             // First, get the group data
             GroupData data;
             if (!groupdata.TryGetValue(group.ToLower(), out data)) return false;
 
             // Change and save
             if (data.Rank == rank) return true;
+
             data.Rank = rank;
             SaveGroups();
             return true;
@@ -891,6 +895,6 @@ namespace Oxide.Core.Libraries
             return false;
         }
 
-        #endregion
+        #endregion Group Management
     }
 }

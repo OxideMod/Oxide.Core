@@ -1,14 +1,26 @@
-﻿using System;
+﻿using Oxide.Core.Plugins;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using Oxide.Core.Plugins;
 
 namespace Oxide.Core.Libraries
 {
+    /// <summary>
+    /// Request methods for web requests
+    /// </summary>
+    public enum RequestMethod
+    {
+        DELETE,
+        GET,
+        PATCH,
+        POST,
+        PUT
+    };
+
     /// <summary>
     /// The WebRequests library
     /// </summary>
@@ -106,7 +118,7 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-                    // Optional request body for post requests
+                    // Optional request body for POST requests
                     var data = new byte[0];
                     if (Body != null)
                     {
@@ -156,14 +168,15 @@ namespace Oxide.Core.Libraries
 
             private void WaitForResponse()
             {
-                var result = request.BeginGetResponse(res => {
+                var result = request.BeginGetResponse(res =>
+                {
                     try
                     {
                         using (var response = (HttpWebResponse)request.EndGetResponse(res))
                         {
                             using (var stream = response.GetResponseStream())
-                                using (var reader = new StreamReader(stream))
-                                    ResponseText = reader.ReadToEnd();
+                            using (var reader = new StreamReader(stream))
+                                ResponseText = reader.ReadToEnd();
                             ResponseCode = (int)response.StatusCode;
                         }
                     }
@@ -176,12 +189,12 @@ namespace Oxide.Core.Libraries
                             try
                             {
                                 using (var stream = response.GetResponseStream())
-                                    using (var reader = new StreamReader(stream))
-                                        ResponseText = reader.ReadToEnd();
+                                using (var reader = new StreamReader(stream))
+                                    ResponseText = reader.ReadToEnd();
                             }
                             catch (Exception)
                             {
-                                // ignored
+                                // Ignored
                             }
                             ResponseCode = (int)response.StatusCode;
                         }
@@ -326,11 +339,10 @@ namespace Oxide.Core.Libraries
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
         [LibraryFunction("EnqueueGet")]
+        [Obsolete("EnqueueGet is deprecated, use Enqueue instead")]
         public void EnqueueGet(string url, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
         {
-            var request = new WebRequest(url, callback, owner) { Method = "GET", RequestHeaders = headers, Timeout = timeout };
-            lock (syncroot) queue.Enqueue(request);
-            workevent.Set();
+            Enqueue(url, null, callback, owner, RequestMethod.GET, headers, timeout);
         }
 
         /// <summary>
@@ -343,11 +355,10 @@ namespace Oxide.Core.Libraries
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
         [LibraryFunction("EnqueuePost")]
+        [Obsolete("EnqueuePost is deprecated, use Enqueue instead")]
         public void EnqueuePost(string url, string body, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
         {
-            var request = new WebRequest(url, callback, owner) {Method = "POST", RequestHeaders = headers, Timeout = timeout, Body = body};
-            lock (syncroot) queue.Enqueue(request);
-            workevent.Set();
+            Enqueue(url, body, callback, owner, RequestMethod.POST, headers, timeout);
         }
 
         /// <summary>
@@ -360,9 +371,26 @@ namespace Oxide.Core.Libraries
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
         [LibraryFunction("EnqueuePut")]
+        [Obsolete("EnqueuePut is deprecated, use Enqueue instead")]
         public void EnqueuePut(string url, string body, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
         {
-            var request = new WebRequest(url, callback, owner) { Method = "PUT", RequestHeaders = headers, Timeout = timeout, Body = body };
+            Enqueue(url, body, callback, owner, RequestMethod.PUT, headers, timeout);
+        }
+
+        /// <summary>
+        /// Enqueues a DELETE, GET, PATCH, POST, or PUT web request
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="body"></param>
+        /// <param name="callback"></param>
+        /// <param name="owner"></param>
+        /// <param name="method"></param>
+        /// <param name="headers"></param>
+        /// <param name="timeout"></param>
+        [LibraryFunction("Enqueue")]
+        public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+        {
+            var request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
             lock (syncroot) queue.Enqueue(request);
             workevent.Set();
         }

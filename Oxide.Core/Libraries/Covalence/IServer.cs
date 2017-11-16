@@ -56,12 +56,17 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         DateTime Time { get; set; }
 
-        #endregion
+        /// <summary>
+        /// Gets information on the currently loaded save file
+        /// </summary>
+        SaveInfo SaveInfo { get; }
+
+        #endregion Information
 
         #region Administration
 
         /// <summary>
-        /// Bans the user for the specified reason and duration
+        /// Bans the player for the specified reason and duration
         /// </summary>
         /// <param name="id"></param>
         /// <param name="reason"></param>
@@ -69,13 +74,13 @@ namespace Oxide.Core.Libraries.Covalence
         void Ban(string id, string reason, TimeSpan duration = default(TimeSpan));
 
         /// <summary>
-        /// Gets the amount of time remaining on the user's ban
+        /// Gets the amount of time remaining on the player's ban
         /// </summary>
         /// <param name="id"></param>
         TimeSpan BanTimeRemaining(string id);
 
         /// <summary>
-        /// Gets if the user is banned
+        /// Gets if the player is banned
         /// </summary>
         /// <param name="id"></param>
         bool IsBanned(string id);
@@ -86,17 +91,25 @@ namespace Oxide.Core.Libraries.Covalence
         void Save();
 
         /// <summary>
-        /// Unbans the user
+        /// Unbans the player
         /// </summary>
         /// <param name="id"></param>
         void Unban(string id);
 
-        #endregion
+        #endregion Administration
 
         #region Chat and Commands
 
         /// <summary>
-        /// Broadcasts a chat message to all players
+        /// Broadcasts the specified chat message and prefix to all players
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="prefix"></param>
+        /// <param name="args"></param>
+        void Broadcast(string message, string prefix, params object[] args);
+
+        /// <summary>
+        /// Broadcasts the specified chat message to all players
         /// </summary>
         /// <param name="message"></param>
         void Broadcast(string message);
@@ -108,6 +121,6 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="args"></param>
         void Command(string command, params object[] args);
 
-        #endregion
+        #endregion Chat and Commands
     }
 }

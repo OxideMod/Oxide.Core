@@ -6,6 +6,16 @@
     public abstract class Extension
     {
         /// <summary>
+        /// Gets whether this extension is a core extension
+        /// </summary>
+        public virtual bool IsCoreExtension { get; private set; }
+
+        /// <summary>
+        /// Gets whether this extension is for a specific game
+        /// </summary>
+        public virtual bool IsGameExtension { get; private set; }
+
+        /// <summary>
         /// Gets the name of this extension
         /// </summary>
         public abstract string Name { get; }
@@ -19,11 +29,6 @@
         /// Gets the version of this extension
         /// </summary>
         public abstract VersionNumber Version { get; }
-
-        /// <summary>
-        /// Gets whether this extension is for a specific game
-        /// </summary>
-        public bool IsGameExtension { get; protected set; }
 
         /// <summary>
         /// Gets the extension manager responsible for this extension
@@ -40,7 +45,6 @@
         public Extension(ExtensionManager manager)
         {
             Manager = manager;
-            IsGameExtension = GetType().FullName.StartsWith("Oxide.Game.");
         }
 
         /// <summary>
