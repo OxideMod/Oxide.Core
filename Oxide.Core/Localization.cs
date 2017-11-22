@@ -70,7 +70,8 @@ namespace Oxide.Core
                 ["PlayerRemovedFromGroup"] = "Player '{0}' removed from group '{1}'",
                 ["PlayersFound"] = "Multiple players were found, please specify: {0}",
                 ["Version"] = "Server is running [#ffb658]Oxide {0}[/#] and [#ee715c]{1} {2} ({3})[/#]",
-                ["YouAreNotAdmin"] = "You are not an admin"
+                ["YouAreNotAdmin"] = "You are not an admin",
+                ["OxideSaved"] = "Saving Oxide data..."
             }
 
             #endregion English

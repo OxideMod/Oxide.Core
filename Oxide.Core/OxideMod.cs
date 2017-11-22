@@ -17,7 +17,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core
@@ -82,6 +81,7 @@ namespace Oxide.Core
         // Various libraries
         private Timer libtimer;
         private Covalence covalence;
+        private Permission permission;
 
         // Extension implemented delegates
         private Func<float> getTimeSinceStartup;
@@ -174,7 +174,7 @@ namespace Oxide.Core
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
             extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
-            extensionManager.RegisterLibrary("Permission", new Permission());
+            extensionManager.RegisterLibrary("Permission", permission = new Permission());
             extensionManager.RegisterLibrary("Plugins", new Libraries.Plugins(RootPluginManager));
             extensionManager.RegisterLibrary("Time", new Time());
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
@@ -560,9 +560,19 @@ namespace Oxide.Core
             }
         }
 
+        /// <summary>
+        /// Called when the server saves
+        /// </summary>
+        public void OnSave() => permission.SavePermissionData();
+
+        /// <summary>
+        /// Called when the server is shutdown
+        /// </summary>
         public void OnShutdown()
         {
             if (IsShuttingDown) return;
+
+            permission.SavePermissionData();
 
             IsShuttingDown = true;
             UnloadAllPlugins();
