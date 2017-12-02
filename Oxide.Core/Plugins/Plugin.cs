@@ -441,7 +441,7 @@ namespace Oxide.Core.Plugins
                 return false;
             }
 
-            if (cmdInfo.PermissionsRequired != null && !caller.IsAdmin)
+            if (cmdInfo.PermissionsRequired != null)
             {
                 foreach (var perm in cmdInfo.PermissionsRequired)
                 {

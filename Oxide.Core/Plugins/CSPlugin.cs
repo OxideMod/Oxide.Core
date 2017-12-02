@@ -35,74 +35,109 @@ namespace Oxide.Core.Plugins
     {
         public class HookMethod
         {
-            public MethodInfo Method;
             public string Name;
-            public ParameterInfo[] Parameters;
-            public bool IsBaseHook;
+
+            public MethodInfo Method;
+
+            public ParameterInfo[] Parameters => Method.GetParameters();
+
+            public bool IsBaseHook => Name.StartsWith("base_");
 
             public HookMethod(MethodInfo method)
             {
                 Method = method;
                 Name = method.Name;
-                Parameters = method.GetParameters();
-                IsBaseHook = method.Name.StartsWith("base_");
 
                 if (Parameters.Length > 0)
+                {
                     Name += $"({string.Join(", ", Parameters.Select(x => x.ParameterType.ToString()).ToArray())})";
+                }
             }
-
-            public bool HasMatchingSignature(object[] args, bool exact = false)
+            
+            public bool HasMatchingSignature(object[] args, out bool exact)
             {
+                exact = true;
+
                 if (Parameters.Length == 0 && (args == null || args.Length == 0))
                     return true;
 
-                for (var n = 0; n < args.Length; n++)
+                for (var i = 0; i < args.Length; i++)
                 {
-                    if (args[n] == null && !CanAssignNull(Parameters[n].ParameterType))
-                        return false;
-
-                    if (args[n] == null) continue;
-
-                    if (exact && !IsBaseHook)
+                    if (args[i] == null)
                     {
-                        if (args[n].GetType() != Parameters[n].ParameterType && args[n].GetType().MakeByRefType() != Parameters[n].ParameterType)
+                        if (CanAssignNull(Parameters[i].ParameterType))
+                        {
+                            continue;
+                        }
+
+                        return false;
+                    }
+
+                    if (exact)
+                    {
+                        if (args[i].GetType() != Parameters[i].ParameterType && args[i].GetType().MakeByRefType() != Parameters[i].ParameterType)
+                        {
+                            if (!CanConvertNumber(args[i], Parameters[i].ParameterType))
+                            {
+                                exact = false;
+                            }
+                        }
+                    }
+
+                    if (exact) continue;
+                    
+                    if (args[i].GetType().IsValueType)
+                    {
+                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).IsValid(args[i]))
+                        {
                             return false;
+                        }
                     }
                     else
                     {
-                        if (args[n].GetType().IsValueType)
+                        if (!Parameters[i].ParameterType.IsInstanceOfType(args[i]))
                         {
-                            if (!TypeDescriptor.GetConverter(Parameters[n].ParameterType).IsValid(args[n]))
-                                return false;
-                        }
-                        else
-                        {
-                            if (!Parameters[n].ParameterType.IsInstanceOfType(args[n]))
-                                return false;
+                            return false;
                         }
                     }
                 }
 
                 return true;
             }
-
+            
             private bool CanAssignNull(Type type)
             {
-                if (!type.IsValueType) return true;
+                if (!type.IsValueType)
+                {
+                    return true;
+                }
+
                 return Nullable.GetUnderlyingType(type) != null;
             }
-        }
 
-        public class HookMatch
-        {
-            public HookMethod Method;
-
-            public object[] Args;
-
-            public HookMatch(HookMethod method, object[] args)
+            private bool IsNumber(object obj)
             {
-                Method = method;
-                Args = args;
+                return obj != null && IsNumber(Nullable.GetUnderlyingType(obj.GetType()) ?? obj.GetType());
+            }
+
+            private bool IsNumber(Type type)
+            {
+                if (type.IsPrimitive)
+                {
+                    return type != typeof(bool) && type != typeof(char) && type != typeof(IntPtr) && type != typeof(UIntPtr);
+                }
+
+                return type == typeof(decimal);
+            }
+
+            private bool CanConvertNumber(object value, Type type)
+            {
+                if (!IsNumber(value) || !IsNumber(type))
+                {
+                    return false;
+                }
+
+                return TypeDescriptor.GetConverter(type).IsValid(value);
             }
         }
 
@@ -114,7 +149,10 @@ namespace Oxide.Core.Plugins
         public static T GetLibrary<T>(string name = null) where T : Library => Interface.Oxide.GetLibrary<T>(name);
 
         // All hooked methods
-        protected Dictionary<string, List<HookMethod>> hooks = new Dictionary<string, List<HookMethod>>();
+        protected Dictionary<string, List<HookMethod>> Hooks = new Dictionary<string, List<HookMethod>>();
+
+        // All matched hooked methods
+        protected Dictionary<string, List<HookMethod>> HooksCache = new Dictionary<string, List<HookMethod>>();
 
         /// <summary>
         /// Initializes a new instance of the CSPlugin class
@@ -122,9 +160,8 @@ namespace Oxide.Core.Plugins
         public CSPlugin()
         {
             // Find all hooks in the plugin and any base classes derived from CSPlugin
-            var types = new List<Type>();
             var type = GetType();
-            types.Add(type);
+            var types = new List<Type> { type };
             while (type != typeof(CSPlugin)) types.Add(type = type.BaseType);
 
             // Add hooks implemented in base classes before user implemented methods
@@ -134,6 +171,7 @@ namespace Oxide.Core.Plugins
                 {
                     var attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
                     if (attr.Length < 1) continue;
+
                     var hookmethod = attr[0] as HookMethodAttribute;
                     AddHookMethod(hookmethod?.Name, method);
                 }
@@ -150,7 +188,7 @@ namespace Oxide.Core.Plugins
             base.HandleAddedToManager(manager);
 
             // Subscribe us
-            foreach (var hookname in hooks.Keys) Subscribe(hookname);
+            foreach (var hookname in Hooks.Keys) Subscribe(hookname);
 
             try
             {
@@ -166,13 +204,14 @@ namespace Oxide.Core.Plugins
 
         protected void AddHookMethod(string name, MethodInfo method)
         {
-            List<HookMethod> hook_methods;
-            if (!hooks.TryGetValue(name, out hook_methods))
+            List<HookMethod> hookMethods;
+            if (!Hooks.TryGetValue(name, out hookMethods))
             {
-                hook_methods = new List<HookMethod>();
-                hooks[name] = hook_methods;
+                hookMethods = new List<HookMethod>();
+                Hooks[name] = hookMethods;
             }
-            hook_methods.Add(new HookMethod(method));
+
+            hookMethods.Add(new HookMethod(method));
         }
 
         /// <summary>
@@ -183,82 +222,172 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         protected sealed override object OnCallHook(string name, object[] args)
         {
-            var received = args?.Length ?? 0;
-            var matches = new List<HookMatch>();
-            object return_value = null;
-
-            // Find a method matching the hook signature
-            if (!FindMatchingHook(name, args, matches, true))
-                FindMatchingHook(name, args, matches);
-
-            // Call all matching hooks
-            foreach (var match in matches)
-            {
-                try
-                {
-                    // Call method with the correct number of arguments
-                    return_value = InvokeMethod(match.Method, match.Args);
-                }
-                catch (TargetInvocationException ex)
-                {
-                    throw ex.InnerException;
-                }
-
-                if (received != match.Method.Parameters.Length)
-                    // A copy of the call arguments was used for this method call
-                    for (var n = 0; n < match.Method.Parameters.Length; n++)
-                        // Copy output values for out and by reference arguments back to the calling args
-                        if (match.Method.Parameters[n].IsOut || match.Method.Parameters[n].ParameterType.IsByRef)
-                            args[n] = match.Args[n];
-            }
-
-            return return_value;
-        }
-
-        protected bool FindMatchingHook(string name, object[] args, List<HookMatch> matches, bool exact = false)
-        {
-            object[] hook_args;
-            List<HookMethod> methods;
-
-            if (!hooks.TryGetValue(name, out methods)) return false;
-
-            foreach (var method in methods.Except(matches.Select(x => x.Method)))
+            object returnvalue = null;
+            
+            // Call all hooks that match the signature
+            foreach (var h in FindHooks(name, args))
             {
                 var received = args?.Length ?? 0;
+                object[] hookArgs;
 
-                if (received != method.Parameters.Length)
+                if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hook_args = new object[method.Parameters.Length];
+                    hookArgs = new object[h.Parameters.Length];
 
-                    if (received > 0 && hook_args.Length > 0)
+                    if (received > 0 && hookArgs.Length > 0)
+                    {
                         // Remove any additional arguments which the callback method does not declare
-                        Array.Copy(args, hook_args, Math.Min(received, hook_args.Length));
+                        Array.Copy(args, hookArgs, Math.Min(received, hookArgs.Length));
+                    }
 
-                    if (hook_args.Length > received)
+                    if (hookArgs.Length > received)
                     {
                         // Create additional parameters for arguments excluded in this hook call
-                        for (var n = received; n < hook_args.Length; n++)
+                        for (var n = received; n < hookArgs.Length; n++)
                         {
-                            var parameter = method.Parameters[n];
+                            var parameter = h.Parameters[n];
                             if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
+                            {
                                 // Use the default value that was provided by the method definition
-                                hook_args[n] = parameter.DefaultValue;
+                                hookArgs[n] = parameter.DefaultValue;
+                            }
                             else if (parameter.ParameterType.IsValueType)
+                            {
                                 // Use the default value for value types
-                                hook_args[n] = Activator.CreateInstance(parameter.ParameterType);
+                                hookArgs[n] = Activator.CreateInstance(parameter.ParameterType);
+                            }
                         }
                     }
                 }
                 else
-                    hook_args = args;
+                {
+                    hookArgs = args;
+                }
+                
+                try
+                {
+                    returnvalue = InvokeMethod(h, hookArgs);
+                }
+                catch (TargetInvocationException ex)
+                {
+                    throw ex.InnerException ?? ex;
+                }
 
-                if (!method.HasMatchingSignature(hook_args, exact)) continue;
-
-                matches.Add(new HookMatch(method, hook_args));
+                if (received != h.Parameters.Length)
+                {
+                    // A copy of the call arguments was used for this method call
+                    for (var n = 0; n < h.Parameters.Length; n++)
+                    {
+                        // Copy output values for out and by reference arguments back to the calling args
+                        if (h.Parameters[n].IsOut || h.Parameters[n].ParameterType.IsByRef)
+                        {
+                            args[n] = hookArgs[n];
+                        }
+                    }
+                }
             }
 
-            return matches.Any(x => !x.Method.IsBaseHook);
+            return returnvalue;
+        }
+
+        protected List<HookMethod> FindHooks(string name, object[] args)
+        {
+            // Check the cache if we already found a match for this hook
+            if (HooksCache.ContainsKey(name))
+            {
+                return HooksCache[name];
+            }
+
+            List<HookMethod> methods;
+            var matches = new List<HookMethod>();
+
+            // Get all hook methods that could match, return an empty list if none match
+            if (!Hooks.TryGetValue(name, out methods))
+            {
+                return matches;
+            }
+
+            // Find matching hooks
+            HookMethod exactMatch = null;
+            HookMethod overloadedMatch = null;
+
+            foreach (var h in methods)
+            {
+                // A base hook should always have a matching signature either directly or through inheritance
+                // and should always be called as core functionality depends on it.
+                if (h.IsBaseHook)
+                {
+                    matches.Add(h);
+                    continue;
+                }
+
+                // Check if this method matches the hook arguments passed if it isn't a base hook
+                object[] hookArgs;
+                var received = args?.Length ?? 0;
+
+                if (received != h.Parameters.Length)
+                {
+                    // The call argument count is different to the declared callback methods argument count
+                    hookArgs = new object[h.Parameters.Length];
+
+                    if (received > 0 && hookArgs.Length > 0)
+                    {
+                        // Remove any additional arguments which the callback method does not declare
+                        Array.Copy(args, hookArgs, Math.Min(received, hookArgs.Length));
+                    }
+
+                    if (hookArgs.Length > received)
+                    {
+                        // Create additional parameters for arguments excluded in this hook call
+                        for (var n = received; n < hookArgs.Length; n++)
+                        {
+                            var parameter = h.Parameters[n];
+                            if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
+                            {
+                                // Use the default value that was provided by the method definition
+                                hookArgs[n] = parameter.DefaultValue;
+                            }
+                            else if (parameter.ParameterType.IsValueType)
+                            {
+                                // Use the default value for value types
+                                hookArgs[n] = Activator.CreateInstance(parameter.ParameterType);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    hookArgs = args;
+                }
+
+                bool isExactMatch;
+                if (h.HasMatchingSignature(hookArgs, out isExactMatch))
+                {
+                    if (isExactMatch)
+                    {
+                        exactMatch = h;
+                        break;
+                    }
+
+                    // Should we determine the level and call the closest overloaded match? Performance impact?
+                    overloadedMatch = h;
+                }
+            }
+
+            if (exactMatch != null)
+            {
+                matches.Add(exactMatch);
+            }
+            else
+            {
+                if (overloadedMatch != null)
+                {
+                    matches.Add(overloadedMatch);
+                }
+            }
+
+            return HooksCache[name] = matches;
         }
 
         protected virtual object InvokeMethod(HookMethod method, object[] args) => method.Method.Invoke(this, args);
