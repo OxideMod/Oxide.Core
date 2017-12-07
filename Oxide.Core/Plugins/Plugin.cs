@@ -309,16 +309,20 @@ namespace Oxide.Core.Plugins
         public void TrackStart()
         {
             if (IsCorePlugin || nestcount > 0) return;
+
             var stopwatch = trackStopwatch;
             if (stopwatch.IsRunning) return;
+
             stopwatch.Start();
         }
 
         public void TrackEnd()
         {
             if (IsCorePlugin || nestcount > 0) return;
+
             var stopwatch = trackStopwatch;
             if (!stopwatch.IsRunning) return;
+
             stopwatch.Stop();
             TotalHookTime += stopwatch.Elapsed.TotalSeconds;
             stopwatch.Reset();
@@ -445,7 +449,7 @@ namespace Oxide.Core.Plugins
             {
                 foreach (var perm in cmdInfo.PermissionsRequired)
                 {
-                    if (caller.HasPermission(perm)) continue;
+                    if (caller.HasPermission(perm) || (caller.IsAdmin && IsCorePlugin)) continue;
 
                     caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
                     return true;

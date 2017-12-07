@@ -62,13 +62,13 @@ namespace Oxide.Core
         public static bool IsSteamId(this string id)
         {
             ulong targetId;
-            return ulong.TryParse(id, out targetId) && targetId > 70000000000000000L;
+            return ulong.TryParse(id, out targetId) && targetId > 76561197960265728ul;
         }
 
         /// <summary>
         /// Checks if a ulong is a valid 64-bit Steam ID
         /// </summary>
-        public static bool IsSteamId(this ulong id) => id > 70000000000000000L;
+        public static bool IsSteamId(this ulong id) => id > 76561197960265728ul;
 
         /// <summary>
         /// Converts a string to plain text
@@ -134,8 +134,10 @@ namespace Oxide.Core
         {
             var enumerator = items.GetEnumerator();
             if (!enumerator.MoveNext()) return string.Empty;
+
             var firstItem = enumerator.Current;
             if (!enumerator.MoveNext()) return firstItem?.ToString();
+
             var builder = new StringBuilder(firstItem?.ToString());
             var moreItems = true;
             while (moreItems)
