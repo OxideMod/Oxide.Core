@@ -134,8 +134,10 @@ namespace Oxide.Core
         {
             var enumerator = items.GetEnumerator();
             if (!enumerator.MoveNext()) return string.Empty;
+
             var firstItem = enumerator.Current;
             if (!enumerator.MoveNext()) return firstItem?.ToString();
+
             var builder = new StringBuilder(firstItem?.ToString());
             var moreItems = true;
             while (moreItems)
