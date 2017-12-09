@@ -293,10 +293,17 @@ namespace Oxide.Core.Plugins
 
         protected List<HookMethod> FindHooks(string name, object[] args)
         {
-            // Check the cache if we already found a match for this hook
-            if (HooksCache.ContainsKey(name))
+            // Get the full name of the hook `name(argument type 1, argument type 2, ..., argument type x)`
+            var fullName = name;
+            if (args?.Length > 0)
             {
-                return HooksCache[name];
+                fullName += $"({string.Join(", ", args.Select(x => x.GetType().ToString()).ToArray())})";
+            }
+
+            // Check the cache if we already found a match for this hook
+            if (HooksCache.ContainsKey(fullName))
+            {
+                return HooksCache[fullName];
             }
 
             List<HookMethod> methods;
@@ -387,7 +394,7 @@ namespace Oxide.Core.Plugins
                 }
             }
 
-            return HooksCache[name] = matches;
+            return HooksCache[fullName] = matches;
         }
 
         protected virtual object InvokeMethod(HookMethod method, object[] args) => method.Method.Invoke(this, args);

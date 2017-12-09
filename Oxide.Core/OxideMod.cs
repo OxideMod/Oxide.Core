@@ -17,7 +17,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core
@@ -232,28 +231,12 @@ namespace Oxide.Core
         #region Logging
 
         /// <summary>
-        /// Logs a formatted info message to the root logger
-        /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public void LogInfo(string format, params object[] args) => RootLogger.Write(LogType.Info, format, args);
-
-        /// <summary>
         /// Logs a formatted debug message to the root logger
         /// </summary>
         /// <param name="format"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public void LogDebug(string format, params object[] args) => RootLogger.Write(LogType.Debug, format, args);
-
-        /// <summary>
-        /// Logs a formatted warning message to the root logger
-        /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public void LogWarning(string format, params object[] args) => RootLogger.Write(LogType.Warning, format, args);
+        public void LogDebug(string format, params object[] args) => RootLogger.Write(LogType.Warning, format, args);
 
         /// <summary>
         /// Logs a formatted error message to the root logger
@@ -270,6 +253,22 @@ namespace Oxide.Core
         /// <param name="ex"></param>
         /// <returns></returns>
         public void LogException(string message, Exception ex) => RootLogger.WriteException(message, ex);
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public void LogInfo(string format, params object[] args) => RootLogger.Write(LogType.Info, format, args);
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public void LogWarning(string format, params object[] args) => RootLogger.Write(LogType.Warning, format, args);
 
         #endregion Logging
 
