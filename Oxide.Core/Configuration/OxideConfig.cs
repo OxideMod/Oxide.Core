@@ -54,11 +54,6 @@ namespace Oxide.Core.Configuration
             /// Gets or sets if the Oxide console should show the toolbar on the bottom with server information
             /// </summary>
             public bool ShowStatusBar { get; set; }
-
-            /// <summary>
-            /// Gets or sets if the Oxide console should show the stacktrace when an error occurs
-            /// </summary>
-            public bool ShowStacktraces { get; set; }
         }
 
         /// <summary>
@@ -110,7 +105,7 @@ namespace Oxide.Core.Configuration
         public OxideConfig(string filename) : base(filename)
         {
             Options = new OxideOptions { Modded = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
-            Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true, ShowStacktraces = true };
+            Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new OxideRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }
     }
