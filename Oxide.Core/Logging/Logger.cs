@@ -1,9 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Oxide.Core.Logging
 {
-    public enum LogType { Info, Debug, Warning, Error, Stacktrace }
+    /// <summary>
+    /// Types for logger
+    /// </summary>
+    public enum LogType
+    {
+        Chat,
+        Error,
+        Info,
+        Warning
+    }
 
     /// <summary>
     /// Represents a logger
@@ -73,23 +82,23 @@ namespace Oxide.Core.Logging
         public virtual void Write(LogType type, string format, params object[] args)
         {
             // Create the structure
-            var msg = CreateLogMessage(type, format, args);
+            var message = CreateLogMessage(type, format, args);
 
             // Pass to overload
-            Write(msg);
+            Write(message);
         }
 
         /// <summary>
         /// Writes a message to this logger
         /// </summary>
-        /// <param name="msg"></param>
-        internal virtual void Write(LogMessage msg)
+        /// <param name="message"></param>
+        internal virtual void Write(LogMessage message)
         {
             // If we're set to process immediately, do so, otherwise enqueue
             if (processImediately)
-                ProcessMessage(msg);
+                ProcessMessage(message);
             else
-                MessageQueue.Enqueue(msg);
+                MessageQueue.Enqueue(message);
         }
 
         /// <summary>
@@ -116,9 +125,8 @@ namespace Oxide.Core.Logging
 
             var outerEx = ex;
             while (ex.InnerException != null) ex = ex.InnerException;
-            if (outerEx.GetType() != ex.GetType()) Write(LogType.Stacktrace, "ExType: {0}", outerEx.GetType().Name);
-            Write(LogType.Error, $"{message} ({ex.GetType().Name}: {ex.Message})");
-            Write(LogType.Stacktrace, "{0}", ex.StackTrace);
+            if (outerEx.GetType() != ex.GetType()) Write(LogType.Error, "ExType: {0}", outerEx.GetType().Name);
+            Write(LogType.Error, $"{message} ({ex.GetType().Name}: {ex.Message})\n{ex.StackTrace}");
         }
 
         /// <summary>
