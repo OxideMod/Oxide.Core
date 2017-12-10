@@ -475,6 +475,55 @@ namespace Oxide.Core
 
         #endregion Plugin Management
 
+        #region Extension Management
+
+        public bool LoadExtension(string name)
+        {
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
+
+            if (!File.Exists(extPath))
+            {
+                LogError($"Could not load extension '{name}' (file not found)");
+                return false;
+            }
+
+            extensionManager.LoadExtension(extPath, false);
+            return true;
+        }
+
+        public bool UnloadExtension(string name)
+        {
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
+
+            if (!File.Exists(extPath))
+            {
+                LogError($"Could not unload extension '{name}' (file not found)");
+                return false;
+            }
+
+            extensionManager.UnloadExtension(extPath);
+            return true;
+        }
+
+        public bool ReloadExtension(string name)
+        {
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
+
+            if (!File.Exists(extPath))
+            {
+                LogError($"Could not reload extension '{name}' (file not found)");
+                return false;
+            }
+
+            extensionManager.ReloadExtension(extPath);
+            return true;
+        }
+
+        #endregion Extension Management
+
         /// <summary>
         /// Calls a hook
         /// </summary>
