@@ -297,7 +297,7 @@ namespace Oxide.Core.Plugins
             var fullName = name;
             if (args?.Length > 0)
             {
-                fullName += $"({string.Join(", ", args.Select(x => x.GetType().ToString()).ToArray())})";
+                fullName += $"({string.Join(", ", args.Select(x => x?.GetType().ToString() ?? "null").ToArray())})";
             }
 
             // Check the cache if we already found a match for this hook
