@@ -85,6 +85,8 @@ namespace Oxide.Core.Logging
             ConsoleColor consoleColor;
             string remoteType;
 
+            if (message.ToLower().Contains("[chat]")) logType = LogType.Chat;
+
             switch (logType)
             {
                 case LogType.Chat:
