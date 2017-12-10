@@ -75,6 +75,50 @@ namespace Oxide.Core.Logging
         }
 
         /// <summary>
+        /// Handles the specified message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="stackTrace"></param>
+        /// <param name="logType"></param>
+        public virtual void HandleMessage(string message, string stackTrace, LogType logType)
+        {
+            ConsoleColor consoleColor;
+            string remoteType;
+
+            switch (logType)
+            {
+                case LogType.Chat:
+                    consoleColor = ConsoleColor.Green;
+                    remoteType = "chat";
+                    break;
+
+                case LogType.Error:
+                    consoleColor = ConsoleColor.Red;
+                    remoteType = "error";
+                    break;
+
+                case LogType.Warning:
+                    consoleColor = ConsoleColor.Yellow;
+                    remoteType = "warning";
+                    break;
+
+                default:
+                    consoleColor = ConsoleColor.Gray;
+                    remoteType = "generic";
+                    break;
+            }
+
+            Interface.Oxide.ServerConsole.AddMessage(message, consoleColor);
+            Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
+            {
+                Message = message,
+                Identifier = 0,
+                Type = remoteType,
+                Stacktrace = stackTrace
+            });
+        }
+
+        /// <summary>
         /// Writes a message to this logger
         /// </summary>
         /// <param name="type"></param>
@@ -135,50 +179,6 @@ namespace Oxide.Core.Logging
         /// </summary>
         public virtual void OnRemoved()
         {
-        }
-
-        /// <summary>
-        /// Called when a log needs to be handled
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="stackTrace"></param>
-        /// <param name="logType"></param>
-        public static void HandleLog(string message, string stackTrace, LogType logType)
-        {
-            ConsoleColor consoleColor;
-            string remoteType;
-
-            switch (logType)
-            {
-                case LogType.Chat:
-                    consoleColor = ConsoleColor.Green;
-                    remoteType = "chat";
-                    break;
-
-                case LogType.Error:
-                    consoleColor = ConsoleColor.Red;
-                    remoteType = "error";
-                    break;
-
-                case LogType.Warning:
-                    consoleColor = ConsoleColor.Yellow;
-                    remoteType = "warning";
-                    break;
-
-                default:
-                    consoleColor = ConsoleColor.Gray;
-                    remoteType = "generic";
-                    break;
-            }
-
-            Interface.Oxide.ServerConsole.AddMessage(message, consoleColor);
-            Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
-            {
-                Message = message,
-                Identifier = 0,
-                Type = remoteType,
-                Stacktrace = stackTrace
-            });
         }
     }
 }
