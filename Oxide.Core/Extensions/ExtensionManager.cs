@@ -110,13 +110,24 @@ namespace Oxide.Core.Extensions
         /// Loads the extension at the specified filename
         /// </summary>
         /// <param name="filename"></param>
-        public void LoadExtension(string filename)
+        public void LoadExtension(string filename, bool forced)
         {
             var name = Utility.GetFileNameWithoutExtension(filename);
+
+            // Check if the extension is already loaded
+            if (extensions.Any(x => x.Filename == filename))
+            {
+                Logger.Write(LogType.Error, $"Failed to load extension '{name}': extension already loaded.");
+                return;
+            }
+
             try
             {
+                // Read the assembly from file
+                var data = File.ReadAllBytes(filename);
+
                 // Load the assembly
-                var assembly = Assembly.LoadFile(filename);
+                var assembly = Assembly.Load(data);
 
                 // Search for a type that derives Extension
                 var extType = typeof(Extension);
@@ -139,6 +150,23 @@ namespace Oxide.Core.Extensions
                 var extension = Activator.CreateInstance(extensionType, this) as Extension;
                 if (extension != null)
                 {
+                    if (!forced)
+                    {
+                        if (extension.IsCoreExtension || extension.IsGameExtension)
+                        {
+                            Logger.Write(LogType.Error, $"Failed to load extension '{name}': you may not hotload Core or Game extensions.");
+                            return;
+                        }
+
+                        if (!extension.SupportsReloading)
+                        {
+                            Logger.Write(LogType.Error, $"Failed to load extension '{name}': this extension does not support reloading.");
+                            return;
+                        }
+                    }
+
+                    extension.Filename = filename;
+
                     extension.Load();
                     extensions.Add(extension);
 
@@ -151,6 +179,83 @@ namespace Oxide.Core.Extensions
                 Logger.WriteException($"Failed to load extension {name}", ex);
                 RemoteLogger.Exception($"Failed to load extension {name}", ex);
             }
+        }
+
+        /// <summary>
+        /// Unloads the extension at the specified filename
+        /// </summary>
+        /// <param name="filename"></param>
+        public void UnloadExtension(string filename)
+        {
+            var name = Utility.GetFileNameWithoutExtension(filename);
+
+            // Find the extension
+            var extension = extensions.SingleOrDefault(x => x.Filename == filename);
+            if (extension == null)
+            {
+                Logger.Write(LogType.Error, $"Failed to unload extension '{name}': extension not loaded.");
+                return;
+            }
+
+            // Check if it's a Core or Game extension
+            if (extension.IsCoreExtension || extension.IsGameExtension)
+            {
+                Logger.Write(LogType.Error, $"Failed to unload extension '{name}': you may not unload Core or Game extensions.");
+                return;
+            }
+
+            // Check if the extension supports reloading
+            if (!extension.SupportsReloading)
+            {
+                Logger.Write(LogType.Error, $"Failed to unload extension '{name}': this extension doesn't support reloading.");
+                return;
+            }
+
+            // TODO: Unload any plugins referenceing this extension
+
+            // Unload it
+            extension.Unload();
+            extensions.Remove(extension);
+
+            // Log extension unloaded
+            Logger.Write(LogType.Info, $"Unloaded extension {extension.Name} v{extension.Version} by {extension.Author}");
+        }
+
+        /// <summary>
+        /// Reloads the extension at the specified filename
+        /// </summary>
+        /// <param name="filename"></param>
+        public void ReloadExtension(string filename)
+        {
+            var name = Utility.GetFileNameWithoutExtension(filename);
+
+            // Find the extension
+            var extension = extensions.SingleOrDefault(x => Utility.GetFileNameWithoutExtension(x.Filename) == name);
+
+            // If the extension isn't already loaded, load it
+            if (extension == null)
+            {
+                LoadExtension(filename, false);
+                return;
+            }
+
+            // Check if it's a Core or Game extension
+            if (extension.IsCoreExtension || extension.IsGameExtension)
+            {
+                Logger.Write(LogType.Error, $"Failed to unload extension '{name}': you may not unload Core or Game extensions.");
+                return;
+            }
+
+            // Check if the extension supports reloading
+            if (!extension.SupportsReloading)
+            {
+                Logger.Write(LogType.Error, $"Failed to reload extension '{name}': this extension doesn't support reloading.");
+                return;
+            }
+
+            UnloadExtension(filename);
+
+            LoadExtension(filename, false);
         }
 
         /// <summary>
@@ -199,9 +304,9 @@ namespace Oxide.Core.Extensions
                 else foundOther.Add(extPath);
             }
 
-            foreach (var extPath in foundCore) LoadExtension(Path.Combine(directory, extPath));
-            foreach (var extPath in foundGame) LoadExtension(Path.Combine(directory, extPath));
-            foreach (var extPath in foundOther) LoadExtension(Path.Combine(directory, extPath));
+            foreach (var extPath in foundCore) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (var extPath in foundGame) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (var extPath in foundOther) LoadExtension(Path.Combine(directory, extPath), true);
 
             foreach (var ext in extensions.ToArray())
             {

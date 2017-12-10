@@ -10,6 +10,9 @@ namespace Oxide.Core
 
             ["en"] = new Dictionary<string, string>
             {
+                ["CommandUsageExtLoad"] = "Usage: ext.load <extname>+",
+                ["CommandUsageExtUnload"] = "Usage: ext.unload <extname>+",
+                ["CommandUsageExtReload"] = "Usage: ext.reload <extname>+",
                 ["CommandUsageGrant"] = "Usage: grant <group|user> <name|id> <permission>",
                 ["CommandUsageGroup"] = "Usage: group <add|set> <name> [title] [rank]",
                 ["CommandUsageGroupParent"] = "Usage: group <parent> <name> <parentName>",

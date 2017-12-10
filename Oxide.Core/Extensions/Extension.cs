@@ -16,6 +16,16 @@
         public virtual bool IsGameExtension { get; private set; }
 
         /// <summary>
+        /// Gets whether the extension supports extension-reloading
+        /// </summary>
+        public virtual bool SupportsReloading { get; private set; } = false;
+
+        /// <summary>
+        /// Gets the filename of the extension
+        /// </summary>
+        public string Filename { get; set; }
+
+        /// <summary>
         /// Gets the name of this extension
         /// </summary>
         public abstract string Name { get; }
@@ -51,6 +61,13 @@
         /// Loads this extension
         /// </summary>
         public virtual void Load()
+        {
+        }
+
+        /// <summary>
+        /// Called before the extension is unloaded
+        /// </summary>
+        public virtual void Unload()
         {
         }
 
