@@ -115,8 +115,11 @@ namespace Oxide.Core.Extensions
             var name = Utility.GetFileNameWithoutExtension(filename);
             try
             {
+                // Read the assembly from file
+                byte[] data = File.ReadAllBytes(filename);
+                
                 // Load the assembly
-                var assembly = Assembly.LoadFile(filename);
+                var assembly = Assembly.Load(data);
 
                 // Search for a type that derives Extension
                 var extType = typeof(Extension);
