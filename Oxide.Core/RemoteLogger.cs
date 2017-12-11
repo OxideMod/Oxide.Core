@@ -62,8 +62,8 @@ namespace Oxide.Core
         {
             public string message;
             public string level;
-            public string platform = "csharp";
             public string culprit;
+            public string platform = "csharp";
             public string release = OxideMod.Version.ToString();
             public Dictionary<string, string> tags = Tags;
             public Dictionary<string, string> modules;
@@ -142,46 +142,39 @@ namespace Oxide.Core
 
         public static void Debug(string message) => EnqueueReport("debug", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);
 
+        public static void Error(string message) => EnqueueReport("error", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);
+
         public static void Info(string message) => EnqueueReport("info", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);
 
         public static void Warning(string message) => EnqueueReport("warning", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);
-
-        public static void Error(string message) => EnqueueReport("error", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);
 
         public static string[] ExceptionFilter =
         {
             "BadImageFormatException",
             "DllNotFoundException",
-            "ExtPlugin",
             "FileNotFoundException",
             "IOException",
             "KeyNotFoundException",
             "Oxide.Core.Configuration",
-            "Oxide.Core.JavaScript",
-            "Oxide.Core.Lua",
-            "Oxide.Core.Python",
             "Oxide.Ext.",
             "Oxide.Plugins.<",
             "ReflectionTypeLoadException",
             "Sharing violation",
-            "UGC",
             "UnauthorizedAccessException",
             "WebException"
         };
 
         public static void Exception(string message, Exception exception)
         {
-            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Game") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler")) return;
-            foreach (var filter in ExceptionFilter) if (exception.StackTrace.Contains(filter) || message.Contains(filter)) return;
+            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler")) return;
+            foreach (var filter in ExceptionFilter)
+                if (exception.StackTrace.Contains(filter) || message.Contains(filter)) return;
 
             EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message, exception.ToString());
         }
 
         public static void Exception(string message, string rawStackTrace)
         {
-            if (!rawStackTrace.Contains("Oxide.Core") && !rawStackTrace.Contains("Oxide.Game") && !rawStackTrace.Contains("Oxide.Plugins.Compiler")) return;
-            foreach (var filter in ExceptionFilter) if (rawStackTrace.Contains(filter) || message.Contains(filter)) return;
-
             var stackTrace = rawStackTrace.Split('\r', '\n');
             var culprit = stackTrace[0].Split('(')[0].Trim();
             EnqueueReport("fatal", stackTrace, culprit, message, rawStackTrace);
@@ -203,6 +196,10 @@ namespace Oxide.Core
 
         private static void EnqueueReport(Report report)
         {
+            var stackTrace = report.extra.Values;
+            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler")) return;
+            foreach (var filter in ExceptionFilter) if (stackTrace.Contains(filter) || stackTrace.Contains(filter)) return;
+
             QueuedReports.Add(new QueuedReport(report));
             if (!submittingReports) SubmitNextReport();
         }

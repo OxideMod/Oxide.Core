@@ -1,3 +1,4 @@
+﻿using Oxide.Core.RemoteConsole;
 using System;
 using System.Collections.Generic;
 
@@ -71,6 +72,52 @@ namespace Oxide.Core.Logging
                 msg.LogfileMessage = string.Format(msg.LogfileMessage, args);
             }
             return msg;
+        }
+
+        /// <summary>
+        /// Handles the specified message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="stackTrace"></param>
+        /// <param name="logType"></param>
+        public virtual void HandleMessage(string message, string stackTrace, LogType logType)
+        {
+            ConsoleColor consoleColor;
+            string remoteType;
+
+            if (message.ToLower().Contains("[chat]")) logType = LogType.Chat;
+
+            switch (logType)
+            {
+                case LogType.Chat:
+                    consoleColor = ConsoleColor.Green;
+                    remoteType = "chat";
+                    break;
+
+                case LogType.Error:
+                    consoleColor = ConsoleColor.Red;
+                    remoteType = "error";
+                    break;
+
+                case LogType.Warning:
+                    consoleColor = ConsoleColor.Yellow;
+                    remoteType = "warning";
+                    break;
+
+                default:
+                    consoleColor = ConsoleColor.Gray;
+                    remoteType = "generic";
+                    break;
+            }
+
+            Interface.Oxide.ServerConsole.AddMessage(message, consoleColor);
+            Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
+            {
+                Message = message,
+                Identifier = 0,
+                Type = remoteType,
+                Stacktrace = stackTrace
+            });
         }
 
         /// <summary>
