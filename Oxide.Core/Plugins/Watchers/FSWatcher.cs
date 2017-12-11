@@ -53,7 +53,6 @@ namespace Oxide.Core.Plugins.Watchers
             // Create the watcher
             watcher = new FileSystemWatcher(directory, filter)
             {
-                EnableRaisingEvents = true,
                 IncludeSubdirectories = true,
                 NotifyFilter = NotifyFilters.LastWrite
             };
@@ -61,6 +60,7 @@ namespace Oxide.Core.Plugins.Watchers
             watcher.Created += watcher_Changed;
             watcher.Deleted += watcher_Changed;
             watcher.Error += watcher_Error;
+            watcher.EnableRaisingEvents = true;
             GC.KeepAlive(watcher);
         }
 
