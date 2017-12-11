@@ -14,7 +14,6 @@ namespace Oxide.Core.ServerConsole
         public event Action<string> Input;
 
         public Func<string> Title;
-
         public Func<string> Status1Left;
         public Func<string> Status1Right;
         public Func<string> Status2Left;
@@ -65,7 +64,6 @@ namespace Oxide.Core.ServerConsole
         }
 
         private string title => Title?.Invoke();
-
         private string status1Left => GetStatusValue(Status1Left);
         private string status1Right => GetStatusValue(Status1Right).PadLeft(input.LineWidth - 1);
         private string status2Left => GetStatusValue(Status2Left);
@@ -151,6 +149,7 @@ namespace Oxide.Core.ServerConsole
 
             nextUpdate = Interface.Oxide.Now + 0.66f;
             if (!input.Valid) return;
+
             string left1 = status1Left, left2 = status2Left, left3 = status3Left;
             //input.StatusTextLeft[0] = string.Empty;
             input.StatusTextLeft[1] = left1;
