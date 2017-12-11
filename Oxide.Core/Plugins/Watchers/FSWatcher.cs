@@ -51,15 +51,13 @@ namespace Oxide.Core.Plugins.Watchers
         private void LoadWatcher(string directory, string filter)
         {
             // Create the watcher
-            watcher = new FileSystemWatcher(directory, filter)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.LastWrite
-            };
+            watcher = new FileSystemWatcher(directory, filter);
             watcher.Changed += watcher_Changed;
             watcher.Created += watcher_Changed;
             watcher.Deleted += watcher_Changed;
             watcher.Error += watcher_Error;
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.IncludeSubdirectories = true;
             watcher.EnableRaisingEvents = true;
             GC.KeepAlive(watcher);
         }
