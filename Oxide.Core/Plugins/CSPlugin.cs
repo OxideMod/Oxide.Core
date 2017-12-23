@@ -88,7 +88,7 @@ namespace Oxide.Core.Plugins
                     
                     if (args[i].GetType().IsValueType)
                     {
-                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).IsValid(args[i]))
+                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()))
                         {
                             return false;
                         }
