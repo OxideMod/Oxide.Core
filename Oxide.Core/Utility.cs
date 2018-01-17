@@ -1,9 +1,11 @@
-﻿using System;
+extern alias Oxide;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Oxide::Newtonsoft.Json;
 
 namespace Oxide.Core
 {
@@ -163,5 +165,9 @@ namespace Oxide.Core
         {
             return path?.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         }
+        
+        public static T ConvertFromJson<T>(string jsonstr) => JsonConvert.DeserializeObject<T>(jsonstr);
+        
+        public static string ConvertToJson(object obj, bool indented = false) => JsonConvert.SerializeObject(obj, (indented) ? Formatting.Idented : Formatting.None);
     }
 }
