@@ -1,4 +1,7 @@
-﻿using System;
+extern alias Oxide;
+
+using Oxide::Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -162,6 +165,13 @@ namespace Oxide.Core
         public static string CleanPath(string path)
         {
             return path?.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+        }
+
+        public static T ConvertFromJson<T>(string jsonstr) => JsonConvert.DeserializeObject<T>(jsonstr);
+
+        public static string ConvertToJson(object obj, bool indented = false)
+        {
+            return JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
         }
     }
 }
