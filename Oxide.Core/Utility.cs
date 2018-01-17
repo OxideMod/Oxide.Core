@@ -168,6 +168,6 @@ namespace Oxide.Core
         
         public static T ConvertFromJson<T>(string jsonstr) => JsonConvert.DeserializeObject<T>(jsonstr);
         
-        public static string ConvertToJson(object obj, bool indented = false) => JsonConvert.SerializeObject(obj, (indented) ? Formatting.Idented : Formatting.None);
+        public static string ConvertToJson(object obj, bool indented = false) => JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
     }
 }
