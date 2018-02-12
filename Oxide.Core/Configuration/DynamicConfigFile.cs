@@ -128,7 +128,7 @@ namespace Oxide.Core.Configuration
         [Obsolete("SanitiseName is deprecated, use SanitizeName instead")]
         public static string SanitiseName(string name)
         {
-            return SanitizeName(name)
+            return SanitizeName(name);
         }
 
         /// <summary>
