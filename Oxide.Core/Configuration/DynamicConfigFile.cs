@@ -104,7 +104,7 @@ namespace Oxide.Core.Configuration
         /// <param name="filename"></param>
         private string CheckPath(string filename)
         {
-            filename = SanitiseName(filename);
+            filename = SanitizeName(filename);
             var path = Path.GetFullPath(filename);
             if (!path.StartsWith(_chroot, StringComparison.Ordinal))
                 throw new Exception($"Only access to oxide directory!\nPath: {path}");
@@ -116,13 +116,19 @@ namespace Oxide.Core.Configuration
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static string SanitiseName(string name)
+        public static string SanitizeName(string name)
         {
             if (string.IsNullOrEmpty(name)) return string.Empty;
             name = name.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
             name = Regex.Replace(name, "[" + Regex.Escape(new string(Path.GetInvalidPathChars())) + "]", "_");
             name = Regex.Replace(name, @"\.+", ".");
             return name.TrimStart('.');
+        }
+
+        [Obsolete("SanitiseName is deprecated, use SanitizeName instead")]
+        public static string SanitiseName(string name)
+        {
+            return SanitizeName(name)
         }
 
         /// <summary>

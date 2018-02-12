@@ -39,7 +39,7 @@ namespace Oxide.Core
 
         public DynamicConfigFile GetFile(string name)
         {
-            name = DynamicConfigFile.SanitiseName(name);
+            name = DynamicConfigFile.SanitizeName(name);
             DynamicConfigFile datafile;
             if (_datafiles.TryGetValue(name, out datafile)) return datafile;
             datafile = new DynamicConfigFile(Path.Combine(Directory, string.Format("{0}.json", name)));
@@ -102,7 +102,7 @@ namespace Oxide.Core
         /// <param name="callback"></param>
         public void ForEachObject<T>(string name, Action<T> callback)
         {
-            var folder = DynamicConfigFile.SanitiseName(name);
+            var folder = DynamicConfigFile.SanitizeName(name);
             var files = _datafiles.Where(d => d.Key.StartsWith(folder)).Select(a => a.Value);
             foreach (var file in files) callback?.Invoke(file.ReadObject<T>());
         }
