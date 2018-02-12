@@ -5,6 +5,7 @@ using Oxide::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Oxide.Core
 {
@@ -38,7 +39,7 @@ namespace Oxide.Core
 
         public DynamicConfigFile GetFile(string name)
         {
-            name = DynamicConfigFile.SanitiseName(name);
+            name = DynamicConfigFile.SanitizeName(name);
             DynamicConfigFile datafile;
             if (_datafiles.TryGetValue(name, out datafile)) return datafile;
             datafile = new DynamicConfigFile(Path.Combine(Directory, string.Format("{0}.json", name)));
@@ -92,5 +93,18 @@ namespace Oxide.Core
         }
 
         public void WriteObject<T>(string name, T Object, bool sync = false) => GetFile(name).WriteObject(Object, sync);
+
+        /// <summary>
+        /// Read data files in a batch and send callback
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <param name="callback"></param>
+        public void ForEachObject<T>(string name, Action<T> callback)
+        {
+            var folder = DynamicConfigFile.SanitizeName(name);
+            var files = _datafiles.Where(d => d.Key.StartsWith(folder)).Select(a => a.Value);
+            foreach (var file in files) callback?.Invoke(file.ReadObject<T>());
+        }
     }
 }
