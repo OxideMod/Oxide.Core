@@ -75,7 +75,8 @@ namespace Oxide.Core.Plugins
 
                     if (exact)
                     {
-                        if (args[i].GetType() != Parameters[i].ParameterType && args[i].GetType().MakeByRefType() != Parameters[i].ParameterType)
+                        if (args[i].GetType() != Parameters[i].ParameterType &&
+                            args[i].GetType().MakeByRefType() != Parameters[i].ParameterType)
                         {
                             if (!CanConvertNumber(args[i], Parameters[i].ParameterType))
                             {
@@ -85,7 +86,14 @@ namespace Oxide.Core.Plugins
                     }
 
                     if (exact) continue;
-                    
+
+                    if (args[i].GetType() == Parameters[i].ParameterType ||
+                        args[i].GetType().MakeByRefType() == Parameters[i].ParameterType ||
+                        Parameters[i].ParameterType.FullName == "System.Object")
+                    {
+                        continue;
+                    }
+
                     if (args[i].GetType().IsValueType)
                     {
                         if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()))
