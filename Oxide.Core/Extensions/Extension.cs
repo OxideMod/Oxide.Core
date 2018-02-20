@@ -41,6 +41,11 @@
         public abstract VersionNumber Version { get; }
 
         /// <summary>
+        /// Gets the branch of this extension
+        /// </summary>
+        public abstract string Branch { get; }
+
+        /// <summary>
         /// Gets the extension manager responsible for this extension
         /// </summary>
         public ExtensionManager Manager { get; private set; }
