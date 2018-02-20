@@ -76,12 +76,10 @@ namespace Oxide.Core.Plugins
                     if (exact)
                     {
                         if (args[i].GetType() != Parameters[i].ParameterType &&
-                            args[i].GetType().MakeByRefType() != Parameters[i].ParameterType)
+                            args[i].GetType().MakeByRefType() != Parameters[i].ParameterType &&
+                            !CanConvertNumber(args[i], Parameters[i].ParameterType))
                         {
-                            if (!CanConvertNumber(args[i], Parameters[i].ParameterType))
-                            {
-                                exact = false;
-                            }
+                            exact = false;
                         }
                     }
 
@@ -96,7 +94,7 @@ namespace Oxide.Core.Plugins
 
                     if (args[i].GetType().IsValueType)
                     {
-                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()))
+                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()) && !CanConvertNumber(args[i], Parameters[i].ParameterType))
                         {
                             return false;
                         }
