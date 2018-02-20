@@ -43,7 +43,7 @@
         /// <summary>
         /// Gets the branch of this extension
         /// </summary>
-        public abstract string Branch { get; }
+        public virtual string Branch { get; }
 
         /// <summary>
         /// Gets the extension manager responsible for this extension
