@@ -1,9 +1,12 @@
-﻿using Oxide.Core.Plugins;
+using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -26,6 +29,9 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public class WebRequests : Library
     {
+        // A callback to process remote server certifications
+        private static RemoteCertificateValidationCallback _certCallback;
+
         /// <summary>
         /// Specifies the HTTP request timeout in seconds
         /// </summary>
@@ -274,8 +280,9 @@ namespace Oxide.Core.Libraries
         public WebRequests()
         {
             // Initialize SSL
+            _certCallback = new RemoteCertificateValidationCallback(FixHttpsValidation);
             ServicePointManager.Expect100Continue = false;
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.ServerCertificateValidationCallback = _certCallback;
             ServicePointManager.DefaultConnectionLimit = 200;
 
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
@@ -285,6 +292,34 @@ namespace Oxide.Core.Libraries
             // Start worker thread
             workerthread = new Thread(Worker);
             workerthread.Start();
+        }
+
+        // Processes the ssl chain from the remote server and validates it
+        private static bool FixHttpsValidation(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors sslerrors)
+        {
+            var flag = true;
+
+            if (sslerrors != SslPolicyErrors.None)
+            {
+                for (var index = 0; index < chain.ChainStatus.Length; ++index)
+                {
+                    if (chain.ChainStatus[index].Status != X509ChainStatusFlags.RevocationStatusUnknown)
+                    {
+                        chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+                        chain.ChainPolicy.UrlRetrievalTimeout = TimeSpan.FromMinutes(1);
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
+
+                        if (!chain.Build((X509Certificate2)cert))
+                        {
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return flag;
         }
 
         /// <summary>
