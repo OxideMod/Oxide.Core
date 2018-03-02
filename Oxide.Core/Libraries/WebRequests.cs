@@ -32,6 +32,11 @@ namespace Oxide.Core.Libraries
         public static float Timeout = 30f;
 
         /// <summary>
+        /// Specifies the HTTP request decompression support
+        /// </summary>
+        public static bool AllowDecompression = false;
+
+        /// <summary>
         /// Represents a single WebRequest instance
         /// </summary>
         public class WebRequest
@@ -114,6 +119,7 @@ namespace Oxide.Core.Libraries
                     request.Proxy = null;
                     request.KeepAlive = false;
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
+                    request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
