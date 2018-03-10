@@ -162,6 +162,15 @@ namespace Oxide.Core
             return value.Substring(firstIndex, (lastIndex - firstIndex + 1));
         }
 
+        public static string[] GetFileNames(string path)
+        {
+            if (!path.StartsWith(Core.Interface.Oxide.InstanceDirectory))
+            {
+                throw new Exception(string.Format("Only access to oxide directory!\nPath: {0}", path));
+            }
+            return System.IO.Directory.GetFiles(path);
+        }
+        
         public static string CleanPath(string path)
         {
             return path?.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
