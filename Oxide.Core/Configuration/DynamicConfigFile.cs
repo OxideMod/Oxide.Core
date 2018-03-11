@@ -51,7 +51,7 @@ namespace Oxide.Core.Configuration
         {
             filename = CheckPath(filename ?? Filename);
             T customObject;
-            if (Exists())
+            if (Exists(filename))
             {
                 var source = File.ReadAllText(filename);
                 customObject = JsonConvert.DeserializeObject<T>(source, Settings);
