@@ -327,10 +327,8 @@ namespace Oxide.Core.Configuration
                 // Get the dictionary to populate
                 Dictionary<string, object> dict = existingValue as Dictionary<string, object> ?? new Dictionary<string, object>();
                 if (reader.TokenType == JsonToken.StartArray)
-                {
-                    JArray.Load(reader);
                     return dict;
-                }
+                    
                 // Read until end of object
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
                 {
