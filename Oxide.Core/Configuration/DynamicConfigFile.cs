@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Oxide.Core.Configuration
@@ -203,7 +204,12 @@ namespace Oxide.Core.Configuration
             {
                 var valueType = destinationType.GetGenericArguments()[0];
                 var list = (IList)Activator.CreateInstance(destinationType);
-                foreach (var val in (IList)value) list.Add(Convert.ChangeType(val, valueType));
+                foreach (var val in (IList)value)
+                {
+                    //Custom classes. They are being stored as Dictionary<string,object>.
+                    IDictionary customClass = val as IDictionary;
+                    list.Add(customClass != null ? ConvertCustomType(customClass,valueType) : ConvertValue(val,valueType));
+                }
                 return list;
             }
             if (destinationType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
@@ -212,11 +218,49 @@ namespace Oxide.Core.Configuration
                 var valueType = destinationType.GetGenericArguments()[1];
                 var dict = (IDictionary)Activator.CreateInstance(destinationType);
                 foreach (var key in ((IDictionary)value).Keys)
-                    dict.Add(Convert.ChangeType(key, keyType), Convert.ChangeType(((IDictionary)value)[key], valueType));
+                {
+                    var val = ((IDictionary)value)[key];
+                    IDictionary customClass = val as IDictionary;
+                    dict.Add(Convert.ChangeType(key, keyType), 
+                        customClass != null ? ConvertCustomType(customClass,valueType) : ConvertValue(val, valueType));
+                }
                 return dict;
             }
             throw new InvalidCastException("Generic types other than List<> and Dictionary<,> are not supported");
         }
+        //As the custom classes are being stored as Dictionary<string,objce> this is nessasarry.
+        private object ConvertCustomType(IDictionary dict, Type destinationType)
+        {
+            var fields = GetAllFields(destinationType);
+            object inst;
+            try
+            {
+                inst = Activator.CreateInstance(destinationType);
+            }
+            catch (Exception e)
+            {
+                e.Log(LogType.Console);
+                return null;
+            }
+            foreach (var key in dict.Keys)
+            {
+                var field = fields.FirstOrDefault(x => x.Name == key.ToString());
+                if (field == null)
+                    throw new ArgumentNullException($"Field \"{key}\" not found!");
+                field.SetValue(inst, ConvertValue(dict[key], field.FieldType));
+            }
+            return inst;
+        }
+        
+        private const BindingFlags Flags =
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.Static |
+            BindingFlags.Instance |
+            BindingFlags.DeclaredOnly;
+            
+        private IEnumerable<FieldInfo> GetAllFields(Type type) =>
+            type?.GetFields(Flags).Union(GetAllFields(type.BaseType)) ?? Enumerable.Empty<FieldInfo>();
 
         /// <summary>
         /// Converts a configuration value to another type and returns it as that type
