@@ -51,7 +51,7 @@ namespace Oxide.Core.Configuration
         {
             filename = CheckPath(filename ?? Filename);
             T customObject;
-            if (Exists())
+            if (Exists(filename))
             {
                 var source = File.ReadAllText(filename);
                 customObject = JsonConvert.DeserializeObject<T>(source, Settings);
@@ -59,7 +59,7 @@ namespace Oxide.Core.Configuration
             else
             {
                 customObject = Activator.CreateInstance<T>();
-                WriteObject(customObject);
+                WriteObject(customObject,false,filename);
             }
             return customObject;
         }
@@ -327,10 +327,8 @@ namespace Oxide.Core.Configuration
                 // Get the dictionary to populate
                 Dictionary<string, object> dict = existingValue as Dictionary<string, object> ?? new Dictionary<string, object>();
                 if (reader.TokenType == JsonToken.StartArray)
-                {
-                    JArray.Load(reader);
                     return dict;
-                }
+                    
                 // Read until end of object
                 while (reader.Read() && reader.TokenType != JsonToken.EndObject)
                 {
