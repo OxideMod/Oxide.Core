@@ -233,15 +233,8 @@ namespace Oxide.Core.Configuration
         {
             var fields = GetAllFields(destinationType);
             object inst;
-            try
-            {
-                inst = Activator.CreateInstance(destinationType);
-            }
-            catch (Exception e)
-            {
-                e.Log(LogType.Console);
-                return null;
-            }
+            inst = Activator.CreateInstance(destinationType);
+            
             foreach (var key in dict.Keys)
             {
                 var field = fields.FirstOrDefault(x => x.Name == key.ToString());
