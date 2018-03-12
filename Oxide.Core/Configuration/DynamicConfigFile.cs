@@ -59,7 +59,7 @@ namespace Oxide.Core.Configuration
             else
             {
                 customObject = Activator.CreateInstance<T>();
-                WriteObject(customObject);
+                WriteObject(customObject,false,filename);
             }
             return customObject;
         }
