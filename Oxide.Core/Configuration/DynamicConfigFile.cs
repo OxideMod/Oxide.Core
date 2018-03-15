@@ -1,7 +1,6 @@
 ﻿extern alias Oxide;
 
 using Oxide::Newtonsoft.Json;
-using Oxide::Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -51,7 +50,7 @@ namespace Oxide.Core.Configuration
         {
             filename = CheckPath(filename ?? Filename);
             T customObject;
-            if (Exists())
+            if (Exists(filename))
             {
                 var source = File.ReadAllText(filename);
                 customObject = JsonConvert.DeserializeObject<T>(source, Settings);
@@ -59,7 +58,7 @@ namespace Oxide.Core.Configuration
             else
             {
                 customObject = Activator.CreateInstance<T>();
-                WriteObject(customObject);
+                WriteObject(customObject, false, filename);
             }
             return customObject;
         }
@@ -328,7 +327,6 @@ namespace Oxide.Core.Configuration
                 Dictionary<string, object> dict = existingValue as Dictionary<string, object> ?? new Dictionary<string, object>();
                 if (reader.TokenType == JsonToken.StartArray)
                 {
-                    JArray.Load(reader);
                     return dict;
                 }
                 // Read until end of object

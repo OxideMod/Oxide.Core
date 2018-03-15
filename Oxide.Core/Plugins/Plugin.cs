@@ -449,7 +449,7 @@ namespace Oxide.Core.Plugins
             {
                 foreach (var perm in cmdInfo.PermissionsRequired)
                 {
-                    if (caller.HasPermission(perm) || (caller.IsAdmin && IsCorePlugin)) continue;
+                    if (caller.HasPermission(perm) || caller.IsServer || caller.IsAdmin && IsCorePlugin) continue;
 
                     caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
                     return true;
