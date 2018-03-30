@@ -94,6 +94,8 @@ namespace Oxide.Core.Configuration
         public bool Exists(string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
+            var dir = Utility.GetDirectoryName(filename);
+            if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             return File.Exists(filename);
         }
 
