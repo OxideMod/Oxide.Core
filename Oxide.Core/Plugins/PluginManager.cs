@@ -146,7 +146,7 @@ namespace Oxide.Core.Plugins
             if (plugins.Count == 0) return null;
 
             // Loop each item
-            var values = new object[plugins.Count];
+            var values = ArrayPool.Get(plugins.Count);
             var returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
@@ -191,6 +191,7 @@ namespace Oxide.Core.Plugins
                     Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
                 }
             }
+            ArrayPool.Free(values);
 
             return finalValue;
         }
