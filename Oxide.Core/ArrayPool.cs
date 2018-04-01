@@ -47,6 +47,10 @@ namespace Oxide.Core
             {
                 array[i] = null;
             }
+            if (_pooledArrays[array.Length].Count > MaxPoolAmount)
+            {
+                return;
+            }
             _pooledArrays[array.Length].Enqueue(array);
         }
 
