@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Oxide.Core
 {
@@ -48,7 +47,6 @@ namespace Oxide.Core
             {
                 array[i] = null;
             }
-            if (_)
             _pooledArrays[array.Length].Enqueue(array);
         }
 
