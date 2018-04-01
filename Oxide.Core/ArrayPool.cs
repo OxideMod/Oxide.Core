@@ -14,6 +14,15 @@ namespace Oxide.Core
 
         private static List<Queue<object[]>> _pooledArrays = new List<Queue<object[]>>();
 
+        static ArrayPool()
+        {
+            for(int i = 0; i < MaxArrayLength; i++)
+            {
+                _pooledArrays.Add(new Queue<object[]>());
+                SetupArrays(i + 1);
+            }
+        }
+
         public static object[] Get(int length)
         {
             if (length == 0 || length > MaxArrayLength)
