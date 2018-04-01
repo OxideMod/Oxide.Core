@@ -344,7 +344,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = new object[h.Parameters.Length];
+                    hookArgs = ArrayPool.Get(h.Parameters.Length);
 
                     if (received > 0 && hookArgs.Length > 0)
                     {
@@ -370,6 +370,7 @@ namespace Oxide.Core.Plugins
                             }
                         }
                     }
+                    ArrayPool.Free(hookArgs);
                 }
                 else
                 {
