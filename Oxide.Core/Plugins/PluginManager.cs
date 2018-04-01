@@ -61,6 +61,7 @@ namespace Oxide.Core.Plugins
         public bool AddPlugin(Plugin plugin)
         {
             if (loadedPlugins.ContainsKey(plugin.Name)) return false;
+
             loadedPlugins.Add(plugin.Name, plugin);
             plugin.HandleAddedToManager(this);
             OnPluginAdded?.Invoke(plugin);
@@ -75,6 +76,7 @@ namespace Oxide.Core.Plugins
         public bool RemovePlugin(Plugin plugin)
         {
             if (!loadedPlugins.ContainsKey(plugin.Name)) return false;
+
             loadedPlugins.Remove(plugin.Name);
             foreach (var list in hookSubscriptions.Values)
                 if (list.Contains(plugin)) list.Remove(plugin);
@@ -108,6 +110,7 @@ namespace Oxide.Core.Plugins
         internal void SubscribeToHook(string hook, Plugin plugin)
         {
             if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I")) return;
+
             IList<Plugin> sublist;
             if (!hookSubscriptions.TryGetValue(hook, out sublist))
             {
@@ -126,6 +129,7 @@ namespace Oxide.Core.Plugins
         internal void UnsubscribeToHook(string hook, Plugin plugin)
         {
             if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I")) return;
+
             IList<Plugin> sublist;
             if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
                 sublist.Remove(plugin);
@@ -143,10 +147,11 @@ namespace Oxide.Core.Plugins
             // Locate the sublist
             IList<Plugin> plugins;
             if (!hookSubscriptions.TryGetValue(hook, out plugins)) return null;
+
             if (plugins.Count == 0) return null;
 
             // Loop each item
-            var values = new object[plugins.Count];
+            var values = ArrayPool.Get(plugins.Count);
             var returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
@@ -164,7 +169,11 @@ namespace Oxide.Core.Plugins
             }
 
             // Is there a return value?
-            if (returnCount == 0) return null;
+            if (returnCount == 0)
+            {
+                ArrayPool.Free(values);
+                return null;
+            }
 
             if (returnCount > 1 && finalValue != null)
             {
@@ -174,6 +183,7 @@ namespace Oxide.Core.Plugins
                 {
                     var value = values[i];
                     if (value == null) continue;
+
                     if (value.GetType().IsValueType)
                     {
                         if (!values[i].Equals(finalValue))
@@ -191,6 +201,7 @@ namespace Oxide.Core.Plugins
                     Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
                 }
             }
+            ArrayPool.Free(values);
 
             return finalValue;
         }
@@ -207,7 +218,9 @@ namespace Oxide.Core.Plugins
         {
             IList<Plugin> plugins;
             if (!hookSubscriptions.TryGetValue(oldHook, out plugins)) return null;
+
             if (plugins.Count == 0) return null;
+
             if (expireDate < DateTime.Now) return null;
 
             var now = Interface.Oxide.Now;
