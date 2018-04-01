@@ -75,6 +75,17 @@ namespace Oxide.Core
         /// <param name="hook"></param>
         /// <param name="args"></param>
         /// <returns></returns>
+        public static object CallHook(string hook)
+        {
+            return CallHook(hook, null);
+        }
+
+        /// <summary>
+        /// Calls the specified hook
+        /// </summary>
+        /// <param name="hook"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public static object CallHook(string hook, object obj1)
         {
             var array = ArrayPool.Get(1);
