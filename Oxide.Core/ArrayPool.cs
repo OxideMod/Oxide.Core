@@ -7,7 +7,7 @@ namespace Oxide.Core
 {
     public static class ArrayPool
     {
-        private const int MaxArrayLength = 10;
+        private const int MaxArrayLength = 50;
         private const int InitialPoolAmount = 64;
         private const int MaxPoolAmount = 256;
 
@@ -38,7 +38,7 @@ namespace Oxide.Core
 
         public static void Free(object[] array)
         {
-            if (array.Length == 0 || array.Length > MaxArrayLength)
+            if (array == null || array.Length == 0 || array.Length > MaxArrayLength)
             {
                 return;
             }
@@ -47,11 +47,11 @@ namespace Oxide.Core
             {
                 array[i] = null;
             }
-            if (_pooledArrays[array.Length].Count > MaxPoolAmount)
+            if (_pooledArrays[array.Length - 1].Count > MaxPoolAmount)
             {
                 return;
             }
-            _pooledArrays[array.Length].Enqueue(array);
+            _pooledArrays[array.Length - 1].Enqueue(array);
         }
 
         private static void SetupArrays(int length)
