@@ -164,7 +164,11 @@ namespace Oxide.Core.Plugins
             }
 
             // Is there a return value?
-            if (returnCount == 0) return null;
+            if (returnCount == 0)
+            {
+                ArrayPool.Free(values);
+                return null;
+            }
 
             if (returnCount > 1 && finalValue != null)
             {

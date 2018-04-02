@@ -370,7 +370,6 @@ namespace Oxide.Core.Plugins
                             }
                         }
                     }
-                    ArrayPool.Free(hookArgs);
                 }
                 else
                 {
@@ -389,6 +388,8 @@ namespace Oxide.Core.Plugins
                     // Should we determine the level and call the closest overloaded match? Performance impact?
                     overloadedMatch = h;
                 }
+
+                ArrayPool.Free(hookArgs);
             }
 
             if (exactMatch != null)
