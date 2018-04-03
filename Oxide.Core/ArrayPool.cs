@@ -47,11 +47,16 @@ namespace Oxide.Core
             {
                 array[i] = null;
             }
-            if (_pooledArrays[array.Length - 1].Count > MaxPoolAmount)
+            var arrays = _pooledArrays[array.Length - 1];
+            if (arrays.Count > MaxPoolAmount)
             {
+                for (int i = 0; i < InitialPoolAmount; i++)
+                {
+                    arrays.Dequeue();
+                }
                 return;
             }
-            _pooledArrays[array.Length - 1].Enqueue(array);
+            arrays.Enqueue(array);
         }
 
         private static void SetupArrays(int length)
