@@ -229,6 +229,7 @@ namespace Oxide.Core.Plugins
         protected sealed override object OnCallHook(string name, object[] args)
         {
             object returnvalue = null;
+            bool pooledArray = false;
             
             // Call all hooks that match the signature
             foreach (var h in FindHooks(name, args))
@@ -240,6 +241,7 @@ namespace Oxide.Core.Plugins
                 {
                     // The call argument count is different to the declared callback methods argument count
                     hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
                     {
@@ -293,7 +295,11 @@ namespace Oxide.Core.Plugins
                         }
                     }
                 }
-                ArrayPool.Free(hookArgs);
+
+                if (pooledArray)
+                {
+                    ArrayPool.Free(hookArgs);
+                }
             }
 
             return returnvalue;
@@ -370,6 +376,8 @@ namespace Oxide.Core.Plugins
                             }
                         }
                     }
+
+                    ArrayPool.Free(hookArgs);
                 }
                 else
                 {
@@ -389,7 +397,7 @@ namespace Oxide.Core.Plugins
                     overloadedMatch = h;
                 }
 
-                ArrayPool.Free(hookArgs);
+                
             }
 
             if (exactMatch != null)
