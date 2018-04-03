@@ -91,11 +91,16 @@ namespace Oxide.Core.Configuration
             if (sync) _keyvalues = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, _settings);
         }
 
+        /// <summary>
+        /// Checks if the file or specified file exists
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
         public bool Exists(string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
             var dir = Utility.GetDirectoryName(filename);
-            if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            if (dir != null && !Directory.Exists(dir)) return false;
             return File.Exists(filename);
         }
 
