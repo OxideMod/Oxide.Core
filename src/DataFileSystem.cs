@@ -95,6 +95,17 @@ namespace Oxide.Core
         public void WriteObject<T>(string name, T Object, bool sync = false) => GetFile(name).WriteObject(Object, sync);
 
         /// <summary>
+        /// Will search in the data directory for files
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string[] GetFiles(string path = "", string searchPattern = "*")
+        {
+            return System.IO.Directory.GetFiles(Path.Combine(Directory, path));
+        }
+
+        /// <summary>
         /// Read data files in a batch and send callback
         /// </summary>
         /// <typeparam name="T"></typeparam>
