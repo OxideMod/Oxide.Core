@@ -102,7 +102,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public string[] GetFiles(string path = "", string searchPattern = "*")
         {
-            return System.IO.Directory.GetFiles(Path.Combine(Directory, path));
+            return System.IO.Directory.GetFiles(Path.Combine(Directory, path), searchPattern);
         }
 
         /// <summary>
