@@ -230,10 +230,13 @@ namespace Oxide.Core.Plugins
                 object[] hookArgs;
                 var received = args?.Length ?? 0;
 
+                bool pooledArray = false;
+
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
                     hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
                     {
@@ -259,9 +262,7 @@ namespace Oxide.Core.Plugins
                             }
                         }
                     }
-
-                        ArrayPool.Free(hookArgs);
-               }
+                }
                 else
                 {
                     hookArgs = args;
@@ -278,6 +279,11 @@ namespace Oxide.Core.Plugins
 
                     // Should we determine the level and call the closest overloaded match? Performance impact?
                     overloadedMatch = h;
+                }
+
+                if (pooledArray)
+                {
+                    ArrayPool.Free(hookArgs);
                 }
             }
 
