@@ -79,6 +79,17 @@ namespace Oxide.Core
         }
 
         /// <summary>
+        /// Gets data files from path, with optional search pattern
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string[] GetFiles(string path = "", string searchPattern = "*")
+        {
+            return System.IO.Directory.GetFiles(Path.Combine(Directory, path), searchPattern);
+        }
+
+        /// <summary>
         /// Saves the specified datafile
         /// </summary>
         /// <param name="name"></param>
