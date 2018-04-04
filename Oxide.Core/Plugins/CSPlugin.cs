@@ -165,7 +165,10 @@ namespace Oxide.Core.Plugins
                 }
                 catch (TargetInvocationException ex)
                 {
-                    ArrayPool.Free(hookArgs);
+                    if (pooledArray)
+                    {
+                        ArrayPool.Free(hookArgs);
+                    }
                     throw ex.InnerException ?? ex;
                 }
 
