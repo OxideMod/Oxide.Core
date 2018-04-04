@@ -1,6 +1,6 @@
-﻿extern alias Oxide;
+﻿extern alias References;
 
-using Oxide::ProtoBuf;
+using References::ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
