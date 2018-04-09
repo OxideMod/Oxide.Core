@@ -1,8 +1,8 @@
-﻿extern alias Oxide;
+﻿extern alias References;
 
 using Oxide.Core.Plugins;
-using Oxide::Newtonsoft.Json;
-using Oxide::ProtoBuf;
+using References::Newtonsoft.Json;
+using References::ProtoBuf;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

@@ -1,6 +1,6 @@
-﻿extern alias Oxide;
+﻿extern alias References;
 
-using Oxide::Newtonsoft.Json;
+using References::Newtonsoft.Json;
 using System;
 using System.IO;
 

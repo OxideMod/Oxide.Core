@@ -31,7 +31,7 @@
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
     <ItemGroup>
       <ReferencePath Condition="'%(FileName)' == 'Oxide.References'">
-        <Aliases>Oxide</Aliases>
+        <Aliases>References</Aliases>
       </ReferencePath>
     </ItemGroup>
   </Target>
