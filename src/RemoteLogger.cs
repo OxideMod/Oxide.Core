@@ -1,9 +1,9 @@
-﻿extern alias Oxide;
+﻿extern alias References;
 
 using Oxide.Core.Extensions;
 using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
-using Oxide::Newtonsoft.Json;
+using References::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -1,10 +1,10 @@
-extern alias Oxide;
+extern alias References;
 
 using Oxide.Core.Configuration;
 using Oxide.Core.Libraries.Covalence;
-using Oxide::WebSocketSharp;
-using Oxide::WebSocketSharp.Net.WebSockets;
-using Oxide::WebSocketSharp.Server;
+using References::WebSocketSharp;
+using References::WebSocketSharp.Net.WebSockets;
+using References::WebSocketSharp.Server;
 using System;
 using System.Linq;
 using System.Net;
