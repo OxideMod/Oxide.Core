@@ -27,11 +27,14 @@ namespace Oxide.Core
             }
 
             var arrays = _pooledArrays[length - 1];
-            if (arrays.Count == 0)
+            lock (arrays)
             {
-                SetupArrays(length);
+                if (arrays.Count == 0)
+                {
+                    SetupArrays(length);
+                }
+                return arrays.Dequeue();
             }
-            return arrays.Dequeue();
         }
 
         public static void Free(object[] array)
@@ -47,16 +50,19 @@ namespace Oxide.Core
                 array[i] = null;
             }
             var arrays = _pooledArrays[array.Length - 1];
-            if (arrays.Count > MaxPoolAmount)
+            lock (arrays)
             {
-                for (int i = 0; i < InitialPoolAmount; i++)
+                if (arrays.Count > MaxPoolAmount)
                 {
-                    arrays.Dequeue();
+                    for (int i = 0; i < InitialPoolAmount; i++)
+                    {
+                        arrays.Dequeue();
+                    }
+                    return;
                 }
-                return;
-            }
 
-            arrays.Enqueue(array);
+                arrays.Enqueue(array);
+            }
         }
 
         private static void SetupArrays(int length)
