@@ -137,7 +137,6 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            message.Message = message.Message.Replace("\"", string.Empty);
             string[] fullCommand = CommandLine.Split(message.Message);
             string command = fullCommand[0].ToLower();
             object[] args = fullCommand.Skip(1).Cast<object>().ToArray();

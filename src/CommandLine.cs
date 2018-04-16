@@ -73,14 +73,14 @@ namespace Oxide.Core
         /// <returns></returns>
         public static string[] Split(string input)
         {
-            input = input.Replace("\\\"", "&qute;");
+            input = input.Replace("\\\"", "&quot;");
             MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
             string[] strArray = new string[matchs.Count];
             for (int i = 0; i < matchs.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
                 strArray[i] = matchs[i].Groups[0].Value.Trim(trimChars);
-                strArray[i] = strArray[i].Replace("&qute;", "\"");
+                strArray[i] = strArray[i].Replace("&quot;", "\"");
             }
 
             return strArray;
