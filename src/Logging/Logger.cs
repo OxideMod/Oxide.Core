@@ -119,7 +119,7 @@ namespace Oxide.Core.Logging
             Interface.Oxide.ServerConsole.AddMessage(message, consoleColor);
             Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
             {
-                Text = message,
+                Message = message,
                 Identifier = 0,
                 Type = remoteType,
                 Stacktrace = stackTrace

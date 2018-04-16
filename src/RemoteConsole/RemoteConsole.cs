@@ -113,9 +113,9 @@ namespace Oxide.Core.RemoteConsole
         /// <summary>
         /// Handles messages sent from the clients
         /// </summary>
-        /// <param name="evt"></param>
+        /// <param name="e"></param>
         /// <param name="connection"></param>
-        private void OnMessage(MessageEventArgs evt, WebSocketContext connection)
+        private void OnMessage(MessageEventArgs e, WebSocketContext connection)
         {
             if (covalence == null)
             {
@@ -123,7 +123,7 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            RemoteMessage message = RemoteMessage.GetMessage(evt.Data);
+            RemoteMessage message = RemoteMessage.GetMessage(e.Data);
 
             if (message == null)
             {
@@ -131,17 +131,16 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            message.Text = message.Text.Replace("\"", string.Empty);
-
-            if (string.IsNullOrEmpty(message.Text))
+            if (string.IsNullOrEmpty(message.Message))
             {
-                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage.Message is not set");
+                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage.Text is not set");
                 return;
             }
 
-            string[] fullCommand = message.Text.Split(' ');
+            message.Message = message.Message.Replace("\"", string.Empty);
+            string[] fullCommand = CommandLine.Split(message.Message);
             string command = fullCommand[0].ToLower();
-            string args = string.Join(" ", fullCommand.Skip(1).ToArray());
+            object[] args = fullCommand.Skip(1).Cast<object>().ToArray();
 
             if (Interface.CallHook("OnRconCommand", connection.UserEndPoint, command, args) != null)
             {
