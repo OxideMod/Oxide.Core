@@ -47,7 +47,7 @@ namespace Oxide.Core.ServerConsole
                 case PlatformID.Win32NT:
                 case PlatformID.Win32S:
                 case PlatformID.Win32Windows:
-                    var pDll = GetModuleHandle("ntdll.dll");
+                    IntPtr pDll = GetModuleHandle("ntdll.dll");
                     if (pDll == IntPtr.Zero) return false;
                     return GetProcAddress(pDll, "wine_get_version") == IntPtr.Zero && (force || GetConsoleWindow() == IntPtr.Zero);
             }
@@ -69,13 +69,13 @@ namespace Oxide.Core.ServerConsole
             }
             oldOutput = Console.Out;
             oldEncoding = Console.OutputEncoding;
-            var encoding = new UTF8Encoding(false);
+            UTF8Encoding encoding = new UTF8Encoding(false);
             SetConsoleOutputCP((uint)encoding.CodePage);
             Console.OutputEncoding = encoding;
             Stream outStream;
             try
             {
-                var safeFileHandle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE), true);
+                SafeFileHandle safeFileHandle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE), true);
                 outStream = new FileStream(safeFileHandle, FileAccess.Write);
             }
             catch (Exception)

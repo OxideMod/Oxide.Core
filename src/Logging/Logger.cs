@@ -56,7 +56,7 @@ namespace Oxide.Core.Logging
         /// <returns></returns>
         protected LogMessage CreateLogMessage(LogType type, string format, object[] args)
         {
-            var msg = new LogMessage
+            LogMessage msg = new LogMessage
             {
                 Type = type,
                 ConsoleMessage = $"[Oxide] {DateTime.Now.ToShortTimeString()} [{type}] {format}",
@@ -129,7 +129,7 @@ namespace Oxide.Core.Logging
         public virtual void Write(LogType type, string format, params object[] args)
         {
             // Create the structure
-            var message = CreateLogMessage(type, format, args);
+            LogMessage message = CreateLogMessage(type, format, args);
 
             // Pass to overload
             Write(message);
@@ -163,14 +163,14 @@ namespace Oxide.Core.Logging
         /// <param name="ex"></param>
         public virtual void WriteException(string message, Exception ex)
         {
-            var formatted = ExceptionHandler.FormatException(ex);
+            string formatted = ExceptionHandler.FormatException(ex);
             if (formatted != null)
             {
                 Write(LogType.Error, $"{message}{Environment.NewLine}{formatted}");
                 return;
             }
 
-            var outerEx = ex;
+            Exception outerEx = ex;
             while (ex.InnerException != null) ex = ex.InnerException;
             if (outerEx.GetType() != ex.GetType()) Write(LogType.Error, "ExType: {0}", outerEx.GetType().Name);
             Write(LogType.Error, $"{message} ({ex.GetType().Name}: {ex.Message})\n{ex.StackTrace}");

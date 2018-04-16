@@ -144,7 +144,7 @@ namespace Oxide.Core.Libraries
                             try
                             {
                                 // Write request body
-                                using (var stream = request.EndGetRequestStream(result)) stream.Write(data, 0, data.Length);
+                                using (Stream stream = request.EndGetRequestStream(result)) stream.Write(data, 0, data.Length);
                             }
                             catch (Exception ex)
                             {
@@ -164,7 +164,7 @@ namespace Oxide.Core.Libraries
                 catch (Exception ex)
                 {
                     ResponseText = ex.Message.Trim('\r', '\n', ' ');
-                    var message = $"Web request produced exception (Url: {Url})";
+                    string message = $"Web request produced exception (Url: {Url})";
                     if (Owner) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                     Interface.Oxide.LogException(message, ex);
                     request?.Abort();
@@ -174,14 +174,14 @@ namespace Oxide.Core.Libraries
 
             private void WaitForResponse()
             {
-                var result = request.BeginGetResponse(res =>
+                IAsyncResult result = request.BeginGetResponse(res =>
                 {
                     try
                     {
-                        using (var response = (HttpWebResponse)request.EndGetResponse(res))
+                        using (HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(res))
                         {
-                            using (var stream = response.GetResponseStream())
-                            using (var reader = new StreamReader(stream))
+                            using (Stream stream = response.GetResponseStream())
+                            using (StreamReader reader = new StreamReader(stream))
                                 ResponseText = reader.ReadToEnd();
                             ResponseCode = (int)response.StatusCode;
                         }
@@ -189,13 +189,13 @@ namespace Oxide.Core.Libraries
                     catch (WebException ex)
                     {
                         ResponseText = ex.Message.Trim('\r', '\n', ' ');
-                        var response = ex.Response as HttpWebResponse;
+                        HttpWebResponse response = ex.Response as HttpWebResponse;
                         if (response != null)
                         {
                             try
                             {
-                                using (var stream = response.GetResponseStream())
-                                using (var reader = new StreamReader(stream))
+                                using (Stream stream = response.GetResponseStream())
+                                using (StreamReader reader = new StreamReader(stream))
                                     ResponseText = reader.ReadToEnd();
                             }
                             catch (Exception)
@@ -208,7 +208,7 @@ namespace Oxide.Core.Libraries
                     catch (Exception ex)
                     {
                         ResponseText = ex.Message.Trim('\r', '\n', ' ');
-                        var message = $"Web request produced exception (Url: {Url})";
+                        string message = $"Web request produced exception (Url: {Url})";
                         if (Owner) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         Interface.Oxide.LogException(message, ex);
                     }
@@ -243,7 +243,7 @@ namespace Oxide.Core.Libraries
                     }
                     catch (Exception ex)
                     {
-                        var message = "Web request callback raised an exception";
+                        string message = "Web request callback raised an exception";
                         if (Owner && Owner != null) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         Interface.Oxide.LogException(message, ex);
                     }
@@ -260,7 +260,7 @@ namespace Oxide.Core.Libraries
             private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager)
             {
                 if (request == null) return;
-                var outstandingRequest = request;
+                HttpWebRequest outstandingRequest = request;
                 request = null;
                 outstandingRequest.Abort();
             }
@@ -396,7 +396,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("Enqueue")]
         public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
         {
-            var request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
+            WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
             lock (syncroot) queue.Enqueue(request);
             workevent.Set();
         }
@@ -442,8 +442,8 @@ namespace Oxide.Core.Libraries
         /// </summary>
         static HttpWebRequestExtensions()
         {
-            var type = typeof(HttpWebRequest);
-            foreach (var header in RestrictedHeaders) HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
+            Type type = typeof(HttpWebRequest);
+            foreach (string header in RestrictedHeaders) HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
         }
 
         /// <summary>
@@ -466,7 +466,7 @@ namespace Oxide.Core.Libraries
         {
             if (HeaderProperties.ContainsKey(name))
             {
-                var property = HeaderProperties[name];
+                PropertyInfo property = HeaderProperties[name];
                 if (property.PropertyType == typeof(DateTime))
                     property.SetValue(request, DateTime.Parse(value), null);
                 else if (property.PropertyType == typeof(bool))

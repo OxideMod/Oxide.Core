@@ -98,7 +98,7 @@ namespace Oxide.Core.ServerConsole
             input.OnInputText += OnInputText;
             input.ClearLine(1);
             input.ClearLine(Console.WindowHeight);
-            for (var i = 0; i < Console.WindowHeight; i++) Console.WriteLine();
+            for (int i = 0; i < Console.WindowHeight; i++) Console.WriteLine();
         }
 
         private void OnInputText(string obj)
@@ -118,7 +118,7 @@ namespace Oxide.Core.ServerConsole
             if (Interface.Oxide.ServerConsole == null) return;
 
             Interface.Oxide.ServerConsole.input.ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? Interface.Oxide.ServerConsole.input.StatusTextLeft.Length : 1);
-            for (var i = 0; i < objects.Length; i++)
+            for (int i = 0; i < objects.Length; i++)
             {
                 if (i % 2 != 0)
                     Console.Write((string)objects[i]);

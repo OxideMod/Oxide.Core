@@ -108,7 +108,7 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="e"></param>
         private void OnMessage(MessageEventArgs e, WebSocketContext connection)
         {
-            var message = RemoteMessage.GetMessage(e.Data);
+            RemoteMessage message = RemoteMessage.GetMessage(e.Data);
             message.Message = message.Message.Replace("\"", string.Empty);
 
             if (message == null || covalence == null || string.IsNullOrEmpty(message.Message))
@@ -118,7 +118,7 @@ namespace Oxide.Core.RemoteConsole
             }
 
             var msg = message.Message.Split(' ');
-            var cmd = msg[0].ToLower();
+            string cmd = msg[0].ToLower();
             var args = msg.Skip(1).ToArray();
 
             if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, cmd, args) != null) return;
@@ -174,7 +174,7 @@ namespace Oxide.Core.RemoteConsole
 
             protected override void OnClose(CloseEventArgs e)
             {
-                var reason = string.IsNullOrEmpty(e.Reason) ? "Unknown" : e.Reason;
+                string reason = string.IsNullOrEmpty(e.Reason) ? "Unknown" : e.Reason;
                 Interface.Oxide.LogInfo($"[Rcon] Connection from {Address} closed: {reason} ({e.Code})");
             }
 

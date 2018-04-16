@@ -35,7 +35,7 @@ namespace Oxide.Core.Logging
             subloggers.Add(logger);
 
             // Write the message cache to it
-            foreach (var t in messagecache) logger.Write(t);
+            foreach (LogMessage t in messagecache) logger.Write(t);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace Oxide.Core.Logging
         /// </summary>
         public void Shutdown()
         {
-            foreach (var sublogger in subloggers) sublogger.OnRemoved();
+            foreach (Logger sublogger in subloggers) sublogger.OnRemoved();
             subloggers.Clear();
         }
 
@@ -67,7 +67,7 @@ namespace Oxide.Core.Logging
         public override void Write(LogType type, string format, params object[] args)
         {
             // Write to all current subloggers
-            foreach (var logger in subloggers) logger.Write(type, format, args);
+            foreach (Logger logger in subloggers) logger.Write(type, format, args);
 
             // Cache it for any loggers added late
             if (usecache) messagecache.Add(CreateLogMessage(type, format, args));

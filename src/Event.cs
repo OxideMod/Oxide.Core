@@ -63,7 +63,7 @@ namespace Oxide.Core
 
             public void Call()
             {
-                var action = Invoke;
+                Action action = Invoke;
                 if (action == null) return;
                 try
                 {
@@ -77,9 +77,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event handler = Handler;
+                Callback next = Next;
+                Callback previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -445,7 +445,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Callback last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -462,7 +462,7 @@ namespace Oxide.Core
 
         public Callback Add(Action callback)
         {
-            var eventCallback = new Callback(callback);
+            Callback eventCallback = new Callback(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -472,7 +472,7 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Callback callback = First;
                 while (callback != null)
                 {
                     callback.Call();

@@ -152,13 +152,13 @@ namespace Oxide.Core.Plugins
 
             // Loop each item
             var values = ArrayPool.Get(plugins.Count);
-            var returnCount = 0;
+            int returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
-            for (var i = 0; i < plugins.Count; i++)
+            for (int i = 0; i < plugins.Count; i++)
             {
                 // Call the hook
-                var value = plugins[i].CallHook(hook, args);
+                object value = plugins[i].CallHook(hook, args);
                 if (value != null)
                 {
                     values[i] = value;
@@ -179,9 +179,9 @@ namespace Oxide.Core.Plugins
             {
                 // Notify log of hook conflict
                 hookConflicts.Clear();
-                for (var i = 0; i < plugins.Count; i++)
+                for (int i = 0; i < plugins.Count; i++)
                 {
-                    var value = values[i];
+                    object value = values[i];
                     if (value == null) continue;
 
                     if (value.GetType().IsValueType)
@@ -223,7 +223,7 @@ namespace Oxide.Core.Plugins
 
             if (expireDate < DateTime.Now) return null;
 
-            var now = Interface.Oxide.Now;
+            float now = Interface.Oxide.Now;
             float lastWarningAt;
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
             {

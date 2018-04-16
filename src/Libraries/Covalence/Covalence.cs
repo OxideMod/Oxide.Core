@@ -72,9 +72,9 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         internal void Initialize()
         {
-            var baseType = typeof(ICovalenceProvider);
+            Type baseType = typeof(ICovalenceProvider);
             IEnumerable<Type> candidateSet = null;
-            foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (Assembly ass in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type[] assTypes = null;
                 try
@@ -108,8 +108,8 @@ namespace Oxide.Core.Libraries.Covalence
             if (candidates.Count > 1)
             {
                 selectedCandidate = candidates[0];
-                var sb = new StringBuilder();
-                for (var i = 1; i < candidates.Count; i++)
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i < candidates.Count; i++)
                 {
                     if (i > 1) sb.Append(',');
                     sb.Append(candidates[i].FullName);
@@ -155,7 +155,7 @@ namespace Oxide.Core.Libraries.Covalence
             }
             catch (CommandAlreadyExistsException)
             {
-                var pluginName = plugin?.Name ?? "An unknown plugin";
+                string pluginName = plugin?.Name ?? "An unknown plugin";
                 logger.Write(LogType.Error, "{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
             }
         }

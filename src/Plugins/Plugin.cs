@@ -221,7 +221,7 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public object CallHook(string hook, params object[] args)
         {
-            var startedAt = 0f;
+            float startedAt = 0f;
             if (!IsCorePlugin && nestcount == 0)
             {
                 preHookGcCount = GC.CollectionCount(0);
@@ -247,21 +247,21 @@ namespace Oxide.Core.Plugins
                 if (startedAt > 0)
                 {
                     stopwatch.Stop();
-                    var duration = stopwatch.Elapsed.TotalSeconds;
-                    if (duration > 0.1)
+                    double duration = stopwatch.Elapsed.TotalSeconds;
+                    if (duration > 0.5)
                     {
-                        var suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
+                        string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
                         Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
                     }
                     stopwatch.Reset();
-                    var total = sum + duration;
-                    var endedAt = startedAt + duration;
+                    double total = sum + duration;
+                    double endedAt = startedAt + duration;
                     if (endedAt - averageAt > 10)
                     {
                         total /= endedAt - averageAt;
                         if (total > 0.1)
                         {
-                            var suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
+                            string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
                             Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
                         }
                         sum = 0;
@@ -310,7 +310,7 @@ namespace Oxide.Core.Plugins
         {
             if (IsCorePlugin || nestcount > 0) return;
 
-            var stopwatch = trackStopwatch;
+            Stopwatch stopwatch = trackStopwatch;
             if (stopwatch.IsRunning) return;
 
             stopwatch.Start();
@@ -320,7 +320,7 @@ namespace Oxide.Core.Plugins
         {
             if (IsCorePlugin || nestcount > 0) return;
 
-            var stopwatch = trackStopwatch;
+            Stopwatch stopwatch = trackStopwatch;
             if (!stopwatch.IsRunning) return;
 
             stopwatch.Stop();
@@ -403,13 +403,13 @@ namespace Oxide.Core.Plugins
                 return true;
             });
 
-            var covalence = Interface.Oxide.GetLibrary<Covalence>();
-            foreach (var command in commands) covalence.RegisterCommand(command, this, CovalenceCommandCallback);
+            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            foreach (string command in commands) covalence.RegisterCommand(command, this, CovalenceCommandCallback);
         }
 
         protected void AddCovalenceCommand(string[] commands, string[] perms, CommandCallback callback)
         {
-            foreach (var cmdName in commands)
+            foreach (string cmdName in commands)
             {
                 if (commandInfos.ContainsKey(cmdName.ToLowerInvariant()))
                 {
@@ -421,7 +421,7 @@ namespace Oxide.Core.Plugins
 
             if (perms == null) return;
 
-            foreach (var perm in perms)
+            foreach (string perm in perms)
             {
                 if (permission.PermissionExists(perm)) continue;
                 permission.RegisterPermission(perm, this);
@@ -430,7 +430,7 @@ namespace Oxide.Core.Plugins
 
         private void RegisterWithCovalence()
         {
-            var covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
             foreach (var pair in commandInfos) covalence.RegisterCommand(pair.Key, this, CovalenceCommandCallback);
         }
 
@@ -447,7 +447,7 @@ namespace Oxide.Core.Plugins
 
             if (cmdInfo.PermissionsRequired != null)
             {
-                foreach (var perm in cmdInfo.PermissionsRequired)
+                foreach (string perm in cmdInfo.PermissionsRequired)
                 {
                     if (caller.HasPermission(perm) || caller.IsServer || caller.IsAdmin && IsCorePlugin) continue;
 
@@ -462,7 +462,7 @@ namespace Oxide.Core.Plugins
 
         private void UnregisterWithCovalence()
         {
-            var covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
             foreach (var pair in commandInfos) covalence.UnregisterCommand(pair.Key, this);
         }
 

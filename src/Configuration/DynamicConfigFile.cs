@@ -52,7 +52,7 @@ namespace Oxide.Core.Configuration
             T customObject;
             if (Exists(filename))
             {
-                var source = File.ReadAllText(filename);
+                string source = File.ReadAllText(filename);
                 customObject = JsonConvert.DeserializeObject<T>(source, Settings);
             }
             else
@@ -70,7 +70,7 @@ namespace Oxide.Core.Configuration
         public override void Save(string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
-            var dir = Utility.GetDirectoryName(filename);
+            string dir = Utility.GetDirectoryName(filename);
             if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             File.WriteAllText(filename, JsonConvert.SerializeObject(_keyvalues, Formatting.Indented, _settings));
         }
@@ -84,9 +84,9 @@ namespace Oxide.Core.Configuration
         public void WriteObject<T>(T config, bool sync = false, string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
-            var dir = Utility.GetDirectoryName(filename);
+            string dir = Utility.GetDirectoryName(filename);
             if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            var json = JsonConvert.SerializeObject(config, Formatting.Indented, Settings);
+            string json = JsonConvert.SerializeObject(config, Formatting.Indented, Settings);
             File.WriteAllText(filename, json);
             if (sync) _keyvalues = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, _settings);
         }
@@ -99,7 +99,7 @@ namespace Oxide.Core.Configuration
         public bool Exists(string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
-            var dir = Utility.GetDirectoryName(filename);
+            string dir = Utility.GetDirectoryName(filename);
             if (dir != null && !Directory.Exists(dir)) return false;
             return File.Exists(filename);
         }
@@ -111,7 +111,7 @@ namespace Oxide.Core.Configuration
         private string CheckPath(string filename)
         {
             filename = SanitizeName(filename);
-            var path = Path.GetFullPath(filename);
+            string path = Path.GetFullPath(filename);
             if (!path.StartsWith(_chroot, StringComparison.Ordinal))
                 throw new Exception($"Only access to oxide directory!\nPath: {path}");
             return path;
@@ -207,17 +207,17 @@ namespace Oxide.Core.Configuration
             if (!destinationType.IsGenericType) return Convert.ChangeType(value, destinationType);
             if (destinationType.GetGenericTypeDefinition() == typeof(List<>))
             {
-                var valueType = destinationType.GetGenericArguments()[0];
-                var list = (IList)Activator.CreateInstance(destinationType);
-                foreach (var val in (IList)value) list.Add(Convert.ChangeType(val, valueType));
+                Type valueType = destinationType.GetGenericArguments()[0];
+                IList list = (IList)Activator.CreateInstance(destinationType);
+                foreach (object val in (IList)value) list.Add(Convert.ChangeType(val, valueType));
                 return list;
             }
             if (destinationType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
-                var keyType = destinationType.GetGenericArguments()[0];
-                var valueType = destinationType.GetGenericArguments()[1];
-                var dict = (IDictionary)Activator.CreateInstance(destinationType);
-                foreach (var key in ((IDictionary)value).Keys)
+                Type keyType = destinationType.GetGenericArguments()[0];
+                Type valueType = destinationType.GetGenericArguments()[1];
+                IDictionary dict = (IDictionary)Activator.CreateInstance(destinationType);
+                foreach (object key in ((IDictionary)value).Keys)
                     dict.Add(Convert.ChangeType(key, keyType), Convert.ChangeType(((IDictionary)value)[key], valueType));
                 return dict;
             }
@@ -242,7 +242,7 @@ namespace Oxide.Core.Configuration
             if (path.Length < 1) throw new ArgumentException("path must not be empty");
             object val;
             if (!_keyvalues.TryGetValue(path[0], out val)) return null;
-            for (var i = 1; i < path.Length; i++)
+            for (int i = 1; i < path.Length; i++)
             {
                 var dict = val as Dictionary<string, object>;
                 if (dict == null || !dict.TryGetValue(path[i], out val)) return null;
@@ -267,9 +267,9 @@ namespace Oxide.Core.Configuration
             if (pathAndTrailingValue.Length < 2)
                 throw new ArgumentException("path must not be empty");
             var path = new string[pathAndTrailingValue.Length - 1];
-            for (var i = 0; i < pathAndTrailingValue.Length - 1; i++)
+            for (int i = 0; i < pathAndTrailingValue.Length - 1; i++)
                 path[i] = (string)pathAndTrailingValue[i];
-            var value = pathAndTrailingValue[pathAndTrailingValue.Length - 1];
+            object value = pathAndTrailingValue[pathAndTrailingValue.Length - 1];
             if (path.Length == 1)
             {
                 _keyvalues[path[0]] = value;
@@ -278,7 +278,7 @@ namespace Oxide.Core.Configuration
             object val;
             if (!_keyvalues.TryGetValue(path[0], out val))
                 _keyvalues[path[0]] = val = new Dictionary<string, object>();
-            for (var i = 1; i < path.Length - 1; i++)
+            for (int i = 1; i < path.Length - 1; i++)
             {
                 if (!(val is Dictionary<string, object>))
                     throw new ArgumentException("path is not a dictionary");
@@ -357,7 +357,7 @@ namespace Oxide.Core.Configuration
                             break;
 
                         case JsonToken.Integer:
-                            var value = reader.Value.ToString();
+                            string value = reader.Value.ToString();
                             int result;
                             if (int.TryParse(value, out result))
                                 dict[propname] = result;
@@ -403,7 +403,7 @@ namespace Oxide.Core.Configuration
                             break;
 
                         case JsonToken.Integer:
-                            var value = reader.Value.ToString();
+                            string value = reader.Value.ToString();
                             int result;
                             if (int.TryParse(value, out result))
                                 list.Add(result);
@@ -466,7 +466,7 @@ namespace Oxide.Core.Configuration
                 writer.WriteStartArray();
 
                 // Simply loop through and serialise
-                foreach (var t in list)
+                foreach (object t in list)
                     serializer.Serialize(writer, t);
 
                 // End array

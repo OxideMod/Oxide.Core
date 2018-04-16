@@ -20,16 +20,16 @@ namespace Oxide.Core
         /// <param name="commandline"></param>
         public CommandLine(string[] commandline)
         {
-            var cmdline = string.Empty;
-            var key = string.Empty;
+            string cmdline = string.Empty;
+            string key = string.Empty;
 
-            foreach (var str in commandline) cmdline += "\"" + str.Trim('/', '\\') + "\"";
+            foreach (string str in commandline) cmdline += "\"" + str.Trim('/', '\\') + "\"";
 
-            foreach (var str in Split(cmdline))
+            foreach (string str in Split(cmdline))
             {
                 if (str.Length <= 0) continue;
 
-                var val = str;
+                string val = str;
                 if (str[0] == '-' || str[0] == '+')
                 {
                     if (key != string.Empty && !variables.ContainsKey(key)) variables.Add(key, string.Empty);
@@ -57,9 +57,9 @@ namespace Oxide.Core
         public string[] Split(string input)
         {
             input = input.Replace("\\\"", "&qute;");
-            var matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
+            MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
             var strArray = new string[matchs.Count];
-            for (var i = 0; i < matchs.Count; i++)
+            for (int i = 0; i < matchs.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
                 strArray[i] = matchs[i].Groups[0].Value.Trim(trimChars);
@@ -102,10 +102,10 @@ namespace Oxide.Core
         public void GetArgument(string var, out string varname, out string format)
         {
             // Format is "folder/{variable}/otherfolder"
-            var cmd = GetVariable(var);
+            string cmd = GetVariable(var);
             StringBuilder varnamesb = new StringBuilder(), formatsb = new StringBuilder();
-            var invar = 0;
-            foreach (var c in cmd)
+            int invar = 0;
+            foreach (char c in cmd)
             {
                 switch (c)
                 {

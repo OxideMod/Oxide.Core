@@ -52,7 +52,7 @@ namespace Oxide.Core.Libraries
         {
             if (messages == null || string.IsNullOrEmpty(lang) || plugin == null) return;
 
-            var file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
+            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
             var existingMessages = GetMessageFile(plugin.Name, lang);
 
             bool changed;
@@ -95,7 +95,7 @@ namespace Oxide.Core.Libraries
         public string[] GetLanguages(Plugin plugin = null)
         {
             var languages = new List<string>();
-            foreach (var directory in Directory.GetDirectories(Interface.Oxide.LangDirectory))
+            foreach (string directory in Directory.GetDirectories(Interface.Oxide.LangDirectory))
             {
                 if (Directory.GetFiles(directory).Length == 0) continue;
 
@@ -129,7 +129,7 @@ namespace Oxide.Core.Libraries
         {
             if (string.IsNullOrEmpty(lang) || plugin == null) return null;
 
-            var file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
+            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
 
             Dictionary<string, string> langFile;
             if (!langFiles.TryGetValue(file, out langFile))
@@ -206,11 +206,11 @@ namespace Oxide.Core.Libraries
         {
             if (string.IsNullOrEmpty(plugin)) return null;
 
-            foreach (var invalidChar in Path.GetInvalidFileNameChars())
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
                 lang = lang.Replace(invalidChar, '_');
 
-            var file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
-            var filename = Path.Combine(Interface.Oxide.LangDirectory, file);
+            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
+            string filename = Path.Combine(Interface.Oxide.LangDirectory, file);
             return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
         }
 
@@ -223,7 +223,7 @@ namespace Oxide.Core.Libraries
         /// <returns></returns>
         private string GetMessageKey(string key, Plugin plugin, string lang = defaultLang)
         {
-            var file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
+            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
 
             Dictionary<string, string> langFile;
             if (!langFiles.TryGetValue(file, out langFile))
@@ -254,7 +254,7 @@ namespace Oxide.Core.Libraries
         /// <returns></returns>
         private bool MergeMessages(Dictionary<string, string> existingMessages, Dictionary<string, string> messages)
         {
-            var changed = false;
+            bool changed = false;
 
             foreach (var message in messages)
             {
@@ -265,7 +265,7 @@ namespace Oxide.Core.Libraries
 
             if (existingMessages.Count > 0)
             {
-                foreach (var message in existingMessages.Keys.ToArray())
+                foreach (string message in existingMessages.Keys.ToArray())
                 {
                     if (messages.ContainsKey(message)) continue;
                     existingMessages.Remove(message);
@@ -296,7 +296,7 @@ namespace Oxide.Core.Libraries
             }
 
             var langs = GetLanguages(sender);
-            foreach (var lang in langs) langFiles.Remove($"{lang}{Path.DirectorySeparatorChar}{sender.Name}.json");
+            foreach (string lang in langs) langFiles.Remove($"{lang}{Path.DirectorySeparatorChar}{sender.Name}.json");
         }
 
         #endregion Lang Handling

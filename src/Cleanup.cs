@@ -13,7 +13,7 @@ namespace Oxide.Core
         {
             if (files == null) return;
 
-            foreach (var file in files)
+            foreach (string file in files)
             {
                 try
                 {

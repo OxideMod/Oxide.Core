@@ -25,7 +25,7 @@ namespace Oxide.Core.Libraries
 
             public void GetExpired(double now, Queue<TimerInstance> queue)
             {
-                var instance = FirstInstance;
+                TimerInstance instance = FirstInstance;
                 while (instance != null)
                 {
                     if (instance.ExpiresAt > now) break;
@@ -36,16 +36,16 @@ namespace Oxide.Core.Libraries
 
             public void InsertTimer(TimerInstance timer)
             {
-                var expires_at = timer.ExpiresAt;
+                float expires_at = timer.ExpiresAt;
 
-                var first_instance = FirstInstance;
-                var last_instance = LastInstance;
+                TimerInstance first_instance = FirstInstance;
+                TimerInstance last_instance = LastInstance;
 
-                var next_instance = first_instance;
+                TimerInstance next_instance = first_instance;
                 if (first_instance != null)
                 {
-                    var first_at = first_instance.ExpiresAt;
-                    var last_at = last_instance.ExpiresAt;
+                    float first_at = first_instance.ExpiresAt;
+                    float last_at = last_instance.ExpiresAt;
                     if (expires_at <= first_at)
                     {
                         next_instance = first_instance;
@@ -57,7 +57,7 @@ namespace Oxide.Core.Libraries
                     else if (last_at - expires_at < expires_at - first_at)
                     {
                         next_instance = last_instance;
-                        var instance = next_instance;
+                        TimerInstance instance = next_instance;
                         while (instance != null)
                         {
                             if (instance.ExpiresAt <= expires_at)
@@ -96,7 +96,7 @@ namespace Oxide.Core.Libraries
                 }
                 else
                 {
-                    var previous = next_instance.PreviousInstance;
+                    TimerInstance previous = next_instance.PreviousInstance;
                     if (previous == null)
                     {
                         FirstInstance = timer;
@@ -193,7 +193,7 @@ namespace Oxide.Core.Libraries
                     if (Destroyed)
                     {
                         Destroyed = false;
-                        var owner = Owner;
+                        Plugin owner = Owner;
                         if (owner != null) removedFromManager = owner.OnRemovedFromManager.Add(OnRemovedFromManager);
                     }
                     else
@@ -258,7 +258,7 @@ namespace Oxide.Core.Libraries
 
                 Remove();
 
-                var expires_at = ExpiresAt + Delay;
+                float expires_at = ExpiresAt + Delay;
                 ExpiresAt = expires_at;
                 timer.InsertTimer(this, expires_at < now);
 
@@ -267,14 +267,14 @@ namespace Oxide.Core.Libraries
 
             internal void Remove()
             {
-                var slot = TimeSlot;
+                TimeSlot slot = TimeSlot;
                 if (slot == null) return;
 
                 slot.Count--;
                 Count--;
 
-                var previous = PreviousInstance;
-                var next = NextInstance;
+                TimerInstance previous = PreviousInstance;
+                TimerInstance next = NextInstance;
 
                 if (next == null)
                 {
@@ -309,7 +309,7 @@ namespace Oxide.Core.Libraries
                 catch (Exception ex)
                 {
                     Destroy();
-                    var error_message = $"Failed to run a {Delay:0.00} timer";
+                    string error_message = $"Failed to run a {Delay:0.00} timer";
                     if (Owner && Owner != null) error_message += $" in '{Owner.Name} v{Owner.Version}'";
                     Interface.Oxide.LogException(error_message, ex);
                     return;
@@ -338,7 +338,7 @@ namespace Oxide.Core.Libraries
 
         public Timer()
         {
-            for (var i = 0; i < TimeSlots; i++)
+            for (int i = 0; i < TimeSlots; i++)
                 timeSlots[i] = new TimeSlot();
         }
 
@@ -347,15 +347,15 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public void Update(float delta)
         {
-            var now = Oxide.Now;
+            float now = Oxide.Now;
             var time_slots = timeSlots;
             var expired_queue = expiredInstanceQueue;
-            var checked_slots = 0;
+            int checked_slots = 0;
 
             lock (Lock)
             {
-                var current_slot = currentSlot;
-                var next_slot_at = nextSlotAt;
+                int current_slot = currentSlot;
+                double next_slot_at = nextSlotAt;
 
                 while (true)
                 {
@@ -375,10 +375,10 @@ namespace Oxide.Core.Libraries
                     nextSlotAt = next_slot_at;
                 }
 
-                var expired_count = expired_queue.Count;
-                for (var i = 0; i < expired_count; i++)
+                int expired_count = expired_queue.Count;
+                for (int i = 0; i < expired_count; i++)
                 {
-                    var instance = expired_queue.Dequeue();
+                    TimerInstance instance = expired_queue.Dequeue();
                     if (!instance.Destroyed) instance.Invoke(now);
                 }
             }
@@ -406,7 +406,7 @@ namespace Oxide.Core.Libraries
 
         private void InsertTimer(TimerInstance timer, bool in_past = false)
         {
-            var index = in_past ? currentSlot : (int)(timer.ExpiresAt / TickDuration) & LastTimeSlot;
+            int index = in_past ? currentSlot : (int)(timer.ExpiresAt / TickDuration) & LastTimeSlot;
             timeSlots[index].InsertTimer(timer);
         }
 

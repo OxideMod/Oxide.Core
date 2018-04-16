@@ -50,19 +50,19 @@ namespace Oxide.Core.Plugins
         public CSPlugin()
         {
             // Find all hooks in the plugin and any base classes derived from CSPlugin
-            var type = GetType();
+            Type type = GetType();
             var types = new List<Type> { type };
             while (type != typeof(CSPlugin)) types.Add(type = type.BaseType);
 
             // Add hooks implemented in base classes before user implemented methods
-            for (var i = types.Count - 1; i >= 0; i--)
+            for (int i = types.Count - 1; i >= 0; i--)
             {
-                foreach (var method in types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
+                foreach (MethodInfo method in types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
                 {
                     var attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
                     if (attr.Length < 1) continue;
 
-                    var hookmethod = attr[0] as HookMethodAttribute;
+                    HookMethodAttribute hookmethod = attr[0] as HookMethodAttribute;
                     AddHookMethod(hookmethod?.Name, method);
                 }
             }
@@ -78,7 +78,7 @@ namespace Oxide.Core.Plugins
             base.HandleAddedToManager(manager);
 
             // Subscribe us
-            foreach (var hookname in Hooks.Keys) Subscribe(hookname);
+            foreach (string hookname in Hooks.Keys) Subscribe(hookname);
 
             try
             {
@@ -116,9 +116,9 @@ namespace Oxide.Core.Plugins
             bool pooledArray = false;
 
             // Call all hooks that match the signature
-            foreach (var h in FindHooks(name, args))
+            foreach (HookMethod h in FindHooks(name, args))
             {
-                var received = args?.Length ?? 0;
+                int received = args?.Length ?? 0;
                 object[] hookArgs;
 
                 if (received != h.Parameters.Length)
@@ -136,9 +136,9 @@ namespace Oxide.Core.Plugins
                     if (hookArgs.Length > received)
                     {
                         // Create additional parameters for arguments excluded in this hook call
-                        for (var n = received; n < hookArgs.Length; n++)
+                        for (int n = received; n < hookArgs.Length; n++)
                         {
-                            var parameter = h.Parameters[n];
+                            ParameterInfo parameter = h.Parameters[n];
                             if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
@@ -173,7 +173,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // A copy of the call arguments was used for this method call
-                    for (var n = 0; n < h.Parameters.Length; n++)
+                    for (int n = 0; n < h.Parameters.Length; n++)
                     {
                         // Copy output values for out and by reference arguments back to the calling args
                         if (h.Parameters[n].IsOut || h.Parameters[n].ParameterType.IsByRef)
@@ -214,7 +214,7 @@ namespace Oxide.Core.Plugins
             HookMethod exactMatch = null;
             HookMethod overloadedMatch = null;
 
-            foreach (var h in methods)
+            foreach (HookMethod h in methods)
             {
                 // A base hook should always have a matching signature either directly or through inheritance
                 // and should always be called as core functionality depends on it.
@@ -226,7 +226,7 @@ namespace Oxide.Core.Plugins
 
                 // Check if this method matches the hook arguments passed if it isn't a base hook
                 object[] hookArgs;
-                var received = args?.Length ?? 0;
+                int received = args?.Length ?? 0;
 
                 bool pooledArray = false;
 
@@ -245,9 +245,9 @@ namespace Oxide.Core.Plugins
                     if (hookArgs.Length > received)
                     {
                         // Create additional parameters for arguments excluded in this hook call
-                        for (var n = received; n < hookArgs.Length; n++)
+                        for (int n = received; n < hookArgs.Length; n++)
                         {
-                            var parameter = h.Parameters[n];
+                            ParameterInfo parameter = h.Parameters[n];
                             if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition

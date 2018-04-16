@@ -112,7 +112,7 @@ namespace Oxide.Core.Extensions
         /// <param name="filename"></param>
         public void LoadExtension(string filename, bool forced)
         {
-            var name = Utility.GetFileNameWithoutExtension(filename);
+            string name = Utility.GetFileNameWithoutExtension(filename);
 
             // Check if the extension is already loaded
             if (extensions.Any(x => x.Filename == filename))
@@ -127,12 +127,12 @@ namespace Oxide.Core.Extensions
                 var data = File.ReadAllBytes(filename);
 
                 // Load the assembly
-                var assembly = Assembly.Load(data);
+                Assembly assembly = Assembly.Load(data);
 
                 // Search for a type that derives Extension
-                var extType = typeof(Extension);
+                Type extType = typeof(Extension);
                 Type extensionType = null;
-                foreach (var type in assembly.GetExportedTypes())
+                foreach (Type type in assembly.GetExportedTypes())
                 {
                     if (!extType.IsAssignableFrom(type)) continue;
 
@@ -147,7 +147,7 @@ namespace Oxide.Core.Extensions
                 }
 
                 // Create and register the extension
-                var extension = Activator.CreateInstance(extensionType, this) as Extension;
+                Extension extension = Activator.CreateInstance(extensionType, this) as Extension;
                 if (extension != null)
                 {
                     if (!forced)
@@ -187,10 +187,10 @@ namespace Oxide.Core.Extensions
         /// <param name="filename"></param>
         public void UnloadExtension(string filename)
         {
-            var name = Utility.GetFileNameWithoutExtension(filename);
+            string name = Utility.GetFileNameWithoutExtension(filename);
 
             // Find the extension
-            var extension = extensions.SingleOrDefault(x => x.Filename == filename);
+            Extension extension = extensions.SingleOrDefault(x => x.Filename == filename);
             if (extension == null)
             {
                 Logger.Write(LogType.Error, $"Failed to unload extension '{name}': extension not loaded.");
@@ -227,10 +227,10 @@ namespace Oxide.Core.Extensions
         /// <param name="filename"></param>
         public void ReloadExtension(string filename)
         {
-            var name = Utility.GetFileNameWithoutExtension(filename);
+            string name = Utility.GetFileNameWithoutExtension(filename);
 
             // Find the extension
-            var extension = extensions.SingleOrDefault(x => Utility.GetFileNameWithoutExtension(x.Filename) == name);
+            Extension extension = extensions.SingleOrDefault(x => Utility.GetFileNameWithoutExtension(x.Filename) == name);
 
             // If the extension isn't already loaded, load it
             if (extension == null)
@@ -279,7 +279,7 @@ namespace Oxide.Core.Extensions
             var foundGame = new List<string>();
             var foundOther = new List<string>();
             var foundExtensions = Directory.GetFiles(directory, extSearchPattern);
-            foreach (var extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
+            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
             {
                 if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
                 {
@@ -304,11 +304,11 @@ namespace Oxide.Core.Extensions
                 else foundOther.Add(extPath);
             }
 
-            foreach (var extPath in foundCore) LoadExtension(Path.Combine(directory, extPath), true);
-            foreach (var extPath in foundGame) LoadExtension(Path.Combine(directory, extPath), true);
-            foreach (var extPath in foundOther) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (string extPath in foundCore) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (string extPath in foundGame) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (string extPath in foundOther) LoadExtension(Path.Combine(directory, extPath), true);
 
-            foreach (var ext in extensions.ToArray())
+            foreach (Extension ext in extensions.ToArray())
             {
                 try
                 {
