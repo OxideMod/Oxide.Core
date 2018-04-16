@@ -143,7 +143,7 @@ namespace Oxide.Core.RemoteConsole
             string command = fullCommand[0].ToLower();
             string args = string.Join(" ", fullCommand.Skip(1).ToArray());
 
-            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, command, args) != null)
+            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint, command, args) != null)
             {
                 return;
             }
