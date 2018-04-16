@@ -18,6 +18,7 @@ namespace Oxide.Core.RemoteConsole
 
         private readonly Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
         private readonly OxideConfig.OxideRcon config = Interface.Oxide.Config.Rcon;
+
         private RconListener listener;
         private WebSocketServer server;
 
@@ -39,9 +40,7 @@ namespace Oxide.Core.RemoteConsole
 
             try
             {
-                server = new WebSocketServer(config.Port);
-                server.WaitTime = TimeSpan.FromSeconds(5.0);
-                server.ReuseAddress = true;
+                server = new WebSocketServer(config.Port) { WaitTime = TimeSpan.FromSeconds(5.0), ReuseAddress = true };
                 server.AddWebSocketService($"/{config.Password}", () => listener = new RconListener(this));
                 server.Start();
 
@@ -49,8 +48,8 @@ namespace Oxide.Core.RemoteConsole
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException($"[Rcon] Failed to start server on port {server.Port}", ex);
-                RemoteLogger.Exception($"Failed to start RCON server on port {server.Port}", ex);
+                Interface.Oxide.LogException($"[Rcon] Failed to start server on port {server?.Port}", ex);
+                RemoteLogger.Exception($"Failed to start RCON server on port {server?.Port}", ex);
             }
         }
 
@@ -59,15 +58,13 @@ namespace Oxide.Core.RemoteConsole
         /// </summary>
         public void Shutdown(string reason = "Server shutting down", CloseStatusCode code = CloseStatusCode.Normal)
         {
-            if (server == null)
+            if (server != null)
             {
-                return;
+                server.Stop(code, reason);
+                server = null;
+                listener = null;
+                Interface.Oxide.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
             }
-
-            server.Stop(code, reason);
-            server = null;
-            listener = null;
-            Interface.Oxide.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
         }
 
         #endregion Initialization
@@ -80,26 +77,23 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="message"></param>
         public void SendMessage(RemoteMessage message)
         {
-            if (message == null || server == null || !server.IsListening || listener == null)
+            if (message != null && server != null && server.IsListening && listener != null)
             {
-                return;
+                listener.SendMessage(message);
             }
-
-            listener.SendMessage(message);
         }
 
         /// <summary>
         /// Broadcast a message to all connected clients
         /// </summary>
         /// <param name="message"></param>
+        /// <param name="identifier"></param>
         public void SendMessage(string message, int identifier)
         {
-            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null)
+            if (!string.IsNullOrEmpty(message) && server != null && server.IsListening && listener != null)
             {
-                return;
+                listener.SendMessage(RemoteMessage.CreateMessage(message, identifier));
             }
-
-            listener.SendMessage(RemoteMessage.CreateMessage(message, identifier));
         }
 
         /// <summary>
@@ -107,56 +101,69 @@ namespace Oxide.Core.RemoteConsole
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="message"></param>
+        /// <param name="identifier"></param>
         public void SendMessage(WebSocketContext connection, string message, int identifier)
         {
-            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null)
+            if (!string.IsNullOrEmpty(message) && server != null && server.IsListening && listener != null)
             {
-                return;
+                connection?.WebSocket?.Send(RemoteMessage.CreateMessage(message, identifier).ToJSON());
             }
-
-            connection?.WebSocket?.Send(RemoteMessage.CreateMessage(message, identifier).ToJSON());
         }
 
         /// <summary>
         /// Handles messages sent from the clients
         /// </summary>
-        /// <param name="e"></param>
-        private void OnMessage(MessageEventArgs e, WebSocketContext connection)
+        /// <param name="evt"></param>
+        /// <param name="connection"></param>
+        private void OnMessage(MessageEventArgs evt, WebSocketContext connection)
         {
-            RemoteMessage message = RemoteMessage.GetMessage(e.Data);
-            message.Message = message.Message.Replace("\"", string.Empty);
-
-            if (message == null || covalence == null || string.IsNullOrEmpty(message.Message))
+            if (covalence == null)
             {
-                Interface.Oxide.LogError($"[Rcon] Failed to process command {(message == null ? "RemoteMessage" : "Covalence")} is null");
+                Interface.Oxide.LogError("[Rcon] Failed to process command, Covalence is null");
                 return;
             }
 
-            string[] msg = message.Message.Split(' ');
-            string cmd = msg[0].ToLower();
-            string[] args = msg.Skip(1).ToArray();
+            RemoteMessage message = RemoteMessage.GetMessage(evt.Data);
 
-            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, cmd, args) != null)
+            if (message == null)
+            {
+                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage is null");
+                return;
+            }
+
+            message.Text = message.Text.Replace("\"", string.Empty);
+
+            if (string.IsNullOrEmpty(message.Text))
+            {
+                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage.Message is not set");
+                return;
+            }
+
+            string[] fullCommand = message.Text.Split(' ');
+            string command = fullCommand[0].ToLower();
+            string args = string.Join(" ", fullCommand.Skip(1).ToArray());
+
+            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, command, args) != null)
             {
                 return;
             }
 
-            covalence.Server.Command(cmd, args);
+            covalence.Server.Command(command, args);
         }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct RconPlayer
         {
-            public string SteamID { get; private set; }
-            public string OwnerSteamID { get; private set; }
-            public string DisplayName { get; private set; }
-            public string Address { get; private set; }
-            public int Ping { get; private set; }
-            public int ConnectedSeconds { get; private set; }
-            public float VoiationLevel { get; private set; } // Needed for Rust compatability
-            public float CurrentLevel { get; private set; } // Needed for Rust compatability
-            public float UnspentXp { get; private set; } // Needed for Rust compatability
-            public float Health { get; private set; } // Needed for Rust compatability
+            private string SteamID { get; }
+            private string OwnerSteamID { get; }
+            private string DisplayName { get; }
+            private string Address { get; }
+            private int Ping { get; }
+            private int ConnectedSeconds { get; }
+            private float VoiationLevel { get; } // Needed for Rust compatability
+            private float CurrentLevel { get; } // Needed for Rust compatability
+            private float UnspentXp { get; } // Needed for Rust compatability
+            private float Health { get; } // Needed for Rust compatability
 
             public RconPlayer(IPlayer player)
             {

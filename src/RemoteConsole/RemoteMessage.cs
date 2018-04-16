@@ -11,24 +11,24 @@ namespace Oxide.Core.RemoteConsole
     [Serializable]
     public class RemoteMessage
     {
-        public string Message;
+        public string Text;
         public int Identifier;
         public string Type;
         public string Stacktrace;
 
-        public static RemoteMessage CreateMessage(string message, int identifier = 0, string type = "generic", string trace = "") => new RemoteMessage()
+        public static RemoteMessage CreateMessage(string text, int identifier = 0, string type = "generic", string trace = "") => new RemoteMessage
         {
-            Message = message,
+            Text = text,
             Identifier = identifier,
             Type = type.ToLower(),
             Stacktrace = trace
         };
 
-        public static RemoteMessage GetMessage(string message)
+        public static RemoteMessage GetMessage(string text)
         {
             try
             {
-                return JsonConvert.DeserializeObject<RemoteMessage>(message);
+                return JsonConvert.DeserializeObject<RemoteMessage>(text);
             }
             catch (JsonReaderException)
             {
