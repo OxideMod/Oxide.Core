@@ -102,7 +102,10 @@ namespace Oxide.Core.Libraries
                 try
                 {
                     attribute = method.GetCustomAttributes(typeof(LibraryFunction), true).SingleOrDefault() as LibraryFunction;
-                    if (attribute == null) continue;
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
                 }
                 catch (TypeLoadException)
                 {
@@ -110,9 +113,13 @@ namespace Oxide.Core.Libraries
                 }
                 string name = attribute.Name ?? method.Name;
                 if (functions.ContainsKey(name))
+                {
                     Interface.Oxide.LogError(type.FullName + " library tried to register an already registered function: " + name);
+                }
                 else
+                {
                     functions[name] = method;
+                }
             }
 
             foreach (PropertyInfo property in type.GetProperties())
@@ -121,7 +128,10 @@ namespace Oxide.Core.Libraries
                 try
                 {
                     attribute = property.GetCustomAttributes(typeof(LibraryProperty), true).SingleOrDefault() as LibraryProperty;
-                    if (attribute == null) continue;
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
                 }
                 catch (TypeLoadException)
                 {
@@ -129,9 +139,13 @@ namespace Oxide.Core.Libraries
                 }
                 string name = attribute.Name ?? property.Name;
                 if (properties.ContainsKey(name))
+                {
                     Interface.Oxide.LogError("{0} library tried to register an already registered property: {1}", type.FullName, name);
+                }
                 else
+                {
                     properties[name] = property;
+                }
             }
         }
 

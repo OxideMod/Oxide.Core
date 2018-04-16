@@ -28,7 +28,11 @@ namespace Oxide.Core.Libraries
                 TimerInstance instance = FirstInstance;
                 while (instance != null)
                 {
-                    if (instance.ExpiresAt > now) break;
+                    if (instance.ExpiresAt > now)
+                    {
+                        break;
+                    }
+
                     queue.Enqueue(instance);
                     instance = instance.NextInstance;
                 }
@@ -73,7 +77,11 @@ namespace Oxide.Core.Libraries
                     {
                         while (next_instance != null)
                         {
-                            if (next_instance.ExpiresAt > expires_at) break;
+                            if (next_instance.ExpiresAt > expires_at)
+                            {
+                                break;
+                            }
+
                             next_instance = next_instance.NextInstance;
                         }
                     }
@@ -172,7 +180,10 @@ namespace Oxide.Core.Libraries
                 ExpiresAt = Oxide.Now + delay;
                 Owner = owner;
                 Destroyed = false;
-                if (owner != null) removedFromManager = owner.OnRemovedFromManager.Add(OnRemovedFromManager);
+                if (owner != null)
+                {
+                    removedFromManager = owner.OnRemovedFromManager.Add(OnRemovedFromManager);
+                }
             }
 
             /// <summary>
@@ -185,16 +196,24 @@ namespace Oxide.Core.Libraries
                 lock (Lock)
                 {
                     if (delay < 0)
+                    {
                         delay = Delay;
+                    }
                     else
+                    {
                         Delay = delay;
+                    }
+
                     Repetitions = repetitions;
                     ExpiresAt = Oxide.Now + delay;
                     if (Destroyed)
                     {
                         Destroyed = false;
                         Plugin owner = Owner;
-                        if (owner != null) removedFromManager = owner.OnRemovedFromManager.Add(OnRemovedFromManager);
+                        if (owner != null)
+                        {
+                            removedFromManager = owner.OnRemovedFromManager.Add(OnRemovedFromManager);
+                        }
                     }
                     else
                     {
@@ -211,7 +230,11 @@ namespace Oxide.Core.Libraries
             {
                 lock (Lock)
                 {
-                    if (Destroyed) return false;
+                    if (Destroyed)
+                    {
+                        return false;
+                    }
+
                     Destroyed = true;
                     Remove();
                     Event.Remove(ref removedFromManager);
@@ -226,13 +249,20 @@ namespace Oxide.Core.Libraries
             {
                 lock (Lock)
                 {
-                    if (Destroyed) return false;
+                    if (Destroyed)
+                    {
+                        return false;
+                    }
+
                     Destroyed = true;
                     Callback = null;
                     Remove();
                     Event.Remove(ref removedFromManager);
-                    var pooled_instances = Pool;
-                    if (pooled_instances.Count < MaxPooled) pooled_instances.Enqueue(this);
+                    Queue<TimerInstance> pooled_instances = Pool;
+                    if (pooled_instances.Count < MaxPooled)
+                    {
+                        pooled_instances.Enqueue(this);
+                    }
                 }
                 return true;
             }
@@ -268,7 +298,10 @@ namespace Oxide.Core.Libraries
             internal void Remove()
             {
                 TimeSlot slot = TimeSlot;
-                if (slot == null) return;
+                if (slot == null)
+                {
+                    return;
+                }
 
                 slot.Count--;
                 Count--;
@@ -310,7 +343,11 @@ namespace Oxide.Core.Libraries
                 {
                     Destroy();
                     string error_message = $"Failed to run a {Delay:0.00} timer";
-                    if (Owner && Owner != null) error_message += $" in '{Owner.Name} v{Owner.Version}'";
+                    if (Owner && Owner != null)
+                    {
+                        error_message += $" in '{Owner.Name} v{Owner.Version}'";
+                    }
+
                     Interface.Oxide.LogException(error_message, ex);
                     return;
                 }
@@ -339,7 +376,9 @@ namespace Oxide.Core.Libraries
         public Timer()
         {
             for (int i = 0; i < TimeSlots; i++)
+            {
                 timeSlots[i] = new TimeSlot();
+            }
         }
 
         /// <summary>
@@ -348,8 +387,8 @@ namespace Oxide.Core.Libraries
         public void Update(float delta)
         {
             float now = Oxide.Now;
-            var time_slots = timeSlots;
-            var expired_queue = expiredInstanceQueue;
+            TimeSlot[] time_slots = timeSlots;
+            Queue<TimerInstance> expired_queue = expiredInstanceQueue;
             int checked_slots = 0;
 
             lock (Lock)
@@ -362,7 +401,10 @@ namespace Oxide.Core.Libraries
                     time_slots[current_slot].GetExpired(next_slot_at > now ? now : next_slot_at, expired_queue);
 
                     // Only move to the next slot once real time is out of the current slot so that the current slot is rechecked each frame
-                    if (now <= next_slot_at) break;
+                    if (now <= next_slot_at)
+                    {
+                        break;
+                    }
 
                     checked_slots++;
                     current_slot = current_slot < LastTimeSlot ? current_slot + 1 : 0;
@@ -379,7 +421,10 @@ namespace Oxide.Core.Libraries
                 for (int i = 0; i < expired_count; i++)
                 {
                     TimerInstance instance = expired_queue.Dequeue();
-                    if (!instance.Destroyed) instance.Invoke(now);
+                    if (!instance.Destroyed)
+                    {
+                        instance.Invoke(now);
+                    }
                 }
             }
         }
@@ -389,7 +434,7 @@ namespace Oxide.Core.Libraries
             lock (Lock)
             {
                 TimerInstance timer;
-                var pooled_instances = TimerInstance.Pool;
+                Queue<TimerInstance> pooled_instances = TimerInstance.Pool;
                 if (pooled_instances.Count > 0)
                 {
                     timer = pooled_instances.Dequeue();

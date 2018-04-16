@@ -26,7 +26,10 @@ namespace Oxide.Core.RemoteConsole
         /// </summary>
         public void Initalize()
         {
-            if (!config.Enabled || listener != null || server != null) return;
+            if (!config.Enabled || listener != null || server != null)
+            {
+                return;
+            }
 
             if (string.IsNullOrEmpty(config.Password))
             {
@@ -56,7 +59,10 @@ namespace Oxide.Core.RemoteConsole
         /// </summary>
         public void Shutdown(string reason = "Server shutting down", CloseStatusCode code = CloseStatusCode.Normal)
         {
-            if (server == null) return;
+            if (server == null)
+            {
+                return;
+            }
 
             server.Stop(code, reason);
             server = null;
@@ -74,7 +80,10 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="message"></param>
         public void SendMessage(RemoteMessage message)
         {
-            if (message == null || server == null || !server.IsListening || listener == null) return;
+            if (message == null || server == null || !server.IsListening || listener == null)
+            {
+                return;
+            }
 
             listener.SendMessage(message);
         }
@@ -85,7 +94,10 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="message"></param>
         public void SendMessage(string message, int identifier)
         {
-            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null) return;
+            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null)
+            {
+                return;
+            }
 
             listener.SendMessage(RemoteMessage.CreateMessage(message, identifier));
         }
@@ -97,7 +109,10 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="message"></param>
         public void SendMessage(WebSocketContext connection, string message, int identifier)
         {
-            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null) return;
+            if (string.IsNullOrEmpty(message) || server == null || !server.IsListening || listener == null)
+            {
+                return;
+            }
 
             connection?.WebSocket?.Send(RemoteMessage.CreateMessage(message, identifier).ToJSON());
         }
@@ -117,11 +132,14 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            var msg = message.Message.Split(' ');
+            string[] msg = message.Message.Split(' ');
             string cmd = msg[0].ToLower();
-            var args = msg.Skip(1).ToArray();
+            string[] args = msg.Skip(1).ToArray();
 
-            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, cmd, args) != null) return;
+            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint.Address, cmd, args) != null)
+            {
+                return;
+            }
 
             covalence.Server.Command(cmd, args);
         }

@@ -86,19 +86,30 @@ namespace Oxide.Core.ServerConsole
 
         public void OnDisable()
         {
-            if (!init) return;
+            if (!init)
+            {
+                return;
+            }
+
             input.OnInputText -= OnInputText;
             console.Shutdown();
         }
 
         public void OnEnable()
         {
-            if (!console.Initialize()) return;
+            if (!console.Initialize())
+            {
+                return;
+            }
+
             init = true;
             input.OnInputText += OnInputText;
             input.ClearLine(1);
             input.ClearLine(Console.WindowHeight);
-            for (int i = 0; i < Console.WindowHeight; i++) Console.WriteLine();
+            for (int i = 0; i < Console.WindowHeight; i++)
+            {
+                Console.WriteLine();
+            }
         }
 
         private void OnInputText(string obj)
@@ -115,29 +126,48 @@ namespace Oxide.Core.ServerConsole
 
         public static void PrintColored(params object[] objects)
         {
-            if (Interface.Oxide.ServerConsole == null) return;
+            if (Interface.Oxide.ServerConsole == null)
+            {
+                return;
+            }
 
             Interface.Oxide.ServerConsole.input.ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? Interface.Oxide.ServerConsole.input.StatusTextLeft.Length : 1);
             for (int i = 0; i < objects.Length; i++)
             {
                 if (i % 2 != 0)
+                {
                     Console.Write((string)objects[i]);
+                }
                 else
+                {
                     Console.ForegroundColor = (ConsoleColor)((int)objects[i]);
+                }
             }
-            if (Console.CursorLeft != 0) Console.CursorTop = Console.CursorTop + 1;
+            if (Console.CursorLeft != 0)
+            {
+                Console.CursorTop = Console.CursorTop + 1;
+            }
+
             Interface.Oxide.ServerConsole.input.RedrawInputLine();
         }
 
         public void Update()
         {
-            if (!init) return;
+            if (!init)
+            {
+                return;
+            }
 
             if (Interface.Oxide.Config.Console.ShowStatusBar)
+            {
                 UpdateStatus();
+            }
 
             input.Update();
-            if (nextTitleUpdate > Interface.Oxide.Now) return;
+            if (nextTitleUpdate > Interface.Oxide.Now)
+            {
+                return;
+            }
 
             nextTitleUpdate = Interface.Oxide.Now + 1f;
             console.SetTitle(title);
@@ -145,10 +175,16 @@ namespace Oxide.Core.ServerConsole
 
         private void UpdateStatus()
         {
-            if (nextUpdate > Interface.Oxide.Now) return;
+            if (nextUpdate > Interface.Oxide.Now)
+            {
+                return;
+            }
 
             nextUpdate = Interface.Oxide.Now + 0.66f;
-            if (!input.Valid) return;
+            if (!input.Valid)
+            {
+                return;
+            }
 
             string left1 = status1Left, left2 = status2Left, left3 = status3Left;
             //input.StatusTextLeft[0] = string.Empty;

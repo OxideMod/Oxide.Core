@@ -23,30 +23,47 @@ namespace Oxide.Core
             string cmdline = string.Empty;
             string key = string.Empty;
 
-            foreach (string str in commandline) cmdline += "\"" + str.Trim('/', '\\') + "\"";
+            foreach (string str in commandline)
+            {
+                cmdline += "\"" + str.Trim('/', '\\') + "\"";
+            }
 
             foreach (string str in Split(cmdline))
             {
-                if (str.Length <= 0) continue;
+                if (str.Length <= 0)
+                {
+                    continue;
+                }
 
                 string val = str;
                 if (str[0] == '-' || str[0] == '+')
                 {
-                    if (key != string.Empty && !variables.ContainsKey(key)) variables.Add(key, string.Empty);
+                    if (key != string.Empty && !variables.ContainsKey(key))
+                    {
+                        variables.Add(key, string.Empty);
+                    }
+
                     key = val.Substring(1);
                 }
                 else if (key != string.Empty)
                 {
                     if (!variables.ContainsKey(key))
                     {
-                        if (key.Contains("dir")) val = val.Replace('/', '\\');
+                        if (key.Contains("dir"))
+                        {
+                            val = val.Replace('/', '\\');
+                        }
+
                         variables.Add(key, val);
                     }
                     key = string.Empty;
                 }
             }
 
-            if (key != string.Empty && !variables.ContainsKey(key)) variables.Add(key, string.Empty);
+            if (key != string.Empty && !variables.ContainsKey(key))
+            {
+                variables.Add(key, string.Empty);
+            }
         }
 
         /// <summary>
@@ -58,7 +75,7 @@ namespace Oxide.Core
         {
             input = input.Replace("\\\"", "&qute;");
             MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
-            var strArray = new string[matchs.Count];
+            string[] strArray = new string[matchs.Count];
             for (int i = 0; i < matchs.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
@@ -115,14 +132,23 @@ namespace Oxide.Core
 
                     case '}':
                         invar--;
-                        if (invar == 0) formatsb.Append("{0}");
+                        if (invar == 0)
+                        {
+                            formatsb.Append("{0}");
+                        }
+
                         break;
 
                     default:
                         if (invar == 0)
+                        {
                             formatsb.Append(c);
+                        }
                         else
+                        {
                             varnamesb.Append(c);
+                        }
+
                         break;
                 }
             }

@@ -54,52 +54,100 @@
         public static bool operator >(VersionNumber a, VersionNumber b)
         {
             if (a.Major < b.Major)
+            {
                 return false;
+            }
+
             if (a.Major > b.Major)
+            {
                 return true;
+            }
+
             if (a.Minor < b.Minor)
+            {
                 return false;
+            }
+
             if (a.Minor > b.Minor)
+            {
                 return true;
+            }
+
             return a.Patch > b.Patch;
         }
 
         public static bool operator >=(VersionNumber a, VersionNumber b)
         {
             if (a.Major < b.Major)
+            {
                 return false;
+            }
+
             if (a.Major > b.Major)
+            {
                 return true;
+            }
+
             if (a.Minor < b.Minor)
+            {
                 return false;
+            }
+
             if (a.Minor > b.Minor)
+            {
                 return true;
+            }
+
             return a.Patch >= b.Patch;
         }
 
         public static bool operator <(VersionNumber a, VersionNumber b)
         {
             if (a.Major > b.Major)
+            {
                 return false;
+            }
+
             if (a.Major < b.Major)
+            {
                 return true;
+            }
+
             if (a.Minor > b.Minor)
+            {
                 return false;
+            }
+
             if (a.Minor < b.Minor)
+            {
                 return true;
+            }
+
             return a.Patch < b.Patch;
         }
 
         public static bool operator <=(VersionNumber a, VersionNumber b)
         {
             if (a.Major > b.Major)
+            {
                 return false;
+            }
+
             if (a.Major < b.Major)
+            {
                 return true;
+            }
+
             if (a.Minor > b.Minor)
+            {
                 return false;
+            }
+
             if (a.Minor < b.Minor)
+            {
                 return true;
+            }
+
             return a.Patch <= b.Patch;
         }
 
@@ -112,7 +160,11 @@
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (!(obj is VersionNumber)) return false;
+            if (!(obj is VersionNumber))
+            {
+                return false;
+            }
+
             VersionNumber other = (VersionNumber)obj;
             return this == other;
         }

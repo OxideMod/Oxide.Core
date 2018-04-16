@@ -125,7 +125,7 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
                     // Optional request body for POST requests
-                    var data = new byte[0];
+                    byte[] data = new byte[0];
                     if (Body != null)
                     {
                         data = Encoding.UTF8.GetBytes(Body);
@@ -133,18 +133,28 @@ namespace Oxide.Core.Libraries
                         request.ContentType = "application/x-www-form-urlencoded";
                     }
 
-                    if (RequestHeaders != null) request.SetRawHeaders(RequestHeaders);
+                    if (RequestHeaders != null)
+                    {
+                        request.SetRawHeaders(RequestHeaders);
+                    }
 
                     // Perform DNS lookup and connect (blocking)
                     if (data.Length > 0)
                     {
                         request.BeginGetRequestStream(result =>
                         {
-                            if (request == null) return;
+                            if (request == null)
+                            {
+                                return;
+                            }
+
                             try
                             {
                                 // Write request body
-                                using (Stream stream = request.EndGetRequestStream(result)) stream.Write(data, 0, data.Length);
+                                using (Stream stream = request.EndGetRequestStream(result))
+                                {
+                                    stream.Write(data, 0, data.Length);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -165,7 +175,11 @@ namespace Oxide.Core.Libraries
                 {
                     ResponseText = ex.Message.Trim('\r', '\n', ' ');
                     string message = $"Web request produced exception (Url: {Url})";
-                    if (Owner) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                    if (Owner)
+                    {
+                        message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                    }
+
                     Interface.Oxide.LogException(message, ex);
                     request?.Abort();
                     OnComplete();
@@ -182,7 +196,10 @@ namespace Oxide.Core.Libraries
                         {
                             using (Stream stream = response.GetResponseStream())
                             using (StreamReader reader = new StreamReader(stream))
+                            {
                                 ResponseText = reader.ReadToEnd();
+                            }
+
                             ResponseCode = (int)response.StatusCode;
                         }
                     }
@@ -196,7 +213,9 @@ namespace Oxide.Core.Libraries
                             {
                                 using (Stream stream = response.GetResponseStream())
                                 using (StreamReader reader = new StreamReader(stream))
+                                {
                                     ResponseText = reader.ReadToEnd();
+                                }
                             }
                             catch (Exception)
                             {
@@ -209,10 +228,18 @@ namespace Oxide.Core.Libraries
                     {
                         ResponseText = ex.Message.Trim('\r', '\n', ' ');
                         string message = $"Web request produced exception (Url: {Url})";
-                        if (Owner) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        if (Owner)
+                        {
+                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        }
+
                         Interface.Oxide.LogException(message, ex);
                     }
-                    if (request == null) return;
+                    if (request == null)
+                    {
+                        return;
+                    }
+
                     request.Abort();
                     OnComplete();
                 }, null);
@@ -222,8 +249,16 @@ namespace Oxide.Core.Libraries
 
             private void OnTimeout(object state, bool timedOut)
             {
-                if (timedOut) request?.Abort();
-                if (Owner == null) return;
+                if (timedOut)
+                {
+                    request?.Abort();
+                }
+
+                if (Owner == null)
+                {
+                    return;
+                }
+
                 Event.Remove(ref removedFromManager);
                 Owner = null;
             }
@@ -234,7 +269,11 @@ namespace Oxide.Core.Libraries
                 registeredWaitHandle?.Unregister(waitHandle);
                 Interface.Oxide.NextTick(() =>
                 {
-                    if (request == null) return;
+                    if (request == null)
+                    {
+                        return;
+                    }
+
                     request = null;
                     Owner?.TrackStart();
                     try
@@ -244,7 +283,11 @@ namespace Oxide.Core.Libraries
                     catch (Exception ex)
                     {
                         string message = "Web request callback raised an exception";
-                        if (Owner && Owner != null) message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        if (Owner && Owner != null)
+                        {
+                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        }
+
                         Interface.Oxide.LogException(message, ex);
                     }
                     Owner?.TrackEnd();
@@ -259,7 +302,11 @@ namespace Oxide.Core.Libraries
             /// <param name="manager"></param>
             private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager)
             {
-                if (request == null) return;
+                if (request == null)
+                {
+                    return;
+                }
+
                 HttpWebRequest outstandingRequest = request;
                 request = null;
                 outstandingRequest.Abort();
@@ -298,7 +345,11 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public override void Shutdown()
         {
-            if (shutdown) return;
+            if (shutdown)
+            {
+                return;
+            }
+
             shutdown = true;
             workevent.Set();
             Thread.Sleep(250);
@@ -323,11 +374,21 @@ namespace Oxide.Core.Libraries
                     }
                     WebRequest request = null;
                     lock (syncroot)
-                        if (queue.Count > 0) request = queue.Dequeue();
+                    {
+                        if (queue.Count > 0)
+                        {
+                            request = queue.Dequeue();
+                        }
+                    }
+
                     if (request != null)
+                    {
                         request.Start();
+                    }
                     else
+                    {
                         workevent.WaitOne();
+                    }
                 }
             }
             catch (Exception ex)
@@ -397,7 +458,11 @@ namespace Oxide.Core.Libraries
         public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
         {
             WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            lock (syncroot) queue.Enqueue(request);
+            lock (syncroot)
+            {
+                queue.Enqueue(request);
+            }
+
             workevent.Set();
         }
 
@@ -443,7 +508,10 @@ namespace Oxide.Core.Libraries
         static HttpWebRequestExtensions()
         {
             Type type = typeof(HttpWebRequest);
-            foreach (string header in RestrictedHeaders) HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
+            foreach (string header in RestrictedHeaders)
+            {
+                HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
+            }
         }
 
         /// <summary>
@@ -453,7 +521,10 @@ namespace Oxide.Core.Libraries
         /// <param name="headers">Dictionary of headers to set</param>
         public static void SetRawHeaders(this WebRequest request, Dictionary<string, string> headers)
         {
-            foreach (var keyValPair in headers) request.SetRawHeader(keyValPair.Key, keyValPair.Value);
+            foreach (KeyValuePair<string, string> keyValPair in headers)
+            {
+                request.SetRawHeader(keyValPair.Key, keyValPair.Value);
+            }
         }
 
         /// <summary>
@@ -468,13 +539,21 @@ namespace Oxide.Core.Libraries
             {
                 PropertyInfo property = HeaderProperties[name];
                 if (property.PropertyType == typeof(DateTime))
+                {
                     property.SetValue(request, DateTime.Parse(value), null);
+                }
                 else if (property.PropertyType == typeof(bool))
+                {
                     property.SetValue(request, bool.Parse(value), null);
+                }
                 else if (property.PropertyType == typeof(long))
+                {
                     property.SetValue(request, long.Parse(value), null);
+                }
                 else
+                {
                     property.SetValue(request, value, null);
+                }
             }
             else
             {

@@ -129,7 +129,11 @@ namespace Oxide.Core.Libraries.Covalence
 
             private void WritePatternString()
             {
-                if (patternStart >= position) return;
+                if (patternStart >= position)
+                {
+                    return;
+                }
+
                 int ts = tokenStart;
                 tokenStart = patternStart;
                 Add(TokenType.String, Token());
@@ -306,7 +310,7 @@ namespace Oxide.Core.Libraries.Covalence
         private static List<Element> Parse(List<Token> tokens)
         {
             int i = 0;
-            var s = new Stack<Entry>();
+            Stack<Entry> s = new Stack<Entry>();
             s.Push(new Entry(null, Element.Tag(ElementType.String)));
             while (i < tokens.Count)
             {
@@ -353,7 +357,7 @@ namespace Oxide.Core.Libraries.Covalence
             while (s.Count > 1)
             {
                 Entry e = s.Pop();
-                var body = s.Peek().Element.Body;
+                List<Element> body = s.Peek().Element.Body;
                 body.Add(Element.String(e.Pattern));
                 body.AddRange(e.Element.Body);
             }

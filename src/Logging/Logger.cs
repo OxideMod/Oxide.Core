@@ -44,7 +44,10 @@ namespace Oxide.Core.Logging
         {
             // Initialize
             this.processImediately = processImediately;
-            if (!processImediately) MessageQueue = new Queue<LogMessage>();
+            if (!processImediately)
+            {
+                MessageQueue = new Queue<LogMessage>();
+            }
         }
 
         /// <summary>
@@ -85,7 +88,10 @@ namespace Oxide.Core.Logging
             ConsoleColor consoleColor;
             string remoteType;
 
-            if (message.ToLower().Contains("[chat]")) logType = LogType.Chat;
+            if (message.ToLower().Contains("[chat]"))
+            {
+                logType = LogType.Chat;
+            }
 
             switch (logType)
             {
@@ -143,9 +149,13 @@ namespace Oxide.Core.Logging
         {
             // If we're set to process immediately, do so, otherwise enqueue
             if (processImediately)
+            {
                 ProcessMessage(message);
+            }
             else
+            {
                 MessageQueue.Enqueue(message);
+            }
         }
 
         /// <summary>
@@ -171,8 +181,16 @@ namespace Oxide.Core.Logging
             }
 
             Exception outerEx = ex;
-            while (ex.InnerException != null) ex = ex.InnerException;
-            if (outerEx.GetType() != ex.GetType()) Write(LogType.Error, "ExType: {0}", outerEx.GetType().Name);
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+            }
+
+            if (outerEx.GetType() != ex.GetType())
+            {
+                Write(LogType.Error, "ExType: {0}", outerEx.GetType().Name);
+            }
+
             Write(LogType.Error, $"{message} ({ex.GetType().Name}: {ex.Message})\n{ex.StackTrace}");
         }
 

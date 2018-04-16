@@ -23,12 +23,19 @@ namespace Oxide.Core
                 {
                     // Return the name excluding any extension
                     Match match = Regex.Match(text, @"([^\\/]+)\.[^\.]+$");
-                    if (match.Success) return match.Groups[1].Value;
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
                 }
                 else
                 {
                     // Return the name excluding the given extension
-                    if (extension[0] == '*') extension = extension.Substring(1);
+                    if (extension[0] == '*')
+                    {
+                        extension = extension.Substring(1);
+                    }
+
                     return Regex.Match(text, @"([^\\/]+)\" + extension + "+$").Groups[1].Value;
                 }
             }
@@ -42,7 +49,13 @@ namespace Oxide.Core
         public static bool Contains<T>(this T[] array, T value)
         {
             foreach (T item in array)
-                if (item.Equals(value)) return true;
+            {
+                if (item.Equals(value))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -132,11 +145,17 @@ namespace Oxide.Core
         /// <returns></returns>
         public static string ToSentence<T>(this IEnumerable<T> items)
         {
-            var enumerator = items.GetEnumerator();
-            if (!enumerator.MoveNext()) return string.Empty;
+            IEnumerator<T> enumerator = items.GetEnumerator();
+            if (!enumerator.MoveNext())
+            {
+                return string.Empty;
+            }
 
             T firstItem = enumerator.Current;
-            if (!enumerator.MoveNext()) return firstItem?.ToString();
+            if (!enumerator.MoveNext())
+            {
+                return firstItem?.ToString();
+            }
 
             StringBuilder builder = new StringBuilder(firstItem?.ToString());
             bool moreItems = true;

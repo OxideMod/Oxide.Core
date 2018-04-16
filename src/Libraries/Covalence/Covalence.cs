@@ -90,14 +90,16 @@ namespace Oxide.Core.Libraries.Covalence
                     logger.Write(LogType.Warning, "Covalence: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
                 }
                 if (assTypes != null)
+                {
                     candidateSet = candidateSet?.Concat(assTypes) ?? assTypes;
+                }
             }
             if (candidateSet == null)
             {
                 logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
-            var candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
+            List<Type> candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
 
             Type selectedCandidate;
             if (candidates.Count == 0)
@@ -111,7 +113,11 @@ namespace Oxide.Core.Libraries.Covalence
                 StringBuilder sb = new StringBuilder();
                 for (int i = 1; i < candidates.Count; i++)
                 {
-                    if (i > 1) sb.Append(',');
+                    if (i > 1)
+                    {
+                        sb.Append(',');
+                    }
+
                     sb.Append(candidates[i].FullName);
                 }
                 logger.Write(LogType.Warning, "Multiple Covalence providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
@@ -147,7 +153,10 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="callback"></param>
         public void RegisterCommand(string command, Plugin plugin, CommandCallback callback)
         {
-            if (cmdSystem == null) return;
+            if (cmdSystem == null)
+            {
+                return;
+            }
 
             try
             {
