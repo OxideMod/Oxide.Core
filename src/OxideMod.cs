@@ -1,4 +1,5 @@
 ﻿extern alias References;
+
 using Oxide.Core.Configuration;
 using Oxide.Core.Extensions;
 using Oxide.Core.Libraries;
@@ -196,6 +197,11 @@ namespace Oxide.Core
             if (CommandLine.HasVariable("rcon.port"))
             {
                 Config.Rcon.Port = int.Parse(CommandLine.GetVariable("rcon.port"));
+            }
+
+            if (CommandLine.HasVariable("rcon.password"))
+            {
+                Config.Rcon.Password = CommandLine.GetVariable("rcon.password");
             }
 
             RootLogger = new CompoundLogger();
