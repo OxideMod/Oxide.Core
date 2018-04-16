@@ -1,4 +1,5 @@
 ﻿extern alias References;
+
 using Oxide.Core.Configuration;
 using References::Newtonsoft.Json;
 using System;
