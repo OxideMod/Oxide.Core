@@ -9,42 +9,66 @@ namespace Oxide.Core
 
         public static void Remove(ref Callback callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
 
         public static void Remove<T1>(ref Callback<T1> callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
 
         public static void Remove<T1, T2>(ref Callback<T1, T2> callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
 
         public static void Remove<T1, T2, T3>(ref Callback<T1, T2, T3> callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
 
         public static void Remove<T1, T2, T3, T4>(ref Callback<T1, T2, T3, T4> callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
 
         public static void Remove<T1, T2, T3, T4, T5>(ref Callback<T1, T2, T3, T4, T5> callback)
         {
-            if (callback == null) return;
+            if (callback == null)
+            {
+                return;
+            }
+
             callback.Remove();
             callback = null;
         }
@@ -64,7 +88,11 @@ namespace Oxide.Core
             public void Call()
             {
                 Action action = Invoke;
-                if (action == null) return;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke();
@@ -87,7 +115,10 @@ namespace Oxide.Core
                 else
                 {
                     previous.Next = next;
-                    if (next == null) handler.Last = previous;
+                    if (next == null)
+                    {
+                        handler.Last = previous;
+                    }
                 }
                 if (next == null)
                 {
@@ -96,7 +127,10 @@ namespace Oxide.Core
                 else
                 {
                     next.Previous = previous;
-                    if (previous == null) handler.First = next;
+                    if (previous == null)
+                    {
+                        handler.First = next;
+                    }
                 }
                 if (handler.Invoking)
                 {
@@ -126,8 +160,12 @@ namespace Oxide.Core
 
             public void Call(T arg0)
             {
-                var action = Invoke;
-                if (action == null) return;
+                Action<T> action = Invoke;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke(arg0);
@@ -140,9 +178,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event<T> handler = Handler;
+                Callback<T> next = Next;
+                Callback<T> previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -150,7 +188,10 @@ namespace Oxide.Core
                 else
                 {
                     previous.Next = next;
-                    if (next == null) handler.Last = previous;
+                    if (next == null)
+                    {
+                        handler.Last = previous;
+                    }
                 }
                 if (next == null)
                 {
@@ -159,7 +200,10 @@ namespace Oxide.Core
                 else
                 {
                     next.Previous = previous;
-                    if (previous == null) handler.First = next;
+                    if (previous == null)
+                    {
+                        handler.First = next;
+                    }
                 }
                 if (handler.Invoking)
                 {
@@ -189,8 +233,12 @@ namespace Oxide.Core
 
             public void Call(T1 arg0, T2 arg1)
             {
-                var action = Invoke;
-                if (action == null) return;
+                Action<T1, T2> action = Invoke;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke(arg0, arg1);
@@ -203,9 +251,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event<T1, T2> handler = Handler;
+                Callback<T1, T2> next = Next;
+                Callback<T1, T2> previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -258,8 +306,12 @@ namespace Oxide.Core
 
             public void Call(T1 arg0, T2 arg1, T3 arg2)
             {
-                var action = Invoke;
-                if (action == null) return;
+                Action<T1, T2, T3> action = Invoke;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke(arg0, arg1, arg2);
@@ -272,9 +324,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event<T1, T2, T3> handler = Handler;
+                Callback<T1, T2, T3> next = Next;
+                Callback<T1, T2, T3> previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -282,7 +334,10 @@ namespace Oxide.Core
                 else
                 {
                     previous.Next = next;
-                    if (next == null) handler.Last = previous;
+                    if (next == null)
+                    {
+                        handler.Last = previous;
+                    }
                 }
                 if (next == null)
                 {
@@ -291,7 +346,10 @@ namespace Oxide.Core
                 else
                 {
                     next.Previous = previous;
-                    if (previous == null) handler.First = next;
+                    if (previous == null)
+                    {
+                        handler.First = next;
+                    }
                 }
                 if (handler.Invoking)
                 {
@@ -321,8 +379,12 @@ namespace Oxide.Core
 
             public void Call(T1 arg0, T2 arg1, T3 arg2, T4 arg3)
             {
-                var action = Invoke;
-                if (action == null) return;
+                Action<T1, T2, T3, T4> action = Invoke;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke(arg0, arg1, arg2, arg3);
@@ -335,9 +397,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event<T1, T2, T3, T4> handler = Handler;
+                Callback<T1, T2, T3, T4> next = Next;
+                Callback<T1, T2, T3, T4> previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -345,7 +407,10 @@ namespace Oxide.Core
                 else
                 {
                     previous.Next = next;
-                    if (next == null) handler.Last = previous;
+                    if (next == null)
+                    {
+                        handler.Last = previous;
+                    }
                 }
                 if (next == null)
                 {
@@ -354,7 +419,10 @@ namespace Oxide.Core
                 else
                 {
                     next.Previous = previous;
-                    if (previous == null) handler.First = next;
+                    if (previous == null)
+                    {
+                        handler.First = next;
+                    }
                 }
                 if (handler.Invoking)
                 {
@@ -384,8 +452,12 @@ namespace Oxide.Core
 
             public void Call(T1 arg0, T2 arg1, T3 arg2, T4 arg3, T5 arg4)
             {
-                var action = Invoke;
-                if (action == null) return;
+                Action<T1, T2, T3, T4, T5> action = Invoke;
+                if (action == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     action.Invoke(arg0, arg1, arg2, arg3, arg4);
@@ -398,9 +470,9 @@ namespace Oxide.Core
 
             public void Remove()
             {
-                var handler = Handler;
-                var next = Next;
-                var previous = Previous;
+                Event<T1, T2, T3, T4, T5> handler = Handler;
+                Callback<T1, T2, T3, T4, T5> next = Next;
+                Callback<T1, T2, T3, T4, T5> previous = Previous;
                 if (previous == null)
                 {
                     handler.First = next;
@@ -408,7 +480,10 @@ namespace Oxide.Core
                 else
                 {
                     previous.Next = next;
-                    if (next == null) handler.Last = previous;
+                    if (next == null)
+                    {
+                        handler.Last = previous;
+                    }
                 }
                 if (next == null)
                 {
@@ -417,7 +492,10 @@ namespace Oxide.Core
                 else
                 {
                     next.Previous = previous;
-                    if (previous == null) handler.First = next;
+                    if (previous == null)
+                    {
+                        handler.First = next;
+                    }
                 }
                 if (handler.Invoking)
                 {
@@ -479,7 +557,7 @@ namespace Oxide.Core
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Callback> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -504,7 +582,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Event.Callback<T> last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -521,7 +599,7 @@ namespace Oxide.Core
 
         public Event.Callback<T> Add(Action<T> callback)
         {
-            var eventCallback = new Event.Callback<T>(callback);
+            Event.Callback<T> eventCallback = new Event.Callback<T>(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -531,14 +609,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0);
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -563,7 +641,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Event.Callback<T1, T2> last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -580,7 +658,7 @@ namespace Oxide.Core
 
         public Event.Callback<T1, T2> Add(Action<T1, T2> callback)
         {
-            var eventCallback = new Event.Callback<T1, T2>(callback);
+            Event.Callback<T1, T2> eventCallback = new Event.Callback<T1, T2>(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -590,14 +668,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2> callback = First;
                 while (callback != null)
                 {
                     callback.Call(default(T1), default(T2));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -612,14 +690,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, default(T2));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -634,14 +712,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1);
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -666,7 +744,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Event.Callback<T1, T2, T3> last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -683,7 +761,7 @@ namespace Oxide.Core
 
         public Event.Callback<T1, T2, T3> Add(Action<T1, T2, T3> callback)
         {
-            var eventCallback = new Event.Callback<T1, T2, T3>(callback);
+            Event.Callback<T1, T2, T3> eventCallback = new Event.Callback<T1, T2, T3>(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -693,14 +771,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3> callback = First;
                 while (callback != null)
                 {
                     callback.Invoke(default(T1), default(T2), default(T3));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -715,14 +793,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, default(T2), default(T3));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -737,14 +815,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, default(T3));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -759,14 +837,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2);
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -791,7 +869,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Event.Callback<T1, T2, T3, T4> last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -808,7 +886,7 @@ namespace Oxide.Core
 
         public Event.Callback<T1, T2, T3, T4> Add(Action<T1, T2, T3, T4> callback)
         {
-            var eventCallback = new Event.Callback<T1, T2, T3, T4>(callback);
+            Event.Callback<T1, T2, T3, T4> eventCallback = new Event.Callback<T1, T2, T3, T4>(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -818,14 +896,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4> callback = First;
                 while (callback != null)
                 {
                     callback.Call(default(T1), default(T2), default(T3), default(T4));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -840,14 +918,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, default(T2), default(T3), default(T4));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -862,14 +940,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, default(T3), default(T4));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -884,14 +962,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2, default(T4));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -906,14 +984,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2, arg3);
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -938,7 +1016,7 @@ namespace Oxide.Core
             callback.Handler = this;
             lock (Lock)
             {
-                var last = Last;
+                Event.Callback<T1, T2, T3, T4, T5> last = Last;
                 if (last == null)
                 {
                     First = callback;
@@ -955,7 +1033,7 @@ namespace Oxide.Core
 
         public Event.Callback<T1, T2, T3, T4, T5> Add(Event.Action<T1, T2, T3, T4, T5> callback)
         {
-            var eventCallback = new Event.Callback<T1, T2, T3, T4, T5>(callback);
+            Event.Callback<T1, T2, T3, T4, T5> eventCallback = new Event.Callback<T1, T2, T3, T4, T5>(callback);
             Add(eventCallback);
             return eventCallback;
         }
@@ -965,14 +1043,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(default(T1), default(T2), default(T3), default(T4), default(T5));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -987,14 +1065,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, default(T2), default(T3), default(T4), default(T5));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -1009,14 +1087,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, default(T3), default(T4), default(T5));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -1031,14 +1109,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2, default(T4), default(T5));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -1053,14 +1131,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2, arg3, default(T5));
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();
@@ -1075,14 +1153,14 @@ namespace Oxide.Core
             lock (Lock)
             {
                 Invoking = true;
-                var callback = First;
+                Event.Callback<T1, T2, T3, T4, T5> callback = First;
                 while (callback != null)
                 {
                     callback.Call(arg0, arg1, arg2, arg3, arg4);
                     callback = callback.Next;
                 }
                 Invoking = false;
-                var removedQueue = RemovedQueue;
+                Queue<Event.Callback<T1, T2, T3, T4, T5>> removedQueue = RemovedQueue;
                 while (removedQueue.Count > 0)
                 {
                     callback = removedQueue.Dequeue();

@@ -70,9 +70,13 @@ namespace Oxide.Core.Extensions
         public void RegisterLibrary(string name, Library library)
         {
             if (libraries.ContainsKey(name))
+            {
                 Interface.Oxide.LogError("An extension tried to register an already registered library: " + name);
+            }
             else
+            {
                 libraries[name] = library;
+            }
         }
 
         /// <summary>
@@ -124,7 +128,7 @@ namespace Oxide.Core.Extensions
             try
             {
                 // Read the assembly from file
-                var data = File.ReadAllBytes(filename);
+                byte[] data = File.ReadAllBytes(filename);
 
                 // Load the assembly
                 Assembly assembly = Assembly.Load(data);
@@ -134,7 +138,10 @@ namespace Oxide.Core.Extensions
                 Type extensionType = null;
                 foreach (Type type in assembly.GetExportedTypes())
                 {
-                    if (!extType.IsAssignableFrom(type)) continue;
+                    if (!extType.IsAssignableFrom(type))
+                    {
+                        continue;
+                    }
 
                     extensionType = type;
                     break;
@@ -264,21 +271,21 @@ namespace Oxide.Core.Extensions
         /// <param name="directory"></param>
         public void LoadAllExtensions(string directory)
         {
-            var coreExtensions = new[]
+            string[] coreExtensions = new[]
             {
                 "Oxide.CSharp", "Oxide.JavaScript", "Oxide.Lua", "Oxide.MySql", "Oxide.Python", "Oxide.SQLite", "Oxide.Unity"
             };
-            var gameExtensions = new[]
+            string[] gameExtensions = new[]
             {
                 "Oxide.Blackwake", "Oxide.Blockstorm", "Oxide.FortressCraft", "Oxide.FromTheDepths", "Oxide.GangBeasts", "Oxide.Hurtworld",
                 "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings",  "Oxide.Rust",
                 "Oxide.RustLegacy", "Oxide.SavageLands", "Oxide.SevenDaysToDie", "Oxide.SpaceEngineers", "Oxide.TheForest", "Oxide.Terraria",
                 "Oxide.Unturned"
             };
-            var foundCore = new List<string>();
-            var foundGame = new List<string>();
-            var foundOther = new List<string>();
-            var foundExtensions = Directory.GetFiles(directory, extSearchPattern);
+            List<string> foundCore = new List<string>();
+            List<string> foundGame = new List<string>();
+            List<string> foundOther = new List<string>();
+            string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
             foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
             {
                 if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
@@ -299,14 +306,34 @@ namespace Oxide.Core.Extensions
                     continue;
                 }
 
-                if (coreExtensions.Contains(extPath.Basename())) foundCore.Add(extPath);
-                else if (gameExtensions.Contains(extPath.Basename())) foundGame.Add(extPath);
-                else foundOther.Add(extPath);
+                if (coreExtensions.Contains(extPath.Basename()))
+                {
+                    foundCore.Add(extPath);
+                }
+                else if (gameExtensions.Contains(extPath.Basename()))
+                {
+                    foundGame.Add(extPath);
+                }
+                else
+                {
+                    foundOther.Add(extPath);
+                }
             }
 
-            foreach (string extPath in foundCore) LoadExtension(Path.Combine(directory, extPath), true);
-            foreach (string extPath in foundGame) LoadExtension(Path.Combine(directory, extPath), true);
-            foreach (string extPath in foundOther) LoadExtension(Path.Combine(directory, extPath), true);
+            foreach (string extPath in foundCore)
+            {
+                LoadExtension(Path.Combine(directory, extPath), true);
+            }
+
+            foreach (string extPath in foundGame)
+            {
+                LoadExtension(Path.Combine(directory, extPath), true);
+            }
+
+            foreach (string extPath in foundOther)
+            {
+                LoadExtension(Path.Combine(directory, extPath), true);
+            }
 
             foreach (Extension ext in extensions.ToArray())
             {

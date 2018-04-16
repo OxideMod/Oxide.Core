@@ -48,7 +48,11 @@ namespace Oxide.Core.ServerConsole
                 case PlatformID.Win32S:
                 case PlatformID.Win32Windows:
                     IntPtr pDll = GetModuleHandle("ntdll.dll");
-                    if (pDll == IntPtr.Zero) return false;
+                    if (pDll == IntPtr.Zero)
+                    {
+                        return false;
+                    }
+
                     return GetProcAddress(pDll, "wine_get_version") == IntPtr.Zero && (force || GetConsoleWindow() == IntPtr.Zero);
             }
             return false;
@@ -56,12 +60,19 @@ namespace Oxide.Core.ServerConsole
 
         public void SetTitle(string title)
         {
-            if (title != null) SetConsoleTitle(title);
+            if (title != null)
+            {
+                SetConsoleTitle(title);
+            }
         }
 
         public bool Initialize()
         {
-            if (!AttachConsole(ATTACH_PARENT_PROCESS)) AllocConsole();
+            if (!AttachConsole(ATTACH_PARENT_PROCESS))
+            {
+                AllocConsole();
+            }
+
             if (GetConsoleWindow() == IntPtr.Zero)
             {
                 FreeConsole();
@@ -88,7 +99,11 @@ namespace Oxide.Core.ServerConsole
 
         public void Shutdown()
         {
-            if (oldOutput != null) Console.SetOut(oldOutput);
+            if (oldOutput != null)
+            {
+                Console.SetOut(oldOutput);
+            }
+
             if (oldEncoding != null)
             {
                 SetConsoleOutputCP((uint)oldEncoding.CodePage);

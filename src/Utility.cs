@@ -30,35 +30,56 @@ namespace Oxide.Core
         }
 
         public bool IsReadOnly => false;
-        public int Count { get { lock (syncRoot) return collection.Count; } }
+        public int Count { get { lock (syncRoot) { return collection.Count; } } }
         public bool Contains(T value)
         {
-            lock (syncRoot) return collection.Contains(value);
+            lock (syncRoot)
+            {
+                return collection.Contains(value);
+            }
         }
         public bool Add(T value)
         {
-            lock (syncRoot) return collection.Add(value);
+            lock (syncRoot)
+            {
+                return collection.Add(value);
+            }
         }
         public bool Remove(T value)
         {
-            lock (syncRoot) return collection.Remove(value);
+            lock (syncRoot)
+            {
+                return collection.Remove(value);
+            }
         }
         public void Clear()
         {
-            lock (syncRoot) collection.Clear();
+            lock (syncRoot)
+            {
+                collection.Clear();
+            }
         }
         public void CopyTo(T[] array, int index)
         {
-            lock (syncRoot) collection.CopyTo(array, index);
+            lock (syncRoot)
+            {
+                collection.CopyTo(array, index);
+            }
         }
         public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
         public bool Any(Func<T, bool> callback)
         {
-            lock (syncRoot) return collection.Any(callback);
+            lock (syncRoot)
+            {
+                return collection.Any(callback);
+            }
         }
         public T[] ToArray()
         {
-            lock (syncRoot) return collection.ToArray();
+            lock (syncRoot)
+            {
+                return collection.ToArray();
+            }
         }
 
         public bool TryDequeue(out T value)
@@ -66,7 +87,11 @@ namespace Oxide.Core
             lock (syncRoot)
             {
                 value = collection.ElementAtOrDefault(0);
-                if (value != null) collection.Remove(value);
+                if (value != null)
+                {
+                    collection.Remove(value);
+                }
+
                 return value != null;
             }
         }
@@ -80,7 +105,11 @@ namespace Oxide.Core
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
             DataFileSystem dfs = Interface.Oxide.DataFileSystem;
-            if (!dfs.ExistsDatafile(name)) return;
+            if (!dfs.ExistsDatafile(name))
+            {
+                return;
+            }
+
             if (ProtoStorage.Exists(name))
             {
                 Interface.Oxide.LogWarning("Failed to import JSON file: {0} already exists.", name);
@@ -90,7 +119,10 @@ namespace Oxide.Core
             {
                 T data = dfs.ReadObject<T>(name);
                 ProtoStorage.Save(data, name);
-                if (deleteAfter) File.Delete(dfs.GetFile(name).Filename);
+                if (deleteAfter)
+                {
+                    File.Delete(dfs.GetFile(name).Filename);
+                }
             }
             catch (Exception ex)
             {
@@ -114,7 +146,10 @@ namespace Oxide.Core
                 bytes /= 1024;
             }
             else
+            {
                 type = "b";
+            }
+
             return $"{bytes:0}{type}";
         }
 
@@ -141,7 +176,11 @@ namespace Oxide.Core
             int lastIndex = value.Length - 1;
             for (int i = lastIndex; i >= 1; i--)
             {
-                if (value[i] != '.') continue;
+                if (value[i] != '.')
+                {
+                    continue;
+                }
+
                 lastIndex = i - 1;
                 break;
             }

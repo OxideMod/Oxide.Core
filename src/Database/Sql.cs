@@ -54,15 +54,20 @@ namespace Oxide.Core.Database
         {
             // Already built?
             if (_sqlFinal != null)
+            {
                 return;
+            }
 
             // Build it
             StringBuilder sb = new StringBuilder();
-            var args = new List<object>();
+            List<object> args = new List<object>();
             Build(sb, args, null);
             string tmpFinal = sb.ToString();
             if (Filter.IsMatch(tmpFinal))
+            {
                 throw new Exception("Commands LOAD DATA, LOAD_FILE, OUTFILE, DUMPFILE not allowed.");
+            }
+
             _sqlFinal = tmpFinal;
             _argsFinal = args.ToArray();
         }
@@ -70,9 +75,13 @@ namespace Oxide.Core.Database
         public Sql Append(Sql sql)
         {
             if (_rhs != null)
+            {
                 _rhs.Append(sql);
+            }
             else
+            {
                 _rhs = sql;
+            }
 
             return this;
         }
@@ -100,9 +109,14 @@ namespace Oxide.Core.Database
                 string sql = ProcessParams(_sql, _args, args);
 
                 if (Is(lhs, "WHERE ") && Is(this, "WHERE "))
+                {
                     sql = "AND " + sql.Substring(6);
+                }
+
                 if (Is(lhs, "ORDER BY ") && Is(this, "ORDER BY "))
+                {
                     sql = ", " + sql.Substring(9);
+                }
 
                 sb.Append(sql);
             }
@@ -163,7 +177,11 @@ namespace Oxide.Core.Database
                 if (int.TryParse(param, out paramIndex))
                 {
                     if (paramIndex < 0 || paramIndex >= argsSrc.Length)
-                        throw new ArgumentOutOfRangeException(string.Format("Parameter '@{0}' specified but only {1} parameters supplied (in `{2}`)", paramIndex, argsSrc.Length, sql));
+                    {
+                        throw new ArgumentOutOfRangeException(
+                            $"Parameter '@{paramIndex}' specified but only {argsSrc.Length} parameters supplied (in `{sql}`)");
+                    }
+
                     argVal = argsSrc[paramIndex];
                 }
                 else
@@ -173,14 +191,21 @@ namespace Oxide.Core.Database
                     foreach (object o in argsSrc)
                     {
                         PropertyInfo pi = o.GetType().GetProperty(param);
-                        if (pi == null) continue;
+                        if (pi == null)
+                        {
+                            continue;
+                        }
+
                         argVal = pi.GetValue(o, null);
                         found = true;
                         break;
                     }
 
                     if (!found)
-                        throw new ArgumentException(string.Format("Parameter '@{0}' specified but none of the passed arguments have a property with this name (in '{1}')", param, sql));
+                    {
+                        throw new ArgumentException(
+                            $"Parameter '@{param}' specified but none of the passed arguments have a property with this name (in '{sql}')");
+                    }
                 }
 
                 if ((argVal as IEnumerable) != null && (argVal as string) == null && (argVal as byte[]) == null)
@@ -212,13 +237,13 @@ namespace Oxide.Core.Database
             IDbDataParameter idbParam = item as IDbDataParameter;
             if (idbParam != null)
             {
-                idbParam.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
+                idbParam.ParameterName = $"{parameterPrefix}{cmd.Parameters.Count}";
                 cmd.Parameters.Add(idbParam);
                 return;
             }
 
             IDbDataParameter p = cmd.CreateParameter();
-            p.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
+            p.ParameterName = $"{parameterPrefix}{cmd.Parameters.Count}";
             if (item == null)
             {
                 p.Value = DBNull.Value;

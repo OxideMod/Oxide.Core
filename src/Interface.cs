@@ -23,7 +23,11 @@ namespace Oxide.Core
         public static void Initialize()
         {
             // Create if not already created
-            if (Oxide != null) return;
+            if (Oxide != null)
+            {
+                return;
+            }
+
             Oxide = new OxideMod(DebugCallback);
             Oxide.Load();
         }
@@ -83,7 +87,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1)
         {
-            var array = ArrayPool.Get(1);
+            object[] array = ArrayPool.Get(1);
             array[0] = obj1;
             object ret = CallHook(hook, array);
             ArrayPool.Free(array);
@@ -99,7 +103,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2)
         {
-            var array = ArrayPool.Get(2);
+            object[] array = ArrayPool.Get(2);
             array[0] = obj1;
             array[1] = obj2;
             object ret = CallHook(hook, array);
@@ -117,7 +121,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3)
         {
-            var array = ArrayPool.Get(3);
+            object[] array = ArrayPool.Get(3);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -137,7 +141,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4)
         {
-            var array = ArrayPool.Get(4);
+            object[] array = ArrayPool.Get(4);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -159,7 +163,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5)
         {
-            var array = ArrayPool.Get(5);
+            object[] array = ArrayPool.Get(5);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -183,7 +187,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6)
         {
-            var array = ArrayPool.Get(6);
+            object[] array = ArrayPool.Get(6);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -209,7 +213,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7)
         {
-            var array = ArrayPool.Get(7);
+            object[] array = ArrayPool.Get(7);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -237,7 +241,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8)
         {
-            var array = ArrayPool.Get(8);
+            object[] array = ArrayPool.Get(8);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -267,7 +271,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9)
         {
-            var array = ArrayPool.Get(9);
+            object[] array = ArrayPool.Get(9);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -299,7 +303,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9, object obj10)
         {
-            var array = ArrayPool.Get(10);
+            object[] array = ArrayPool.Get(10);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;

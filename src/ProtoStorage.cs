@@ -12,8 +12,15 @@ namespace Oxide.Core
         public static IEnumerable<string> GetFiles(string subDirectory)
         {
             string directory = GetFileDataPath(subDirectory.Replace("..", ""));
-            if (!Directory.Exists(directory)) yield break;
-            foreach (string file in Directory.GetFiles(directory, "*.data")) yield return Utility.GetFileNameWithoutExtension(file);
+            if (!Directory.Exists(directory))
+            {
+                yield break;
+            }
+
+            foreach (string file in Directory.GetFiles(directory, "*.data"))
+            {
+                yield return Utility.GetFileNameWithoutExtension(file);
+            }
         }
 
         public static T Load<T>(params string[] subPaths)
@@ -25,7 +32,11 @@ namespace Oxide.Core
                 if (File.Exists(path))
                 {
                     T data;
-                    using (FileStream file = File.OpenRead(path)) data = Serializer.Deserialize<T>(file);
+                    using (FileStream file = File.OpenRead(path))
+                    {
+                        data = Serializer.Deserialize<T>(file);
+                    }
+
                     return data;
                 }
             }
@@ -43,8 +54,15 @@ namespace Oxide.Core
             string directory = Path.GetDirectoryName(path);
             try
             {
-                if (directory != null && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
-                using (FileStream file = File.Open(path, FileMode.Create)) Serializer.Serialize(file, data);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                using (FileStream file = File.Open(path, FileMode.Create))
+                {
+                    Serializer.Serialize(file, data);
+                }
             }
             catch (Exception ex)
             {

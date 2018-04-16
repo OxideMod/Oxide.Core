@@ -51,16 +51,22 @@ namespace Oxide.Core.Plugins
         {
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
-            var types = new List<Type> { type };
-            while (type != typeof(CSPlugin)) types.Add(type = type.BaseType);
+            List<Type> types = new List<Type> { type };
+            while (type != typeof(CSPlugin))
+            {
+                types.Add(type = type.BaseType);
+            }
 
             // Add hooks implemented in base classes before user implemented methods
             for (int i = types.Count - 1; i >= 0; i--)
             {
                 foreach (MethodInfo method in types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
                 {
-                    var attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
-                    if (attr.Length < 1) continue;
+                    object[] attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
+                    if (attr.Length < 1)
+                    {
+                        continue;
+                    }
 
                     HookMethodAttribute hookmethod = attr[0] as HookMethodAttribute;
                     AddHookMethod(hookmethod?.Name, method);
@@ -78,7 +84,10 @@ namespace Oxide.Core.Plugins
             base.HandleAddedToManager(manager);
 
             // Subscribe us
-            foreach (string hookname in Hooks.Keys) Subscribe(hookname);
+            foreach (string hookname in Hooks.Keys)
+            {
+                Subscribe(hookname);
+            }
 
             try
             {
@@ -88,7 +97,10 @@ namespace Oxide.Core.Plugins
             catch (Exception ex)
             {
                 Interface.Oxide.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
-                if (Loader != null) Loader.PluginErrors[Name] = ex.Message;
+                if (Loader != null)
+                {
+                    Loader.PluginErrors[Name] = ex.Message;
+                }
             }
         }
 
@@ -203,7 +215,7 @@ namespace Oxide.Core.Plugins
             {
                 return methods;
             }
-            var matches = new List<HookMethod>();
+            List<HookMethod> matches = new List<HookMethod>();
             // Get all hook methods that could match, return an empty list if none match
             if (!Hooks.TryGetValue(name, out methods))
             {

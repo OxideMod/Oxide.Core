@@ -11,13 +11,19 @@ namespace Oxide.Core
 
         internal static void Run()
         {
-            if (files == null) return;
+            if (files == null)
+            {
+                return;
+            }
 
             foreach (string file in files)
             {
                 try
                 {
-                    if (!File.Exists(file)) continue;
+                    if (!File.Exists(file))
+                    {
+                        continue;
+                    }
 
                     Interface.Oxide.LogDebug("Cleanup file: {0}", file);
                     File.Delete(file);

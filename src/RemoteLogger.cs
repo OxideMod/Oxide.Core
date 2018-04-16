@@ -79,16 +79,21 @@ namespace Oxide.Core
                 this.culprit = culprit;
                 this.modules = new Dictionary<string, string>();
                 foreach (Extension extension in Interface.Oxide.GetAllExtensions())
+                {
                     modules[extension.GetType().Assembly.GetName().Name] = extension.Version.ToString();
+                }
 
                 if (exception != null)
                 {
                     extra = new Dictionary<string, string>();
-                    var exceptionLines = exception.Split('\n').Take(31).ToArray();
+                    string[] exceptionLines = exception.Split('\n').Take(31).ToArray();
                     for (int i = 0; i < exceptionLines.Length; i++)
                     {
                         string line = exceptionLines[i].Trim(' ', '\r', '\n').Replace('\t', ' ');
-                        if (line.Length > 0) extra["line_" + i.ToString("00")] = line;
+                        if (line.Length > 0)
+                        {
+                            extra["line_" + i.ToString("00")] = line;
+                        }
                     }
                 }
             }
@@ -102,7 +107,10 @@ namespace Oxide.Core
                     if (pluginType != null)
                     {
                         Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginType.Name);
-                        if (plugin != null) modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        if (plugin != null)
+                        {
+                            modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        }
                     }
                 }
             }
@@ -111,18 +119,32 @@ namespace Oxide.Core
             {
                 foreach (string line in stackTrace)
                 {
-                    if (!line.StartsWith("Oxide.Plugins.PluginCompiler") || !line.Contains("+")) continue;
+                    if (!line.StartsWith("Oxide.Plugins.PluginCompiler") || !line.Contains("+"))
+                    {
+                        continue;
+                    }
 
                     string pluginName = line.Split('+')[0];
                     Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginName);
-                    if (plugin != null) modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                    if (plugin != null)
+                    {
+                        modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                    }
+
                     break;
                 }
             }
 
             private static bool IsTypeDerivedFrom(Type type, Type baseType)
             {
-                while (type != null && type != baseType) if ((type = type.BaseType) == baseType) return true;
+                while (type != null && type != baseType)
+                {
+                    if ((type = type.BaseType) == baseType)
+                    {
+                        return true;
+                    }
+                }
+
                 return false;
             }
         }
@@ -166,16 +188,25 @@ namespace Oxide.Core
 
         public static void Exception(string message, Exception exception)
         {
-            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler")) return;
+            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler"))
+            {
+                return;
+            }
+
             foreach (string filter in ExceptionFilter)
-                if (exception.StackTrace.Contains(filter) || message.Contains(filter)) return;
+            {
+                if (exception.StackTrace.Contains(filter) || message.Contains(filter))
+                {
+                    return;
+                }
+            }
 
             EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message, exception.ToString());
         }
 
         public static void Exception(string message, string rawStackTrace)
         {
-            var stackTrace = rawStackTrace.Split('\r', '\n');
+            string[] stackTrace = rawStackTrace.Split('\r', '\n');
             string culprit = stackTrace[0].Split('(')[0].Trim();
             EnqueueReport("fatal", stackTrace, culprit, message, rawStackTrace);
         }
@@ -197,16 +228,32 @@ namespace Oxide.Core
         private static void EnqueueReport(Report report)
         {
             Dictionary<string, string>.ValueCollection stackTrace = report.extra.Values;
-            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler")) return;
-            foreach (string filter in ExceptionFilter) if (stackTrace.Contains(filter) || stackTrace.Contains(filter)) return;
+            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler"))
+            {
+                return;
+            }
+
+            foreach (string filter in ExceptionFilter)
+            {
+                if (stackTrace.Contains(filter) || stackTrace.Contains(filter))
+                {
+                    return;
+                }
+            }
 
             QueuedReports.Add(new QueuedReport(report));
-            if (!submittingReports) SubmitNextReport();
+            if (!submittingReports)
+            {
+                SubmitNextReport();
+            }
         }
 
         private static void SubmitNextReport()
         {
-            if (QueuedReports.Count < 1) return;
+            if (QueuedReports.Count < 1)
+            {
+                return;
+            }
 
             QueuedReport queuedReport = QueuedReports[0];
             submittingReports = true;
