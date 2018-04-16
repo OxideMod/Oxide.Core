@@ -113,7 +113,7 @@
         public override bool Equals(object obj)
         {
             if (!(obj is VersionNumber)) return false;
-            var other = (VersionNumber)obj;
+            VersionNumber other = (VersionNumber)obj;
             return this == other;
         }
 
@@ -125,7 +125,7 @@
         {
             unchecked
             {
-                var hash = 17;
+                int hash = 17;
                 hash = hash * 23 + Major.GetHashCode();
                 hash = hash * 23 + Minor.GetHashCode();
                 hash = hash * 23 + Patch.GetHashCode();

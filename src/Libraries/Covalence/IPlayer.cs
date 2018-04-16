@@ -266,7 +266,7 @@ namespace Oxide.Core.Libraries.Covalence
         public override bool Equals(object obj)
         {
             if (!(obj is GenericPosition)) return false;
-            var pos = (GenericPosition)obj;
+            GenericPosition pos = (GenericPosition)obj;
             return X.Equals(pos.X) && Y.Equals(pos.Y) && Z.Equals(pos.Z);
         }
 

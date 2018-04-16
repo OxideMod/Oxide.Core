@@ -22,7 +22,7 @@ namespace Oxide.Core
                 if (extension.Equals("*.*"))
                 {
                     // Return the name excluding any extension
-                    var match = Regex.Match(text, @"([^\\/]+)\.[^\.]+$");
+                    Match match = Regex.Match(text, @"([^\\/]+)\.[^\.]+$");
                     if (match.Success) return match.Groups[1].Value;
                 }
                 else
@@ -41,7 +41,7 @@ namespace Oxide.Core
         /// </summary>
         public static bool Contains<T>(this T[] array, T value)
         {
-            foreach (var item in array)
+            foreach (T item in array)
                 if (item.Equals(value)) return true;
             return false;
         }
@@ -108,7 +108,7 @@ namespace Oxide.Core
         /// </summary>
         public static string SentenceCase(this string text)
         {
-            var regex = new Regex(@"(^[a-z])|\.\s+(.)", RegexOptions.ExplicitCapture);
+            Regex regex = new Regex(@"(^[a-z])|\.\s+(.)", RegexOptions.ExplicitCapture);
             return regex.Replace(text.ToLower(), s => s.Value.ToUpper());
         }
 
@@ -135,14 +135,14 @@ namespace Oxide.Core
             var enumerator = items.GetEnumerator();
             if (!enumerator.MoveNext()) return string.Empty;
 
-            var firstItem = enumerator.Current;
+            T firstItem = enumerator.Current;
             if (!enumerator.MoveNext()) return firstItem?.ToString();
 
-            var builder = new StringBuilder(firstItem?.ToString());
-            var moreItems = true;
+            StringBuilder builder = new StringBuilder(firstItem?.ToString());
+            bool moreItems = true;
             while (moreItems)
             {
-                var item = enumerator.Current;
+                T item = enumerator.Current;
                 moreItems = enumerator.MoveNext();
                 builder.Append(moreItems ? ", " : " and ");
                 builder.Append(item);

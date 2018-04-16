@@ -79,7 +79,7 @@ namespace Oxide.Core
     {
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
-            var dfs = Interface.Oxide.DataFileSystem;
+            DataFileSystem dfs = Interface.Oxide.DataFileSystem;
             if (!dfs.ExistsDatafile(name)) return;
             if (ProtoStorage.Exists(name))
             {
@@ -88,7 +88,7 @@ namespace Oxide.Core
             }
             try
             {
-                var data = dfs.ReadObject<T>(name);
+                T data = dfs.ReadObject<T>(name);
                 ProtoStorage.Save(data, name);
                 if (deleteAfter) File.Delete(dfs.GetFile(name).Filename);
             }
@@ -138,15 +138,15 @@ namespace Oxide.Core
 
         public static string GetFileNameWithoutExtension(string value)
         {
-            var lastIndex = value.Length - 1;
-            for (var i = lastIndex; i >= 1; i--)
+            int lastIndex = value.Length - 1;
+            for (int i = lastIndex; i >= 1; i--)
             {
                 if (value[i] != '.') continue;
                 lastIndex = i - 1;
                 break;
             }
-            var firstIndex = 0;
-            for (var i = lastIndex - 1; i >= 0; i--)
+            int firstIndex = 0;
+            for (int i = lastIndex - 1; i >= 0; i--)
             {
                 switch (value[i])
                 {

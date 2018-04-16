@@ -84,7 +84,7 @@ namespace Oxide.Core.Logging
                         while (MessageQueue.Count > 0)
                         {
                             // Dequeue
-                            var message = MessageQueue.Dequeue();
+                            LogMessage message = MessageQueue.Dequeue();
 
                             // Process
                             ProcessMessage(message);

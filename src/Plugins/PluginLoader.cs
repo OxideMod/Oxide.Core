@@ -47,7 +47,7 @@ namespace Oxide.Core.Plugins
 
             var files = new DirectoryInfo(directory).GetFiles("*" + FileExtension);
             var filtered = files.Where(f => (f.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden);
-            foreach (var file in filtered) yield return Utility.GetFileNameWithoutExtension(file.FullName);
+            foreach (FileInfo file in filtered) yield return Utility.GetFileNameWithoutExtension(file.FullName);
         }
 
         /// <summary>
@@ -64,8 +64,8 @@ namespace Oxide.Core.Plugins
                 return null;
             }
 
-            var filename = Path.Combine(directory, name + FileExtension);
-            var plugin = GetPlugin(filename);
+            string filename = Path.Combine(directory, name + FileExtension);
+            Plugin plugin = GetPlugin(filename);
             LoadingPlugins.Add(plugin.Name);
             Interface.Oxide.NextTick(() => LoadPlugin(plugin));
 

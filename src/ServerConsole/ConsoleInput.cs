@@ -38,7 +38,7 @@ namespace Oxide.Core.ServerConsole
             try
             {
                 Console.CursorTop = Console.CursorTop + 1;
-                for (var i = 0; i < StatusTextLeft.Length; i++)
+                for (int i = 0; i < StatusTextLeft.Length; i++)
                 {
                     if (!Interface.Oxide.Config.Console.ShowStatusBar) break;
                     Console.CursorLeft = 0;
@@ -82,7 +82,7 @@ namespace Oxide.Core.ServerConsole
             {
                 return;
             }
-            var consoleKeyInfo = Console.ReadKey();
+            ConsoleKeyInfo consoleKeyInfo = Console.ReadKey();
             if (consoleKeyInfo.Key != ConsoleKey.DownArrow && consoleKeyInfo.Key != ConsoleKey.UpArrow) inputHistoryIndex = 0;
             switch (consoleKeyInfo.Key)
             {
@@ -92,7 +92,7 @@ namespace Oxide.Core.ServerConsole
                     Console.WriteLine(string.Concat("> ", inputString));
                     inputHistory.Insert(0, inputString);
                     if (inputHistory.Count > 50) inputHistory.RemoveRange(50, inputHistory.Count - 50);
-                    var str = inputString;
+                    string str = inputString;
                     inputString = string.Empty;
                     OnInputText?.Invoke(str);
                     RedrawInputLine();
@@ -137,13 +137,13 @@ namespace Oxide.Core.ServerConsole
                     {
                         ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? StatusTextLeft.Length + 1 : 1);
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        var lowestDiff = results.Max(r => r.Length);
-                        for (var index = 0; index < results.Length; index++)
+                        int lowestDiff = results.Max(r => r.Length);
+                        for (int index = 0; index < results.Length; index++)
                         {
-                            var result = results[index];
+                            string result = results[index];
                             if (index > 0)
                             {
-                                var diff = GetFirstDiffIndex(results[0], result);
+                                int diff = GetFirstDiffIndex(results[0], result);
                                 if (diff > 0 && diff < lowestDiff)
                                     lowestDiff = diff;
                             }
@@ -166,8 +166,8 @@ namespace Oxide.Core.ServerConsole
         private static int GetFirstDiffIndex(string str1, string str2)
         {
             if (str1 == null || str2 == null) return -1;
-            var length = Math.Min(str1.Length, str2.Length);
-            for (var index = 0; index < length; index++) if (str1[index] != str2[index]) return index;
+            int length = Math.Min(str1.Length, str2.Length);
+            for (int index = 0; index < length; index++) if (str1[index] != str2[index]) return index;
             return length;
         }
     }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -56,10 +57,10 @@ namespace Oxide.Core.Database
                 return;
 
             // Build it
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             var args = new List<object>();
             Build(sb, args, null);
-            var tmpFinal = sb.ToString();
+            string tmpFinal = sb.ToString();
             if (Filter.IsMatch(tmpFinal))
                 throw new Exception("Commands LOAD DATA, LOAD_FILE, OUTFILE, DUMPFILE not allowed.");
             _sqlFinal = tmpFinal;
@@ -96,7 +97,7 @@ namespace Oxide.Core.Database
                     sb.Append("\n");
                 }
 
-                var sql = ProcessParams(_sql, _args, args);
+                string sql = ProcessParams(_sql, _args, args);
 
                 if (Is(lhs, "WHERE ") && Is(this, "WHERE "))
                     sql = "AND " + sql.Substring(6);
@@ -154,7 +155,7 @@ namespace Oxide.Core.Database
         {
             return RxParams.Replace(sql, m =>
             {
-                var param = m.Value.Substring(1);
+                string param = m.Value.Substring(1);
 
                 object argVal;
 
@@ -167,11 +168,11 @@ namespace Oxide.Core.Database
                 }
                 else
                 {
-                    var found = false;
+                    bool found = false;
                     argVal = null;
-                    foreach (var o in argsSrc)
+                    foreach (object o in argsSrc)
                     {
-                        var pi = o.GetType().GetProperty(param);
+                        PropertyInfo pi = o.GetType().GetProperty(param);
                         if (pi == null) continue;
                         argVal = pi.GetValue(o, null);
                         found = true;
@@ -184,8 +185,8 @@ namespace Oxide.Core.Database
 
                 if ((argVal as IEnumerable) != null && (argVal as string) == null && (argVal as byte[]) == null)
                 {
-                    var sb = new StringBuilder();
-                    foreach (var i in argVal as IEnumerable)
+                    StringBuilder sb = new StringBuilder();
+                    foreach (object i in argVal as IEnumerable)
                     {
                         sb.Append((sb.Length == 0 ? "@" : ",@") + argsDest.Count.ToString());
                         argsDest.Add(i);
@@ -200,7 +201,7 @@ namespace Oxide.Core.Database
 
         public static void AddParams(IDbCommand cmd, object[] items, string parameterPrefix)
         {
-            foreach (var item in items)
+            foreach (object item in items)
             {
                 AddParam(cmd, item, "@");
             }
@@ -208,7 +209,7 @@ namespace Oxide.Core.Database
 
         public static void AddParam(IDbCommand cmd, object item, string parameterPrefix)
         {
-            var idbParam = item as IDbDataParameter;
+            IDbDataParameter idbParam = item as IDbDataParameter;
             if (idbParam != null)
             {
                 idbParam.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
@@ -216,7 +217,7 @@ namespace Oxide.Core.Database
                 return;
             }
 
-            var p = cmd.CreateParameter();
+            IDbDataParameter p = cmd.CreateParameter();
             p.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
             if (item == null)
             {
@@ -224,7 +225,7 @@ namespace Oxide.Core.Database
             }
             else
             {
-                var t = item.GetType();
+                Type t = item.GetType();
                 if (t.IsEnum)
                 {
                     p.Value = (int)item;

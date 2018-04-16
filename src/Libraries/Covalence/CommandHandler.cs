@@ -97,16 +97,16 @@ namespace Oxide.Core.Libraries.Covalence
         private void ParseCommand(string argstr, out string cmd, out string[] args)
         {
             var arglist = new List<string>();
-            var sb = new StringBuilder();
-            var inlongarg = false;
-            for (var i = 0; i < argstr.Length; i++)
+            StringBuilder sb = new StringBuilder();
+            bool inlongarg = false;
+            for (int i = 0; i < argstr.Length; i++)
             {
-                var c = argstr[i];
+                char c = argstr[i];
                 if (c == '"')
                 {
                     if (inlongarg)
                     {
-                        var arg = sb.ToString().Trim();
+                        string arg = sb.ToString().Trim();
                         if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
                         sb = new StringBuilder();
                         inlongarg = false;
@@ -118,7 +118,7 @@ namespace Oxide.Core.Libraries.Covalence
                 }
                 else if (char.IsWhiteSpace(c) && !inlongarg)
                 {
-                    var arg = sb.ToString().Trim();
+                    string arg = sb.ToString().Trim();
                     if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
                     sb = new StringBuilder();
                 }
@@ -129,7 +129,7 @@ namespace Oxide.Core.Libraries.Covalence
             }
             if (sb.Length > 0)
             {
-                var arg = sb.ToString().Trim();
+                string arg = sb.ToString().Trim();
                 if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
             }
             if (arglist.Count == 0)

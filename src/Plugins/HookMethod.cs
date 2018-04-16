@@ -37,7 +37,7 @@ namespace Oxide.Core.Plugins
             if (Parameters.Length == 0 && (args == null || args.Length == 0))
                 return true;
 
-            for (var i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Length; i++)
             {
                 if (args[i] == null)
                 {

@@ -32,7 +32,7 @@ namespace Oxide.Core
         {
             Directory = directory;
             _datafiles = new Dictionary<string, DynamicConfigFile>();
-            var converter = new KeyValuesConverter();
+            KeyValuesConverter converter = new KeyValuesConverter();
             _settings = new JsonSerializerSettings();
             _settings.Converters.Add(converter);
         }
@@ -61,7 +61,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public DynamicConfigFile GetDatafile(string name)
         {
-            var datafile = GetFile(name);
+            DynamicConfigFile datafile = GetFile(name);
 
             // Does it exist?
             if (datafile.Exists())
@@ -87,7 +87,7 @@ namespace Oxide.Core
         public T ReadObject<T>(string name)
         {
             if (ExistsDatafile(name)) return GetFile(name).ReadObject<T>();
-            var instance = Activator.CreateInstance<T>();
+            T instance = Activator.CreateInstance<T>();
             WriteObject(name, instance);
             return instance;
         }
@@ -102,9 +102,9 @@ namespace Oxide.Core
         /// <param name="callback"></param>
         public void ForEachObject<T>(string name, Action<T> callback)
         {
-            var folder = DynamicConfigFile.SanitizeName(name);
+            string folder = DynamicConfigFile.SanitizeName(name);
             var files = _datafiles.Where(d => d.Key.StartsWith(folder)).Select(a => a.Value);
-            foreach (var file in files) callback?.Invoke(file.ReadObject<T>());
+            foreach (DynamicConfigFile file in files) callback?.Invoke(file.ReadObject<T>());
         }
     }
 }

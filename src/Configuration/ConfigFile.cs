@@ -25,7 +25,7 @@ namespace Oxide.Core.Configuration
         /// <param name="filename"></param>
         public static T Load<T>(string filename) where T : ConfigFile
         {
-            var config = (T)Activator.CreateInstance(typeof(T), filename);
+            T config = (T)Activator.CreateInstance(typeof(T), filename);
             config.Load();
             return config;
         }
@@ -36,7 +36,7 @@ namespace Oxide.Core.Configuration
         /// <param name="filename"></param>
         public virtual void Load(string filename = null)
         {
-            var source = File.ReadAllText(filename ?? Filename);
+            string source = File.ReadAllText(filename ?? Filename);
             JsonConvert.PopulateObject(source, this);
         }
 
@@ -46,7 +46,7 @@ namespace Oxide.Core.Configuration
         /// <param name="filename"></param>
         public virtual void Save(string filename = null)
         {
-            var source = JsonConvert.SerializeObject(this, Formatting.Indented);
+            string source = JsonConvert.SerializeObject(this, Formatting.Indented);
             File.WriteAllText(filename ?? Filename, source);
         }
     }

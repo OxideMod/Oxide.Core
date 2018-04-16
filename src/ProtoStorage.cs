@@ -11,21 +11,21 @@ namespace Oxide.Core
     {
         public static IEnumerable<string> GetFiles(string subDirectory)
         {
-            var directory = GetFileDataPath(subDirectory.Replace("..", ""));
+            string directory = GetFileDataPath(subDirectory.Replace("..", ""));
             if (!Directory.Exists(directory)) yield break;
-            foreach (var file in Directory.GetFiles(directory, "*.data")) yield return Utility.GetFileNameWithoutExtension(file);
+            foreach (string file in Directory.GetFiles(directory, "*.data")) yield return Utility.GetFileNameWithoutExtension(file);
         }
 
         public static T Load<T>(params string[] subPaths)
         {
-            var name = GetFileName(subPaths);
-            var path = GetFileDataPath(name);
+            string name = GetFileName(subPaths);
+            string path = GetFileDataPath(name);
             try
             {
                 if (File.Exists(path))
                 {
                     T data;
-                    using (var file = File.OpenRead(path)) data = Serializer.Deserialize<T>(file);
+                    using (FileStream file = File.OpenRead(path)) data = Serializer.Deserialize<T>(file);
                     return data;
                 }
             }
@@ -38,13 +38,13 @@ namespace Oxide.Core
 
         public static void Save<T>(T data, params string[] subPaths)
         {
-            var name = GetFileName(subPaths);
-            var path = GetFileDataPath(name);
-            var directory = Path.GetDirectoryName(path);
+            string name = GetFileName(subPaths);
+            string path = GetFileDataPath(name);
+            string directory = Path.GetDirectoryName(path);
             try
             {
                 if (directory != null && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
-                using (var file = File.Open(path, FileMode.Create)) Serializer.Serialize(file, data);
+                using (FileStream file = File.Open(path, FileMode.Create)) Serializer.Serialize(file, data);
             }
             catch (Exception ex)
             {
