@@ -43,11 +43,17 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public virtual IEnumerable<string> ScanDirectory(string directory)
         {
-            if (FileExtension == null || !Directory.Exists(directory)) yield break;
+            if (FileExtension == null || !Directory.Exists(directory))
+            {
+                yield break;
+            }
 
-            var files = new DirectoryInfo(directory).GetFiles("*" + FileExtension);
-            var filtered = files.Where(f => (f.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden);
-            foreach (var file in filtered) yield return Utility.GetFileNameWithoutExtension(file.FullName);
+            FileInfo[] files = new DirectoryInfo(directory).GetFiles("*" + FileExtension);
+            IEnumerable<FileInfo> filtered = files.Where(f => (f.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden);
+            foreach (FileInfo file in filtered)
+            {
+                yield return Utility.GetFileNameWithoutExtension(file.FullName);
+            }
         }
 
         /// <summary>
@@ -64,8 +70,8 @@ namespace Oxide.Core.Plugins
                 return null;
             }
 
-            var filename = Path.Combine(directory, name + FileExtension);
-            var plugin = GetPlugin(filename);
+            string filename = Path.Combine(directory, name + FileExtension);
+            Plugin plugin = GetPlugin(filename);
             LoadingPlugins.Add(plugin.Name);
             Interface.Oxide.NextTick(() => LoadPlugin(plugin));
 
@@ -102,7 +108,11 @@ namespace Oxide.Core.Plugins
             }
             catch (IOException)
             {
-                if (!waitingForAccess) Interface.Oxide.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                if (!waitingForAccess)
+                {
+                    Interface.Oxide.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                }
+
                 Interface.Oxide.GetLibrary<Timer>().Once(.5f, () => LoadPlugin(plugin, true));
             }
             catch (Exception ex)

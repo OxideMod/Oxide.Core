@@ -118,7 +118,7 @@ namespace Oxide.Core.Libraries.Covalence
 
             private void Add(TokenType type, object val = null)
             {
-                var t = new Token
+                Token t = new Token
                 {
                     Type = type,
                     Val = val,
@@ -129,8 +129,12 @@ namespace Oxide.Core.Libraries.Covalence
 
             private void WritePatternString()
             {
-                if (patternStart >= position) return;
-                var ts = tokenStart;
+                if (patternStart >= position)
+                {
+                    return;
+                }
+
+                int ts = tokenStart;
                 tokenStart = patternStart;
                 Add(TokenType.String, Token());
                 tokenStart = ts;
@@ -167,7 +171,7 @@ namespace Oxide.Core.Libraries.Covalence
                 Next();
                 return () =>
                 {
-                    var ch = Current();
+                    char ch = Current();
                     if (ch == ']')
                     {
                         Next();
@@ -193,7 +197,7 @@ namespace Oxide.Core.Libraries.Covalence
                         Next();
                         return s;
                     }
-                    var parsed = parse(Token());
+                    object parsed = parse(Token());
                     if (parsed == null)
                     {
                         Reset();
@@ -276,7 +280,7 @@ namespace Oxide.Core.Libraries.Covalence
                 // A pattern is the full pattern of a token, e.g. [#foo] instead of just foo as token
                 // When we reach eof or an error we want to default to using a string as token
                 // To accomplish this, we need the full pattern instead of just the token
-                var l = new Lexer { text = text };
+                Lexer l = new Lexer { text = text };
 
                 // Run the state machine until EOF
                 State state = l.Str;
@@ -305,14 +309,14 @@ namespace Oxide.Core.Libraries.Covalence
 
         private static List<Element> Parse(List<Token> tokens)
         {
-            var i = 0;
-            var s = new Stack<Entry>();
+            int i = 0;
+            Stack<Entry> s = new Stack<Entry>();
             s.Push(new Entry(null, Element.Tag(ElementType.String)));
             while (i < tokens.Count)
             {
-                var t = tokens[i++];
+                Token t = tokens[i++];
                 Action<Element> push = el => s.Push(new Entry(t.Pattern, el));
-                var e = s.Peek().Element;
+                Element e = s.Peek().Element;
                 if (t.Type == closeTags[e.Type])
                 {
                     // Last tag was closed, pop tag and add to parent
@@ -352,8 +356,8 @@ namespace Oxide.Core.Libraries.Covalence
             // Stringify all tags that weren't closed at EOF
             while (s.Count > 1)
             {
-                var e = s.Pop();
-                var body = s.Peek().Element.Body;
+                Entry e = s.Pop();
+                List<Element> body = s.Peek().Element.Body;
                 body.Add(Element.String(e.Pattern));
                 body.AddRange(e.Element.Body);
             }
@@ -386,15 +390,15 @@ namespace Oxide.Core.Libraries.Covalence
             // translation(tree) 	= open_tag_translation
             //                      + translation(child_1) + translation(child_2) + ... + translation(child_n)
             //                      + close_tag_translation
-            var sb = new StringBuilder();
-            foreach (var e in tree)
+            StringBuilder sb = new StringBuilder();
+            foreach (Element e in tree)
             {
                 if (e.Type == ElementType.String)
                 {
                     sb.Append(e.Val);
                     continue;
                 }
-                var tag = Translation(e, translations);
+                Tag tag = Translation(e, translations);
                 sb.Append(tag.Open);
                 sb.Append(ToTreeFormat(e.Body, translations));
                 sb.Append(tag.Close);

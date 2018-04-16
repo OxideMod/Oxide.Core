@@ -81,9 +81,9 @@ namespace Oxide.Core.Plugins.Watchers
         /// <param name="e"></param>
         private void watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            var watcher = (FileSystemWatcher)sender;
-            var length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
-            var sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
+            FileSystemWatcher watcher = (FileSystemWatcher)sender;
+            int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
+            string sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
             QueuedChange change;
             if (!changeQueue.TryGetValue(sub_path, out change))
             {
@@ -96,14 +96,22 @@ namespace Oxide.Core.Plugins.Watchers
             {
                 case WatcherChangeTypes.Changed:
                     if (change.type != WatcherChangeTypes.Created)
+                    {
                         change.type = WatcherChangeTypes.Changed;
+                    }
+
                     break;
 
                 case WatcherChangeTypes.Created:
                     if (change.type == WatcherChangeTypes.Deleted)
+                    {
                         change.type = WatcherChangeTypes.Changed;
+                    }
                     else
+                    {
                         change.type = WatcherChangeTypes.Created;
+                    }
+
                     break;
 
                 case WatcherChangeTypes.Deleted:
@@ -125,16 +133,24 @@ namespace Oxide.Core.Plugins.Watchers
                     if (Regex.Match(sub_path, @"include\\", RegexOptions.IgnoreCase).Success)
                     {
                         if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
+                        {
                             FirePluginSourceChanged(sub_path);
+                        }
+
                         return;
                     }
                     switch (change.type)
                     {
                         case WatcherChangeTypes.Changed:
                             if (watchedPlugins.Contains(sub_path))
+                            {
                                 FirePluginSourceChanged(sub_path);
+                            }
                             else
+                            {
                                 FirePluginAdded(sub_path);
+                            }
+
                             break;
 
                         case WatcherChangeTypes.Created:
@@ -143,7 +159,10 @@ namespace Oxide.Core.Plugins.Watchers
 
                         case WatcherChangeTypes.Deleted:
                             if (watchedPlugins.Contains(sub_path))
+                            {
                                 FirePluginRemoved(sub_path);
+                            }
+
                             break;
                     }
                 });

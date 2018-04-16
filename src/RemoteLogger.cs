@@ -31,7 +31,7 @@ namespace Oxide.Core
 
         private static Dictionary<string, string> BuildHeaders()
         {
-            var authString = string.Join(", ", sentryAuth.Select(x => string.Join("=", x)).ToArray());
+            string authString = string.Join(", ", sentryAuth.Select(x => string.Join("=", x)).ToArray());
             authString += ", sentry_timestamp=" + (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             return new Dictionary<string, string> { { "X-Sentry-Auth", "Sentry " + authString } };
         }
@@ -78,51 +78,73 @@ namespace Oxide.Core
                 this.message = message.Length > 1000 ? message.Substring(0, 1000) : message;
                 this.culprit = culprit;
                 this.modules = new Dictionary<string, string>();
-                foreach (var extension in Interface.Oxide.GetAllExtensions())
+                foreach (Extension extension in Interface.Oxide.GetAllExtensions())
+                {
                     modules[extension.GetType().Assembly.GetName().Name] = extension.Version.ToString();
+                }
 
                 if (exception != null)
                 {
                     extra = new Dictionary<string, string>();
-                    var exceptionLines = exception.Split('\n').Take(31).ToArray();
-                    for (var i = 0; i < exceptionLines.Length; i++)
+                    string[] exceptionLines = exception.Split('\n').Take(31).ToArray();
+                    for (int i = 0; i < exceptionLines.Length; i++)
                     {
-                        var line = exceptionLines[i].Trim(' ', '\r', '\n').Replace('\t', ' ');
-                        if (line.Length > 0) extra["line_" + i.ToString("00")] = line;
+                        string line = exceptionLines[i].Trim(' ', '\r', '\n').Replace('\t', ' ');
+                        if (line.Length > 0)
+                        {
+                            extra["line_" + i.ToString("00")] = line;
+                        }
                     }
                 }
             }
 
             public void DetectModules(Assembly assembly)
             {
-                var extensionType = assembly.GetTypes().FirstOrDefault(t => t.BaseType == typeof(Extension));
+                Type extensionType = assembly.GetTypes().FirstOrDefault(t => t.BaseType == typeof(Extension));
                 if (extensionType == null)
                 {
-                    var pluginType = assembly.GetTypes().FirstOrDefault(t => IsTypeDerivedFrom(t, typeof(Plugin)));
+                    Type pluginType = assembly.GetTypes().FirstOrDefault(t => IsTypeDerivedFrom(t, typeof(Plugin)));
                     if (pluginType != null)
                     {
-                        var plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginType.Name);
-                        if (plugin != null) modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginType.Name);
+                        if (plugin != null)
+                        {
+                            modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        }
                     }
                 }
             }
 
             public void DetectModules(string[] stackTrace)
             {
-                foreach (var line in stackTrace)
+                foreach (string line in stackTrace)
                 {
-                    if (!line.StartsWith("Oxide.Plugins.PluginCompiler") || !line.Contains("+")) continue;
+                    if (!line.StartsWith("Oxide.Plugins.PluginCompiler") || !line.Contains("+"))
+                    {
+                        continue;
+                    }
 
-                    var pluginName = line.Split('+')[0];
-                    var plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginName);
-                    if (plugin != null) modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                    string pluginName = line.Split('+')[0];
+                    Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginName);
+                    if (plugin != null)
+                    {
+                        modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                    }
+
                     break;
                 }
             }
 
             private static bool IsTypeDerivedFrom(Type type, Type baseType)
             {
-                while (type != null && type != baseType) if ((type = type.BaseType) == baseType) return true;
+                while (type != null && type != baseType)
+                {
+                    if ((type = type.BaseType) == baseType)
+                    {
+                        return true;
+                    }
+                }
+
                 return false;
             }
         }
@@ -166,49 +188,74 @@ namespace Oxide.Core
 
         public static void Exception(string message, Exception exception)
         {
-            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler")) return;
-            foreach (var filter in ExceptionFilter)
-                if (exception.StackTrace.Contains(filter) || message.Contains(filter)) return;
+            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler"))
+            {
+                return;
+            }
+
+            foreach (string filter in ExceptionFilter)
+            {
+                if (exception.StackTrace.Contains(filter) || message.Contains(filter))
+                {
+                    return;
+                }
+            }
 
             EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message, exception.ToString());
         }
 
         public static void Exception(string message, string rawStackTrace)
         {
-            var stackTrace = rawStackTrace.Split('\r', '\n');
-            var culprit = stackTrace[0].Split('(')[0].Trim();
+            string[] stackTrace = rawStackTrace.Split('\r', '\n');
+            string culprit = stackTrace[0].Split('(')[0].Trim();
             EnqueueReport("fatal", stackTrace, culprit, message, rawStackTrace);
         }
 
         private static void EnqueueReport(string level, Assembly assembly, string culprit, string message, string exception = null)
         {
-            var report = new Report(level, culprit, message, exception);
+            Report report = new Report(level, culprit, message, exception);
             report.DetectModules(assembly);
             EnqueueReport(report);
         }
 
         private static void EnqueueReport(string level, string[] stackTrace, string culprit, string message, string exception = null)
         {
-            var report = new Report(level, culprit, message, exception);
+            Report report = new Report(level, culprit, message, exception);
             report.DetectModules(stackTrace);
             EnqueueReport(report);
         }
 
         private static void EnqueueReport(Report report)
         {
-            var stackTrace = report.extra.Values;
-            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler")) return;
-            foreach (var filter in ExceptionFilter) if (stackTrace.Contains(filter) || stackTrace.Contains(filter)) return;
+            Dictionary<string, string>.ValueCollection stackTrace = report.extra.Values;
+            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler"))
+            {
+                return;
+            }
+
+            foreach (string filter in ExceptionFilter)
+            {
+                if (stackTrace.Contains(filter) || stackTrace.Contains(filter))
+                {
+                    return;
+                }
+            }
 
             QueuedReports.Add(new QueuedReport(report));
-            if (!submittingReports) SubmitNextReport();
+            if (!submittingReports)
+            {
+                SubmitNextReport();
+            }
         }
 
         private static void SubmitNextReport()
         {
-            if (QueuedReports.Count < 1) return;
+            if (QueuedReports.Count < 1)
+            {
+                return;
+            }
 
-            var queuedReport = QueuedReports[0];
+            QueuedReport queuedReport = QueuedReports[0];
             submittingReports = true;
             Webrequests.Enqueue(Url, queuedReport.Body, (code, response) =>
             {
@@ -228,7 +275,7 @@ namespace Oxide.Core
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static string GetCurrentMethod()
         {
-            var callingMethod = (new StackTrace()).GetFrame(2).GetMethod();
+            MethodBase callingMethod = (new StackTrace()).GetFrame(2).GetMethod();
             return callingMethod.DeclaringType?.FullName + "." + callingMethod.Name;
         }
     }

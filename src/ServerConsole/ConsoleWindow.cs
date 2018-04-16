@@ -47,8 +47,12 @@ namespace Oxide.Core.ServerConsole
                 case PlatformID.Win32NT:
                 case PlatformID.Win32S:
                 case PlatformID.Win32Windows:
-                    var pDll = GetModuleHandle("ntdll.dll");
-                    if (pDll == IntPtr.Zero) return false;
+                    IntPtr pDll = GetModuleHandle("ntdll.dll");
+                    if (pDll == IntPtr.Zero)
+                    {
+                        return false;
+                    }
+
                     return GetProcAddress(pDll, "wine_get_version") == IntPtr.Zero && (force || GetConsoleWindow() == IntPtr.Zero);
             }
             return false;
@@ -56,12 +60,19 @@ namespace Oxide.Core.ServerConsole
 
         public void SetTitle(string title)
         {
-            if (title != null) SetConsoleTitle(title);
+            if (title != null)
+            {
+                SetConsoleTitle(title);
+            }
         }
 
         public bool Initialize()
         {
-            if (!AttachConsole(ATTACH_PARENT_PROCESS)) AllocConsole();
+            if (!AttachConsole(ATTACH_PARENT_PROCESS))
+            {
+                AllocConsole();
+            }
+
             if (GetConsoleWindow() == IntPtr.Zero)
             {
                 FreeConsole();
@@ -69,13 +80,13 @@ namespace Oxide.Core.ServerConsole
             }
             oldOutput = Console.Out;
             oldEncoding = Console.OutputEncoding;
-            var encoding = new UTF8Encoding(false);
+            UTF8Encoding encoding = new UTF8Encoding(false);
             SetConsoleOutputCP((uint)encoding.CodePage);
             Console.OutputEncoding = encoding;
             Stream outStream;
             try
             {
-                var safeFileHandle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE), true);
+                SafeFileHandle safeFileHandle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE), true);
                 outStream = new FileStream(safeFileHandle, FileAccess.Write);
             }
             catch (Exception)
@@ -88,7 +99,11 @@ namespace Oxide.Core.ServerConsole
 
         public void Shutdown()
         {
-            if (oldOutput != null) Console.SetOut(oldOutput);
+            if (oldOutput != null)
+            {
+                Console.SetOut(oldOutput);
+            }
+
             if (oldEncoding != null)
             {
                 SetConsoleOutputCP((uint)oldEncoding.CodePage);

@@ -16,7 +16,7 @@ namespace Oxide.Core.RemoteConsole
         public string Type;
         public string Stacktrace;
 
-        public static RemoteMessage CreateMessage(string message, int identifier = 0, string type = "generic", string trace = "") => new RemoteMessage()
+        public static RemoteMessage CreateMessage(string message, int identifier = 0, string type = "generic", string trace = "") => new RemoteMessage
         {
             Message = message,
             Identifier = identifier,
@@ -24,11 +24,11 @@ namespace Oxide.Core.RemoteConsole
             Stacktrace = trace
         };
 
-        public static RemoteMessage GetMessage(string message)
+        public static RemoteMessage GetMessage(string text)
         {
             try
             {
-                return JsonConvert.DeserializeObject<RemoteMessage>(message);
+                return JsonConvert.DeserializeObject<RemoteMessage>(text);
             }
             catch (JsonReaderException)
             {

@@ -26,7 +26,7 @@ namespace Oxide.Core
                 return new object[length];
             }
 
-            var arrays = _pooledArrays[length - 1];
+            Queue<object[]> arrays = _pooledArrays[length - 1];
             lock (arrays)
             {
                 if (arrays.Count == 0)
@@ -49,7 +49,7 @@ namespace Oxide.Core
             {
                 array[i] = null;
             }
-            var arrays = _pooledArrays[array.Length - 1];
+            Queue<object[]> arrays = _pooledArrays[array.Length - 1];
             lock (arrays)
             {
                 if (arrays.Count > MaxPoolAmount)
@@ -67,7 +67,7 @@ namespace Oxide.Core
 
         private static void SetupArrays(int length)
         {
-            var arrays = _pooledArrays[length - 1];
+            Queue<object[]> arrays = _pooledArrays[length - 1];
             for (int i = 0; i < InitialPoolAmount; i++)
             {
                 arrays.Enqueue(new object[length]);

@@ -35,9 +35,11 @@ namespace Oxide.Core.Plugins
             exact = true;
 
             if (Parameters.Length == 0 && (args == null || args.Length == 0))
+            {
                 return true;
+            }
 
-            for (var i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Length; i++)
             {
                 if (args[i] == null)
                 {
@@ -59,7 +61,10 @@ namespace Oxide.Core.Plugins
                     }
                 }
 
-                if (exact) continue;
+                if (exact)
+                {
+                    continue;
+                }
 
                 if (args[i].GetType() == Parameters[i].ParameterType ||
                     args[i].GetType().MakeByRefType() == Parameters[i].ParameterType ||
