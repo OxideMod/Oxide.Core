@@ -37,7 +37,11 @@ namespace Oxide.Core.Logging
 
         public override void OnRemoved()
         {
-            if (exit) return;
+            if (exit)
+            {
+                return;
+            }
+
             exit = true;
             waitevent.Set();
             workerthread.Join();
@@ -49,7 +53,11 @@ namespace Oxide.Core.Logging
         /// <param name="msg"></param>
         internal override void Write(LogMessage msg)
         {
-            lock (syncroot) base.Write(msg);
+            lock (syncroot)
+            {
+                base.Write(msg);
+            }
+
             waitevent.Set();
         }
 
@@ -77,14 +85,18 @@ namespace Oxide.Core.Logging
                 // Iterate each item in the queue
                 lock (syncroot)
                 {
-                    if (MessageQueue.Count <= 0) continue;
+                    if (MessageQueue.Count <= 0)
+                    {
+                        continue;
+                    }
+
                     BeginBatchProcess();
                     try
                     {
                         while (MessageQueue.Count > 0)
                         {
                             // Dequeue
-                            var message = MessageQueue.Dequeue();
+                            LogMessage message = MessageQueue.Dequeue();
 
                             // Process
                             ProcessMessage(message);

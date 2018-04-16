@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -53,15 +54,20 @@ namespace Oxide.Core.Database
         {
             // Already built?
             if (_sqlFinal != null)
+            {
                 return;
+            }
 
             // Build it
-            var sb = new StringBuilder();
-            var args = new List<object>();
+            StringBuilder sb = new StringBuilder();
+            List<object> args = new List<object>();
             Build(sb, args, null);
-            var tmpFinal = sb.ToString();
+            string tmpFinal = sb.ToString();
             if (Filter.IsMatch(tmpFinal))
+            {
                 throw new Exception("Commands LOAD DATA, LOAD_FILE, OUTFILE, DUMPFILE not allowed.");
+            }
+
             _sqlFinal = tmpFinal;
             _argsFinal = args.ToArray();
         }
@@ -69,9 +75,13 @@ namespace Oxide.Core.Database
         public Sql Append(Sql sql)
         {
             if (_rhs != null)
+            {
                 _rhs.Append(sql);
+            }
             else
+            {
                 _rhs = sql;
+            }
 
             return this;
         }
@@ -96,12 +106,17 @@ namespace Oxide.Core.Database
                     sb.Append("\n");
                 }
 
-                var sql = ProcessParams(_sql, _args, args);
+                string sql = ProcessParams(_sql, _args, args);
 
                 if (Is(lhs, "WHERE ") && Is(this, "WHERE "))
+                {
                     sql = "AND " + sql.Substring(6);
+                }
+
                 if (Is(lhs, "ORDER BY ") && Is(this, "ORDER BY "))
+                {
                     sql = ", " + sql.Substring(9);
+                }
 
                 sb.Append(sql);
             }
@@ -154,7 +169,7 @@ namespace Oxide.Core.Database
         {
             return RxParams.Replace(sql, m =>
             {
-                var param = m.Value.Substring(1);
+                string param = m.Value.Substring(1);
 
                 object argVal;
 
@@ -162,30 +177,41 @@ namespace Oxide.Core.Database
                 if (int.TryParse(param, out paramIndex))
                 {
                     if (paramIndex < 0 || paramIndex >= argsSrc.Length)
-                        throw new ArgumentOutOfRangeException(string.Format("Parameter '@{0}' specified but only {1} parameters supplied (in `{2}`)", paramIndex, argsSrc.Length, sql));
+                    {
+                        throw new ArgumentOutOfRangeException(
+                            $"Parameter '@{paramIndex}' specified but only {argsSrc.Length} parameters supplied (in `{sql}`)");
+                    }
+
                     argVal = argsSrc[paramIndex];
                 }
                 else
                 {
-                    var found = false;
+                    bool found = false;
                     argVal = null;
-                    foreach (var o in argsSrc)
+                    foreach (object o in argsSrc)
                     {
-                        var pi = o.GetType().GetProperty(param);
-                        if (pi == null) continue;
+                        PropertyInfo pi = o.GetType().GetProperty(param);
+                        if (pi == null)
+                        {
+                            continue;
+                        }
+
                         argVal = pi.GetValue(o, null);
                         found = true;
                         break;
                     }
 
                     if (!found)
-                        throw new ArgumentException(string.Format("Parameter '@{0}' specified but none of the passed arguments have a property with this name (in '{1}')", param, sql));
+                    {
+                        throw new ArgumentException(
+                            $"Parameter '@{param}' specified but none of the passed arguments have a property with this name (in '{sql}')");
+                    }
                 }
 
                 if ((argVal as IEnumerable) != null && (argVal as string) == null && (argVal as byte[]) == null)
                 {
-                    var sb = new StringBuilder();
-                    foreach (var i in argVal as IEnumerable)
+                    StringBuilder sb = new StringBuilder();
+                    foreach (object i in argVal as IEnumerable)
                     {
                         sb.Append((sb.Length == 0 ? "@" : ",@") + argsDest.Count.ToString());
                         argsDest.Add(i);
@@ -200,7 +226,7 @@ namespace Oxide.Core.Database
 
         public static void AddParams(IDbCommand cmd, object[] items, string parameterPrefix)
         {
-            foreach (var item in items)
+            foreach (object item in items)
             {
                 AddParam(cmd, item, "@");
             }
@@ -208,23 +234,23 @@ namespace Oxide.Core.Database
 
         public static void AddParam(IDbCommand cmd, object item, string parameterPrefix)
         {
-            var idbParam = item as IDbDataParameter;
+            IDbDataParameter idbParam = item as IDbDataParameter;
             if (idbParam != null)
             {
-                idbParam.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
+                idbParam.ParameterName = $"{parameterPrefix}{cmd.Parameters.Count}";
                 cmd.Parameters.Add(idbParam);
                 return;
             }
 
-            var p = cmd.CreateParameter();
-            p.ParameterName = string.Format("{0}{1}", parameterPrefix, cmd.Parameters.Count);
+            IDbDataParameter p = cmd.CreateParameter();
+            p.ParameterName = $"{parameterPrefix}{cmd.Parameters.Count}";
             if (item == null)
             {
                 p.Value = DBNull.Value;
             }
             else
             {
-                var t = item.GetType();
+                Type t = item.GetType();
                 if (t.IsEnum)
                 {
                     p.Value = (int)item;

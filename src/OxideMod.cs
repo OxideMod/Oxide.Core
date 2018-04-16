@@ -6,6 +6,7 @@ using Oxide.Core.Libraries;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
+using Oxide.Core.Plugins.Watchers;
 using Oxide.Core.ServerConsole;
 using References::Newtonsoft.Json;
 using System;
@@ -114,8 +115,14 @@ namespace Oxide.Core
         {
             RootDirectory = Environment.CurrentDirectory;
             if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
+            {
                 RootDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            if (RootDirectory == null) throw new Exception($"RootDirectory is null");
+            }
+
+            if (RootDirectory == null)
+            {
+                throw new Exception($"RootDirectory is null");
+            }
 
             InstanceDirectory = Path.Combine(RootDirectory, "oxide");
 
@@ -128,29 +135,59 @@ namespace Oxide.Core
                 string var, format;
                 CommandLine.GetArgument("oxide.directory", out var, out format);
                 if (string.IsNullOrEmpty(var) || CommandLine.HasVariable(var))
+                {
                     InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(var))));
+                }
             }
 
             ExtensionDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            if (ExtensionDirectory == null || !Directory.Exists(ExtensionDirectory)) throw new Exception("Could not identify extension directory");
+            if (ExtensionDirectory == null || !Directory.Exists(ExtensionDirectory))
+            {
+                throw new Exception("Could not identify extension directory");
+            }
 
             PluginDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("plugins"));
             ConfigDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("config"));
             DataDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("data"));
             LangDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("lang"));
             LogDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("logs"));
-            if (!Directory.Exists(InstanceDirectory)) Directory.CreateDirectory(InstanceDirectory);
-            if (!Directory.Exists(PluginDirectory)) Directory.CreateDirectory(PluginDirectory);
-            if (!Directory.Exists(ConfigDirectory)) Directory.CreateDirectory(ConfigDirectory);
-            if (!Directory.Exists(DataDirectory)) Directory.CreateDirectory(DataDirectory);
-            if (!Directory.Exists(LangDirectory)) Directory.CreateDirectory(LangDirectory);
-            if (!Directory.Exists(LogDirectory)) Directory.CreateDirectory(LogDirectory);
+            if (!Directory.Exists(InstanceDirectory))
+            {
+                Directory.CreateDirectory(InstanceDirectory);
+            }
+
+            if (!Directory.Exists(PluginDirectory))
+            {
+                Directory.CreateDirectory(PluginDirectory);
+            }
+
+            if (!Directory.Exists(ConfigDirectory))
+            {
+                Directory.CreateDirectory(ConfigDirectory);
+            }
+
+            if (!Directory.Exists(DataDirectory))
+            {
+                Directory.CreateDirectory(DataDirectory);
+            }
+
+            if (!Directory.Exists(LangDirectory))
+            {
+                Directory.CreateDirectory(LangDirectory);
+            }
+
+            if (!Directory.Exists(LogDirectory))
+            {
+                Directory.CreateDirectory(LogDirectory);
+            }
 
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
-            var config = Path.Combine(InstanceDirectory, "oxide.config.json");
+            string config = Path.Combine(InstanceDirectory, "oxide.config.json");
             if (File.Exists(config))
+            {
                 Config = ConfigFile.Load<OxideConfig>(config);
+            }
             else
             {
                 Config = new OxideConfig(config);
@@ -158,11 +195,21 @@ namespace Oxide.Core
             }
 
             if (CommandLine.HasVariable("rcon.port"))
+            {
                 Config.Rcon.Port = int.Parse(CommandLine.GetVariable("rcon.port"));
+            }
+
+            if (CommandLine.HasVariable("rcon.password"))
+            {
+                Config.Rcon.Password = CommandLine.GetVariable("rcon.password");
+            }
 
             RootLogger = new CompoundLogger();
             RootLogger.AddLogger(new RotatingFileLogger { Directory = LogDirectory });
-            if (debugCallback != null) RootLogger.AddLogger(new CallbackLogger(debugCallback));
+            if (debugCallback != null)
+            {
+                RootLogger.AddLogger(new CallbackLogger(debugCallback));
+            }
 
             LogInfo("Loading Oxide Core v{0}...", Version);
 
@@ -195,18 +242,25 @@ namespace Oxide.Core
                 LogWarning("A reliable clock is not available, falling back to a clock which may be unreliable on certain hardware");
             }
 
-            foreach (var ext in extensionManager.GetAllExtensions()) ext.LoadPluginWatchers(PluginDirectory);
+            foreach (Extension ext in extensionManager.GetAllExtensions())
+            {
+                ext.LoadPluginWatchers(PluginDirectory);
+            }
+
             LogInfo("Loading plugins...");
             LoadAllPlugins(true);
 
-            foreach (var watcher in extensionManager.GetPluginChangeWatchers())
+            foreach (PluginChangeWatcher watcher in extensionManager.GetPluginChangeWatchers())
             {
                 watcher.OnPluginSourceChanged += watcher_OnPluginSourceChanged;
                 watcher.OnPluginAdded += watcher_OnPluginAdded;
                 watcher.OnPluginRemoved += watcher_OnPluginRemoved;
             }
 
-            if (CommandLine.HasVariable("nolog")) LogWarning("Usage of the 'nolog' variable will prevent logging");
+            if (CommandLine.HasVariable("nolog"))
+            {
+                LogWarning("Usage of the 'nolog' variable will prevent logging");
+            }
         }
 
         /// <summary>
@@ -279,18 +333,18 @@ namespace Oxide.Core
         /// </summary>
         public void LoadAllPlugins(bool init = false)
         {
-            var loaders = extensionManager.GetPluginLoaders();
+            IEnumerable<PluginLoader> loaders = extensionManager.GetPluginLoaders();
 
             // Load all core plugins first
             if (!HasLoadedCorePlugins)
             {
-                foreach (var loader in loaders)
+                foreach (PluginLoader loader in loaders)
                 {
-                    foreach (var type in loader.CorePlugins)
+                    foreach (Type type in loader.CorePlugins)
                     {
                         try
                         {
-                            var plugin = (Plugin)Activator.CreateInstance(type);
+                            Plugin plugin = (Plugin)Activator.CreateInstance(type);
                             plugin.IsCorePlugin = true;
                             PluginLoaded(plugin);
                         }
@@ -304,13 +358,21 @@ namespace Oxide.Core
             }
 
             // Scan the plugin directory and load all reported plugins
-            foreach (var loader in loaders)
-                foreach (var name in loader.ScanDirectory(PluginDirectory)) LoadPlugin(name);
+            foreach (PluginLoader loader in loaders)
+            {
+                foreach (string name in loader.ScanDirectory(PluginDirectory))
+                {
+                    LoadPlugin(name);
+                }
+            }
 
-            if (!init) return;
+            if (!init)
+            {
+                return;
+            }
 
-            var lastCall = Now;
-            foreach (var loader in extensionManager.GetPluginLoaders())
+            float lastCall = Now;
+            foreach (PluginLoader loader in extensionManager.GetPluginLoaders())
             {
                 // Wait until all async plugins have finished loading
                 while (loader.LoadingPlugins.Count > 0)
@@ -328,8 +390,10 @@ namespace Oxide.Core
         /// </summary>
         public void UnloadAllPlugins(IList<string> skip = null)
         {
-            foreach (var plugin in RootPluginManager.GetPlugins().Where(p => !p.IsCorePlugin && (skip == null || !skip.Contains(p.Name))).ToArray())
+            foreach (Plugin plugin in RootPluginManager.GetPlugins().Where(p => !p.IsCorePlugin && (skip == null || !skip.Contains(p.Name))).ToArray())
+            {
                 UnloadPlugin(plugin.Name);
+            }
         }
 
         /// <summary>
@@ -337,8 +401,10 @@ namespace Oxide.Core
         /// </summary>
         public void ReloadAllPlugins(IList<string> skip = null)
         {
-            foreach (var plugin in RootPluginManager.GetPlugins().Where(p => !p.IsCorePlugin && (skip == null || !skip.Contains(p.Name))).ToArray())
+            foreach (Plugin plugin in RootPluginManager.GetPlugins().Where(p => !p.IsCorePlugin && (skip == null || !skip.Contains(p.Name))).ToArray())
+            {
                 ReloadPlugin(plugin.Name);
+            }
         }
 
         /// <summary>
@@ -348,10 +414,13 @@ namespace Oxide.Core
         public bool LoadPlugin(string name)
         {
             // Check if the plugin is already loaded
-            if (RootPluginManager.GetPlugin(name) != null) return false;
+            if (RootPluginManager.GetPlugin(name) != null)
+            {
+                return false;
+            }
 
             // Find all plugin loaders that lay claim to the name
-            var loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Contains(name)));
+            HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Contains(name)));
 
             if (loaders.Count == 0)
             {
@@ -367,11 +436,15 @@ namespace Oxide.Core
             }
 
             // Load it and watch for errors
-            var loader = loaders.First();
+            PluginLoader loader = loaders.First();
             try
             {
-                var plugin = loader.Load(PluginDirectory, name);
-                if (plugin == null) return true; // Async load
+                Plugin plugin = loader.Load(PluginDirectory, name);
+                if (plugin == null)
+                {
+                    return true; // Async load
+                }
+
                 plugin.Loader = loader;
                 PluginLoaded(plugin);
                 return true;
@@ -405,7 +478,11 @@ namespace Oxide.Core
             }
             catch (Exception ex)
             {
-                if (plugin.Loader != null) plugin.Loader.PluginErrors[plugin.Name] = ex.Message;
+                if (plugin.Loader != null)
+                {
+                    plugin.Loader.PluginErrors[plugin.Name] = ex.Message;
+                }
+
                 LogException($"Could not initialize plugin '{plugin.Name} v{plugin.Version}'", ex);
                 return false;
             }
@@ -418,18 +495,25 @@ namespace Oxide.Core
         public bool UnloadPlugin(string name)
         {
             // Get the plugin
-            var plugin = RootPluginManager.GetPlugin(name);
-            if (plugin == null) return false;
+            Plugin plugin = RootPluginManager.GetPlugin(name);
+            if (plugin == null)
+            {
+                return false;
+            }
 
             // Let the plugin loader know that this plugin is being unloaded
-            var loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
+            PluginLoader loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
             loader?.Unloading(plugin);
 
             // Unload it
             RootPluginManager.RemovePlugin(plugin);
 
             // Let other plugins know that this plugin has been unloaded
-            if (plugin.IsLoaded) CallHook("OnPluginUnloaded", plugin);
+            if (plugin.IsLoaded)
+            {
+                CallHook("OnPluginUnloaded", plugin);
+            }
+
             plugin.IsLoaded = false;
 
             LogInfo("Unloaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
@@ -442,25 +526,29 @@ namespace Oxide.Core
         /// <param name="name"></param>
         public bool ReloadPlugin(string name)
         {
-            var isNested = false;
-            var directory = PluginDirectory;
+            bool isNested = false;
+            string directory = PluginDirectory;
             if (name.Contains("\\"))
             {
                 isNested = true;
-                var subPath = Path.GetDirectoryName(name);
+                string subPath = Path.GetDirectoryName(name);
                 if (subPath != null)
                 {
                     directory = Path.Combine(directory, subPath);
                     name = name.Substring(subPath.Length + 1);
                 }
             }
-            var loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Contains(name));
+            PluginLoader loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Contains(name));
             if (loader != null)
             {
                 loader.Reload(directory, name);
                 return true;
             }
-            if (isNested) return false;
+            if (isNested)
+            {
+                return false;
+            }
+
             UnloadPlugin(name);
             LoadPlugin(name);
             return true;
@@ -479,8 +567,8 @@ namespace Oxide.Core
 
         public bool LoadExtension(string name)
         {
-            var extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
-            var extPath = Path.Combine(ExtensionDirectory, extFileName);
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
 
             if (!File.Exists(extPath))
             {
@@ -494,8 +582,8 @@ namespace Oxide.Core
 
         public bool UnloadExtension(string name)
         {
-            var extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
-            var extPath = Path.Combine(ExtensionDirectory, extFileName);
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
 
             if (!File.Exists(extPath))
             {
@@ -509,8 +597,8 @@ namespace Oxide.Core
 
         public bool ReloadExtension(string name)
         {
-            var extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
-            var extPath = Path.Combine(ExtensionDirectory, extFileName);
+            string extFileName = !name.EndsWith(".dll") ? name + ".dll" : name;
+            string extPath = Path.Combine(ExtensionDirectory, extFileName);
 
             if (!File.Exists(extPath))
             {
@@ -551,7 +639,10 @@ namespace Oxide.Core
         /// <param name="callback"></param>
         public void NextTick(Action callback)
         {
-            lock (nextTickLock) nextTickQueue.Add(callback);
+            lock (nextTickLock)
+            {
+                nextTickQueue.Add(callback);
+            }
         }
 
         /// <summary>
@@ -575,7 +666,7 @@ namespace Oxide.Core
                     nextTickQueue = lastTickQueue;
                     lastTickQueue = queued;
                 }
-                for (var i = 0; i < queued.Count; i++)
+                for (int i = 0; i < queued.Count; i++)
                 {
                     try
                     {
@@ -593,7 +684,10 @@ namespace Oxide.Core
             libtimer.Update(delta);
 
             // Don't update plugin watchers or call OnFrame in plugins until servers starts ticking
-            if (!isInitialized) return;
+            if (!isInitialized)
+            {
+                return;
+            }
 
             ServerConsole?.Update();
 
@@ -610,13 +704,23 @@ namespace Oxide.Core
 
         public void OnShutdown()
         {
-            if (IsShuttingDown) return;
+            if (IsShuttingDown)
+            {
+                return;
+            }
 
             IsShuttingDown = true;
             UnloadAllPlugins();
 
-            foreach (var extension in extensionManager.GetAllExtensions()) extension.OnShutdown();
-            foreach (var name in extensionManager.GetLibraries()) extensionManager.GetLibrary(name).Shutdown();
+            foreach (Extension extension in extensionManager.GetAllExtensions())
+            {
+                extension.OnShutdown();
+            }
+
+            foreach (string name in extensionManager.GetLibraries())
+            {
+                extensionManager.GetLibrary(name).Shutdown();
+            }
 
             RemoteConsole?.Shutdown();
             ServerConsole?.OnDisable();
@@ -633,7 +737,10 @@ namespace Oxide.Core
 
         public bool EnableConsole(bool force = false)
         {
-            if (!CheckConsole(force)) return false;
+            if (!CheckConsole(force))
+            {
+                return false;
+            }
 
             ServerConsole = new ServerConsole.ServerConsole();
             ServerConsole.OnEnable();
@@ -671,16 +778,16 @@ namespace Oxide.Core
                 case PlatformID.Win32NT:
                 case PlatformID.Win32S:
                 case PlatformID.Win32Windows:
-                    var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-                    var newPath = string.IsNullOrEmpty(currentPath) ? path : currentPath + Path.PathSeparator + path;
+                    string currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+                    string newPath = string.IsNullOrEmpty(currentPath) ? path : currentPath + Path.PathSeparator + path;
                     Environment.SetEnvironmentVariable("PATH", newPath);
                     SetDllDirectory(path);
                     break;
 
                 case PlatformID.Unix:
                 case PlatformID.MacOSX:
-                    var currentLdLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? string.Empty;
-                    var newLdLibraryPath = string.IsNullOrEmpty(currentLdLibraryPath) ? path : currentLdLibraryPath + Path.PathSeparator + path;
+                    string currentLdLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? string.Empty;
+                    string newLdLibraryPath = string.IsNullOrEmpty(currentLdLibraryPath) ? path : currentLdLibraryPath + Path.PathSeparator + path;
                     Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", newLdLibraryPath);
                     break;
             }

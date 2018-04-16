@@ -25,7 +25,10 @@ namespace Oxide.Core.Libraries.Covalence
 
         public void Refresh()
         {
-            if (!File.Exists(FullPath)) return;
+            if (!File.Exists(FullPath))
+            {
+                return;
+            }
 
             CreationTime = File.GetCreationTime(FullPath);
             CreationTimeUnix = time.GetUnixFromDateTime(CreationTime);
@@ -45,7 +48,10 @@ namespace Oxide.Core.Libraries.Covalence
         /// <returns></returns>
         public static SaveInfo Create(string filepath)
         {
-            if (!File.Exists(filepath)) return null;
+            if (!File.Exists(filepath))
+            {
+                return null;
+            }
 
             return new SaveInfo(filepath);
         }

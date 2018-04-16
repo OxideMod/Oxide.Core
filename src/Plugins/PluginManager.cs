@@ -60,7 +60,10 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         public bool AddPlugin(Plugin plugin)
         {
-            if (loadedPlugins.ContainsKey(plugin.Name)) return false;
+            if (loadedPlugins.ContainsKey(plugin.Name))
+            {
+                return false;
+            }
 
             loadedPlugins.Add(plugin.Name, plugin);
             plugin.HandleAddedToManager(this);
@@ -75,11 +78,20 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public bool RemovePlugin(Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name)) return false;
+            if (!loadedPlugins.ContainsKey(plugin.Name))
+            {
+                return false;
+            }
 
             loadedPlugins.Remove(plugin.Name);
-            foreach (var list in hookSubscriptions.Values)
-                if (list.Contains(plugin)) list.Remove(plugin);
+            foreach (IList<Plugin> list in hookSubscriptions.Values)
+            {
+                if (list.Contains(plugin))
+                {
+                    list.Remove(plugin);
+                }
+            }
+
             plugin.HandleRemovedFromManager(this);
             OnPluginRemoved?.Invoke(plugin);
             return true;
@@ -109,7 +121,10 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         internal void SubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I")) return;
+            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I"))
+            {
+                return;
+            }
 
             IList<Plugin> sublist;
             if (!hookSubscriptions.TryGetValue(hook, out sublist))
@@ -117,7 +132,10 @@ namespace Oxide.Core.Plugins
                 sublist = new List<Plugin>();
                 hookSubscriptions.Add(hook, sublist);
             }
-            if (!sublist.Contains(plugin)) sublist.Add(plugin);
+            if (!sublist.Contains(plugin))
+            {
+                sublist.Add(plugin);
+            }
             //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is subscribing to hook '{hook}'!");
         }
 
@@ -128,11 +146,16 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         internal void UnsubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I")) return;
+            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I"))
+            {
+                return;
+            }
 
             IList<Plugin> sublist;
             if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
+            {
                 sublist.Remove(plugin);
+            }
             //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is unsubscribing to hook '{hook}'!");
         }
 
@@ -146,19 +169,25 @@ namespace Oxide.Core.Plugins
         {
             // Locate the sublist
             IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(hook, out plugins)) return null;
+            if (!hookSubscriptions.TryGetValue(hook, out plugins))
+            {
+                return null;
+            }
 
-            if (plugins.Count == 0) return null;
+            if (plugins.Count == 0)
+            {
+                return null;
+            }
 
             // Loop each item
-            var values = ArrayPool.Get(plugins.Count);
-            var returnCount = 0;
+            object[] values = ArrayPool.Get(plugins.Count);
+            int returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
-            for (var i = 0; i < plugins.Count; i++)
+            for (int i = 0; i < plugins.Count; i++)
             {
                 // Call the hook
-                var value = plugins[i].CallHook(hook, args);
+                object value = plugins[i].CallHook(hook, args);
                 if (value != null)
                 {
                     values[i] = value;
@@ -179,20 +208,27 @@ namespace Oxide.Core.Plugins
             {
                 // Notify log of hook conflict
                 hookConflicts.Clear();
-                for (var i = 0; i < plugins.Count; i++)
+                for (int i = 0; i < plugins.Count; i++)
                 {
-                    var value = values[i];
-                    if (value == null) continue;
+                    object value = values[i];
+                    if (value == null)
+                    {
+                        continue;
+                    }
 
                     if (value.GetType().IsValueType)
                     {
                         if (!values[i].Equals(finalValue))
+                        {
                             hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                        }
                     }
                     else
                     {
                         if (values[i] != finalValue)
+                        {
                             hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                        }
                     }
                 }
                 if (hookConflicts.Count > 0)
@@ -217,13 +253,22 @@ namespace Oxide.Core.Plugins
         public object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
             IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(oldHook, out plugins)) return null;
+            if (!hookSubscriptions.TryGetValue(oldHook, out plugins))
+            {
+                return null;
+            }
 
-            if (plugins.Count == 0) return null;
+            if (plugins.Count == 0)
+            {
+                return null;
+            }
 
-            if (expireDate < DateTime.Now) return null;
+            if (expireDate < DateTime.Now)
+            {
+                return null;
+            }
 
-            var now = Interface.Oxide.Now;
+            float now = Interface.Oxide.Now;
             float lastWarningAt;
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
             {

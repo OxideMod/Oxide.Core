@@ -72,9 +72,9 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         internal void Initialize()
         {
-            var baseType = typeof(ICovalenceProvider);
+            Type baseType = typeof(ICovalenceProvider);
             IEnumerable<Type> candidateSet = null;
-            foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (Assembly ass in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type[] assTypes = null;
                 try
@@ -90,14 +90,16 @@ namespace Oxide.Core.Libraries.Covalence
                     logger.Write(LogType.Warning, "Covalence: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
                 }
                 if (assTypes != null)
+                {
                     candidateSet = candidateSet?.Concat(assTypes) ?? assTypes;
+                }
             }
             if (candidateSet == null)
             {
                 logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
-            var candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
+            List<Type> candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
 
             Type selectedCandidate;
             if (candidates.Count == 0)
@@ -108,10 +110,14 @@ namespace Oxide.Core.Libraries.Covalence
             if (candidates.Count > 1)
             {
                 selectedCandidate = candidates[0];
-                var sb = new StringBuilder();
-                for (var i = 1; i < candidates.Count; i++)
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1; i < candidates.Count; i++)
                 {
-                    if (i > 1) sb.Append(',');
+                    if (i > 1)
+                    {
+                        sb.Append(',');
+                    }
+
                     sb.Append(candidates[i].FullName);
                 }
                 logger.Write(LogType.Warning, "Multiple Covalence providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
@@ -147,7 +153,10 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="callback"></param>
         public void RegisterCommand(string command, Plugin plugin, CommandCallback callback)
         {
-            if (cmdSystem == null) return;
+            if (cmdSystem == null)
+            {
+                return;
+            }
 
             try
             {
@@ -155,7 +164,7 @@ namespace Oxide.Core.Libraries.Covalence
             }
             catch (CommandAlreadyExistsException)
             {
-                var pluginName = plugin?.Name ?? "An unknown plugin";
+                string pluginName = plugin?.Name ?? "An unknown plugin";
                 logger.Write(LogType.Error, "{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
             }
         }

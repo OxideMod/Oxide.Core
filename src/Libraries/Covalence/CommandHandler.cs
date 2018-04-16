@@ -34,10 +34,16 @@ namespace Oxide.Core.Libraries.Covalence
         public bool HandleChatMessage(IPlayer player, string message)
         {
             // Make sure the message is not empty
-            if (message.Length == 0) return false;
+            if (message.Length == 0)
+            {
+                return false;
+            }
 
             // Is it a chat command?
-            if (message[0] != '/') return false;
+            if (message[0] != '/')
+            {
+                return false;
+            }
 
             // Get the message
             message = message.Substring(1);
@@ -62,7 +68,10 @@ namespace Oxide.Core.Libraries.Covalence
         public bool HandleConsoleMessage(IPlayer player, string message)
         {
             // Handle global parent for console commands
-            if (message.StartsWith("global.")) message = message.Substring(7);
+            if (message.StartsWith("global."))
+            {
+                message = message.Substring(7);
+            }
 
             // Parse the command
             string command;
@@ -96,18 +105,22 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="args"></param>
         private void ParseCommand(string argstr, out string cmd, out string[] args)
         {
-            var arglist = new List<string>();
-            var sb = new StringBuilder();
-            var inlongarg = false;
-            for (var i = 0; i < argstr.Length; i++)
+            List<string> arglist = new List<string>();
+            StringBuilder sb = new StringBuilder();
+            bool inlongarg = false;
+            for (int i = 0; i < argstr.Length; i++)
             {
-                var c = argstr[i];
+                char c = argstr[i];
                 if (c == '"')
                 {
                     if (inlongarg)
                     {
-                        var arg = sb.ToString().Trim();
-                        if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
+                        string arg = sb.ToString().Trim();
+                        if (!string.IsNullOrEmpty(arg))
+                        {
+                            arglist.Add(arg);
+                        }
+
                         sb = new StringBuilder();
                         inlongarg = false;
                     }
@@ -118,8 +131,12 @@ namespace Oxide.Core.Libraries.Covalence
                 }
                 else if (char.IsWhiteSpace(c) && !inlongarg)
                 {
-                    var arg = sb.ToString().Trim();
-                    if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
+                    string arg = sb.ToString().Trim();
+                    if (!string.IsNullOrEmpty(arg))
+                    {
+                        arglist.Add(arg);
+                    }
+
                     sb = new StringBuilder();
                 }
                 else
@@ -129,8 +146,11 @@ namespace Oxide.Core.Libraries.Covalence
             }
             if (sb.Length > 0)
             {
-                var arg = sb.ToString().Trim();
-                if (!string.IsNullOrEmpty(arg)) arglist.Add(arg);
+                string arg = sb.ToString().Trim();
+                if (!string.IsNullOrEmpty(arg))
+                {
+                    arglist.Add(arg);
+                }
             }
             if (arglist.Count == 0)
             {

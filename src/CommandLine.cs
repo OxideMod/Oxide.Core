@@ -20,33 +20,50 @@ namespace Oxide.Core
         /// <param name="commandline"></param>
         public CommandLine(string[] commandline)
         {
-            var cmdline = string.Empty;
-            var key = string.Empty;
+            string cmdline = string.Empty;
+            string key = string.Empty;
 
-            foreach (var str in commandline) cmdline += "\"" + str.Trim('/', '\\') + "\"";
-
-            foreach (var str in Split(cmdline))
+            foreach (string str in commandline)
             {
-                if (str.Length <= 0) continue;
+                cmdline += "\"" + str.Trim('/', '\\') + "\"";
+            }
 
-                var val = str;
+            foreach (string str in Split(cmdline))
+            {
+                if (str.Length <= 0)
+                {
+                    continue;
+                }
+
+                string val = str;
                 if (str[0] == '-' || str[0] == '+')
                 {
-                    if (key != string.Empty && !variables.ContainsKey(key)) variables.Add(key, string.Empty);
+                    if (key != string.Empty && !variables.ContainsKey(key))
+                    {
+                        variables.Add(key, string.Empty);
+                    }
+
                     key = val.Substring(1);
                 }
                 else if (key != string.Empty)
                 {
                     if (!variables.ContainsKey(key))
                     {
-                        if (key.Contains("dir")) val = val.Replace('/', '\\');
+                        if (key.Contains("dir"))
+                        {
+                            val = val.Replace('/', '\\');
+                        }
+
                         variables.Add(key, val);
                     }
                     key = string.Empty;
                 }
             }
 
-            if (key != string.Empty && !variables.ContainsKey(key)) variables.Add(key, string.Empty);
+            if (key != string.Empty && !variables.ContainsKey(key))
+            {
+                variables.Add(key, string.Empty);
+            }
         }
 
         /// <summary>
@@ -54,16 +71,16 @@ namespace Oxide.Core
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public string[] Split(string input)
+        public static string[] Split(string input)
         {
-            input = input.Replace("\\\"", "&qute;");
-            var matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
-            var strArray = new string[matchs.Count];
-            for (var i = 0; i < matchs.Count; i++)
+            input = input.Replace("\\\"", "&quot;");
+            MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
+            string[] strArray = new string[matchs.Count];
+            for (int i = 0; i < matchs.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
                 strArray[i] = matchs[i].Groups[0].Value.Trim(trimChars);
-                strArray[i] = strArray[i].Replace("&qute;", "\"");
+                strArray[i] = strArray[i].Replace("&quot;", "\"");
             }
 
             return strArray;
@@ -102,10 +119,10 @@ namespace Oxide.Core
         public void GetArgument(string var, out string varname, out string format)
         {
             // Format is "folder/{variable}/otherfolder"
-            var cmd = GetVariable(var);
+            string cmd = GetVariable(var);
             StringBuilder varnamesb = new StringBuilder(), formatsb = new StringBuilder();
-            var invar = 0;
-            foreach (var c in cmd)
+            int invar = 0;
+            foreach (char c in cmd)
             {
                 switch (c)
                 {
@@ -115,14 +132,23 @@ namespace Oxide.Core
 
                     case '}':
                         invar--;
-                        if (invar == 0) formatsb.Append("{0}");
+                        if (invar == 0)
+                        {
+                            formatsb.Append("{0}");
+                        }
+
                         break;
 
                     default:
                         if (invar == 0)
+                        {
                             formatsb.Append(c);
+                        }
                         else
+                        {
                             varnamesb.Append(c);
+                        }
+
                         break;
                 }
             }

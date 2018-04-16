@@ -94,44 +94,58 @@ namespace Oxide.Core.Libraries
             functions = new Dictionary<string, MethodInfo>();
             properties = new Dictionary<string, PropertyInfo>();
 
-            var type = GetType();
+            Type type = GetType();
 
-            foreach (var method in type.GetMethods())
+            foreach (MethodInfo method in type.GetMethods())
             {
                 LibraryFunction attribute;
                 try
                 {
                     attribute = method.GetCustomAttributes(typeof(LibraryFunction), true).SingleOrDefault() as LibraryFunction;
-                    if (attribute == null) continue;
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
                 }
                 catch (TypeLoadException)
                 {
                     continue; // Ignore rare exceptions caused by type information being loaded for all methods
                 }
-                var name = attribute.Name ?? method.Name;
+                string name = attribute.Name ?? method.Name;
                 if (functions.ContainsKey(name))
+                {
                     Interface.Oxide.LogError(type.FullName + " library tried to register an already registered function: " + name);
+                }
                 else
+                {
                     functions[name] = method;
+                }
             }
 
-            foreach (var property in type.GetProperties())
+            foreach (PropertyInfo property in type.GetProperties())
             {
                 LibraryProperty attribute;
                 try
                 {
                     attribute = property.GetCustomAttributes(typeof(LibraryProperty), true).SingleOrDefault() as LibraryProperty;
-                    if (attribute == null) continue;
+                    if (attribute == null)
+                    {
+                        continue;
+                    }
                 }
                 catch (TypeLoadException)
                 {
                     continue; // Ignore rare exceptions caused by type information being loaded for all properties
                 }
-                var name = attribute.Name ?? property.Name;
+                string name = attribute.Name ?? property.Name;
                 if (properties.ContainsKey(name))
+                {
                     Interface.Oxide.LogError("{0} library tried to register an already registered property: {1}", type.FullName, name);
+                }
                 else
+                {
                     properties[name] = property;
+                }
             }
         }
 
