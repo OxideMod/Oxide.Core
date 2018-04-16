@@ -71,7 +71,7 @@ namespace Oxide.Core
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public string[] Split(string input)
+        public static string[] Split(string input)
         {
             input = input.Replace("\\\"", "&qute;");
             MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
