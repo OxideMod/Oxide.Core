@@ -149,46 +149,14 @@ namespace Oxide.Core.Configuration
         }
 
         /// <summary>
-        /// Gets or sets a setting on this config by key
+        /// Gets or sets a nested setting on this config by keys
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="keys"></param>
         /// <returns></returns>
-        public object this[string key]
+        public object this[params string[] keys]
         {
-            get
-            {
-                object val;
-                return _keyvalues.TryGetValue(key, out val) ? val : null;
-            }
-            set
-            {
-                _keyvalues[key] = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a nested setting on this config by key
-        /// </summary>
-        /// <param name="keyLevel1"></param>
-        /// <param name="keyLevel2"></param>
-        /// <returns></returns>
-        public object this[string keyLevel1, string keyLevel2]
-        {
-            get { return Get(keyLevel1, keyLevel2); }
-            set { Set(keyLevel1, keyLevel2, value); }
-        }
-
-        /// <summary>
-        /// Gets or sets a nested setting on this config by key
-        /// </summary>
-        /// <param name="keyLevel1"></param>
-        /// <param name="keyLevel2"></param>
-        /// <param name="keyLevel3"></param>
-        /// <returns></returns>
-        public object this[string keyLevel1, string keyLevel2, string keyLevel3]
-        {
-            get { return Get(keyLevel1, keyLevel2, keyLevel3); }
-            set { Set(keyLevel1, keyLevel2, keyLevel3, value); }
+            get { return Get(keys); }
+            set { Set(new List<object>(keys) { value }.ToArray()); }
         }
 
         /// <summary>
