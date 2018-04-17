@@ -287,7 +287,11 @@ namespace Oxide.Core.Configuration
         /// <typeparam name="T"></typeparam>
         /// <param name="path"></param>
         /// <returns></returns>
-        public T Get<T>(params string[] path) => ConvertValue<T>(Get(path));
+        public T Get<T>(params string[] path)
+        {
+            var val = Get(path);
+            return val == null ? null : ConvertValue<T>(val);
+        }
 
         /// <summary>
         /// Sets a configuration value at the specified path
