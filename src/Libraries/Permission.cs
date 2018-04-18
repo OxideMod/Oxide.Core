@@ -133,21 +133,21 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Saves all permissions data to the datafile
+        /// Saves all permissions data to the data files
         /// </summary>
-        public void SavePermissions()
+        public void SaveData()
         {
             SaveUsers();
             SaveGroups();
         }
 
         /// <summary>
-        /// Saves users permissions data to the datafile
+        /// Saves users permissions data to the data file
         /// </summary>
         public void SaveUsers() => ProtoStorage.Save(userdata, "oxide.users");
 
         /// <summary>
-        /// Saves groups permissions data to the datafile
+        /// Saves groups permissions data to the data file
         /// </summary>
         public void SaveGroups() => ProtoStorage.Save(groupdata, "oxide.groups");
 
