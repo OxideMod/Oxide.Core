@@ -80,8 +80,9 @@ namespace Oxide.Core
         public OxideConfig Config { get; private set; }
 
         // Various libraries
-        private Timer libtimer;
         private Covalence covalence;
+        private Permission libperm;
+        private Timer libtimer;
 
         // Extension implemented delegates
         private Func<float> getTimeSinceStartup;
@@ -220,7 +221,7 @@ namespace Oxide.Core
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
             extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
-            extensionManager.RegisterLibrary("Permission", new Permission());
+            extensionManager.RegisterLibrary("Permission", libperm = new Permission());
             extensionManager.RegisterLibrary("Plugins", new Libraries.Plugins(RootPluginManager));
             extensionManager.RegisterLibrary("Time", new Time());
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
@@ -702,6 +703,14 @@ namespace Oxide.Core
             }
         }
 
+        /// <summary>
+        /// Called when the server is saving
+        /// </summary>
+        public void OnSave() => libperm.SaveData();
+
+        /// <summary>
+        /// Called when the server is shutting down
+        /// </summary>
         public void OnShutdown()
         {
             if (IsShuttingDown)
@@ -709,6 +718,7 @@ namespace Oxide.Core
                 return;
             }
 
+            libperm.SaveData();
             IsShuttingDown = true;
             UnloadAllPlugins();
 
