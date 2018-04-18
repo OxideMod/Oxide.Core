@@ -26,6 +26,7 @@ namespace Oxide.Core
                 ["CommandUsageUnload"] = "Usage: oxide.unload *|<pluginname>+",
                 ["CommandUsageUserGroup"] = "Usage: oxide.usergroup <add|remove> <username> <groupname>",
                 ["ConnectionRejected"] = "Connection was rejected",
+                ["DataSaved"] = "Saving Oxide data...",
                 ["GroupAlreadyExists"] = "Group '{0}' already exists",
                 ["GroupAlreadyHasPermission"] = "Group '{0}' already has permission '{1}'",
                 ["GroupDoesNotHavePermission"] = "Group '{0}' does not have permission '{1}'",
