@@ -333,7 +333,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        private UserData GetUserData(string id)
+        public UserData GetUserData(string id)
         {
             UserData data;
             if (!userdata.TryGetValue(id, out data))
