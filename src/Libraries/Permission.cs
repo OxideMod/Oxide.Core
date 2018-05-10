@@ -1063,7 +1063,7 @@ namespace Oxide.Core.Libraries
             }
 
             data.Rank = rank;
-            Interface.CallHook("OnGroupRankSet", group, rank)
+            Interface.CallHook("OnGroupRankSet", group, rank);
             return true;
         }
 
@@ -1132,7 +1132,7 @@ namespace Oxide.Core.Libraries
 
             // Change the parent group
             data.ParentGroup = parent;
-            Interface.CallHook("OnGroupParentSet", group, parent)
+            Interface.CallHook("OnGroupParentSet", group, parent);
             return true;
         }
 
