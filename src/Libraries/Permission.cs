@@ -362,7 +362,7 @@ namespace Oxide.Core.Libraries
                 string newName = nickname.Sanitize();
                 data.LastSeenNickname = nickname.Sanitize();
 
-                Interface.CallHook("OnUserNameUpdated", data, oldName, newName);
+                Interface.CallHook("OnUserNameUpdated", id, oldName, newName);
             }
         }
 
