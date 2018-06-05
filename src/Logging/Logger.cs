@@ -97,22 +97,22 @@ namespace Oxide.Core.Logging
             {
                 case LogType.Chat:
                     consoleColor = ConsoleColor.Green;
-                    remoteType = "chat";
+                    remoteType = "Chat";
                     break;
 
                 case LogType.Error:
                     consoleColor = ConsoleColor.Red;
-                    remoteType = "error";
+                    remoteType = "Error";
                     break;
 
                 case LogType.Warning:
                     consoleColor = ConsoleColor.Yellow;
-                    remoteType = "warning";
+                    remoteType = "Warning";
                     break;
 
                 default:
                     consoleColor = ConsoleColor.Gray;
-                    remoteType = "generic";
+                    remoteType = "Generic";
                     break;
             }
 
@@ -120,7 +120,7 @@ namespace Oxide.Core.Logging
             Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
             {
                 Message = message,
-                Identifier = 0,
+                Identifier = -1,
                 Type = remoteType,
                 Stacktrace = stackTrace
             });
