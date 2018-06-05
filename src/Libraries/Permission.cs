@@ -238,6 +238,8 @@ namespace Oxide.Core.Libraries
             }
             set.Add(name);
 
+            Interface.CallHook("OnPermissionRegistered", name, owner);
+
             string prefix = owner.Name.ToLower() + ".";
             if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
             {
@@ -333,7 +335,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        private UserData GetUserData(string id)
+        public UserData GetUserData(string id)
         {
             UserData data;
             if (!userdata.TryGetValue(id, out data))
@@ -355,7 +357,12 @@ namespace Oxide.Core.Libraries
         {
             if (UserExists(id))
             {
-                GetUserData(id).LastSeenNickname = nickname.Sanitize();
+                UserData data = GetUserData(id);
+                string oldName = data.LastSeenNickname;
+                string newName = nickname.Sanitize();
+                data.LastSeenNickname = nickname.Sanitize();
+
+                Interface.CallHook("OnUserNameUpdated", id, oldName, newName);
             }
         }
 
@@ -958,7 +965,11 @@ namespace Oxide.Core.Libraries
             GroupData data = new GroupData { Title = title, Rank = rank };
 
             // Add the group
-            groupdata.Add(group.ToLower(), data);
+            group = group.ToLower();
+            groupdata.Add(group, data);
+
+            Interface.CallHook("OnGroupCreated", group, title, rank);
+
             return true;
         }
 
@@ -978,7 +989,7 @@ namespace Oxide.Core.Libraries
             group = group.ToLower();
 
             // Remove the group
-            groupdata.Remove(group);
+            bool removed = groupdata.Remove(group);
 
             // Remove group from users
             bool changed = userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group));
@@ -986,6 +997,11 @@ namespace Oxide.Core.Libraries
             if (changed)
             {
                 SaveUsers();
+            }
+
+            if (removed)
+            {
+                Interface.CallHook("OnGroupDeleted", group);
             }
 
             return true;
@@ -1004,9 +1020,11 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
+            group = group.ToLower();
+
             // First, get the group data
             GroupData data;
-            if (!groupdata.TryGetValue(group.ToLower(), out data))
+            if (!groupdata.TryGetValue(group, out data))
             {
                 return false;
             }
@@ -1018,6 +1036,9 @@ namespace Oxide.Core.Libraries
             }
 
             data.Title = title;
+
+            Interface.CallHook("OnGroupTitleSet", group, title);
+
             return true;
         }
 
@@ -1034,9 +1055,10 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
+            group = group.ToLower();
             // First, get the group data
             GroupData data;
-            if (!groupdata.TryGetValue(group.ToLower(), out data))
+            if (!groupdata.TryGetValue(group, out data))
             {
                 return false;
             }
@@ -1048,6 +1070,9 @@ namespace Oxide.Core.Libraries
             }
 
             data.Rank = rank;
+
+            Interface.CallHook("OnGroupRankSet", group, rank);
+
             return true;
         }
 
@@ -1116,6 +1141,9 @@ namespace Oxide.Core.Libraries
 
             // Change the parent group
             data.ParentGroup = parent;
+
+            Interface.CallHook("OnGroupParentSet", group, parent);
+
             return true;
         }
 
