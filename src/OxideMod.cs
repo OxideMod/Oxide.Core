@@ -713,28 +713,26 @@ namespace Oxide.Core
         /// </summary>
         public void OnShutdown()
         {
-            if (IsShuttingDown)
+            if (!IsShuttingDown)
             {
-                return;
+                libperm.SaveData();
+                IsShuttingDown = true;
+                UnloadAllPlugins();
+
+                foreach (Extension extension in extensionManager.GetAllExtensions())
+                {
+                    extension.OnShutdown();
+                }
+
+                foreach (string name in extensionManager.GetLibraries())
+                {
+                    extensionManager.GetLibrary(name).Shutdown();
+                }
+
+                RemoteConsole?.Shutdown();
+                ServerConsole?.OnDisable();
+                RootLogger.Shutdown();
             }
-
-            libperm.SaveData();
-            IsShuttingDown = true;
-            UnloadAllPlugins();
-
-            foreach (Extension extension in extensionManager.GetAllExtensions())
-            {
-                extension.OnShutdown();
-            }
-
-            foreach (string name in extensionManager.GetLibraries())
-            {
-                extensionManager.GetLibrary(name).Shutdown();
-            }
-
-            RemoteConsole?.Shutdown();
-            ServerConsole?.OnDisable();
-            RootLogger.Shutdown();
         }
 
         /// <summary>
@@ -747,14 +745,14 @@ namespace Oxide.Core
 
         public bool EnableConsole(bool force = false)
         {
-            if (!CheckConsole(force))
+            if (CheckConsole(force))
             {
-                return false;
+                ServerConsole = new ServerConsole.ServerConsole();
+                ServerConsole.OnEnable();
+                return true;
             }
 
-            ServerConsole = new ServerConsole.ServerConsole();
-            ServerConsole.OnEnable();
-            return true;
+            return false;
         }
 
         #region Plugin Change Watchers

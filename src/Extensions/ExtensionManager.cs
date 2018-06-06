@@ -114,6 +114,7 @@ namespace Oxide.Core.Extensions
         /// Loads the extension at the specified filename
         /// </summary>
         /// <param name="filename"></param>
+        /// <param name="forced"></param>
         public void LoadExtension(string filename, bool forced)
         {
             string name = Utility.GetFileNameWithoutExtension(filename);
@@ -271,21 +272,20 @@ namespace Oxide.Core.Extensions
         /// <param name="directory"></param>
         public void LoadAllExtensions(string directory)
         {
-            string[] coreExtensions = new[]
-            {
+            List<string> foundCore = new List<string>();
+            List<string> foundGame = new List<string>();
+            List<string> foundOther = new List<string>();
+            string[] coreExtensions = {
                 "Oxide.CSharp", "Oxide.JavaScript", "Oxide.Lua", "Oxide.MySql", "Oxide.Python", "Oxide.SQLite", "Oxide.Unity"
             };
-            string[] gameExtensions = new[]
-            {
+            string[] gameExtensions = {
                 "Oxide.Blackwake", "Oxide.Blockstorm", "Oxide.FortressCraft", "Oxide.FromTheDepths", "Oxide.GangBeasts", "Oxide.Hurtworld",
                 "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings",  "Oxide.Rust",
                 "Oxide.RustLegacy", "Oxide.SavageLands", "Oxide.SevenDaysToDie", "Oxide.SpaceEngineers", "Oxide.TheForest", "Oxide.Terraria",
                 "Oxide.Unturned"
             };
-            List<string> foundCore = new List<string>();
-            List<string> foundGame = new List<string>();
-            List<string> foundOther = new List<string>();
             string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
+
             foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
             {
                 if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)

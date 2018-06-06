@@ -76,6 +76,7 @@ namespace Oxide.Core
             input = input.Replace("\\\"", "&quot;");
             MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
             string[] strArray = new string[matchs.Count];
+
             for (int i = 0; i < matchs.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
@@ -122,6 +123,7 @@ namespace Oxide.Core
             string cmd = GetVariable(var);
             StringBuilder varnamesb = new StringBuilder(), formatsb = new StringBuilder();
             int invar = 0;
+
             foreach (char c in cmd)
             {
                 switch (c)

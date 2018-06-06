@@ -6,26 +6,6 @@
     public abstract class Extension
     {
         /// <summary>
-        /// Gets whether this extension is a core extension
-        /// </summary>
-        public virtual bool IsCoreExtension { get; private set; }
-
-        /// <summary>
-        /// Gets whether this extension is for a specific game
-        /// </summary>
-        public virtual bool IsGameExtension { get; private set; }
-
-        /// <summary>
-        /// Gets whether the extension supports extension-reloading
-        /// </summary>
-        public virtual bool SupportsReloading { get; private set; } = false;
-
-        /// <summary>
-        /// Gets the filename of the extension
-        /// </summary>
-        public string Filename { get; set; }
-
-        /// <summary>
         /// Gets the name of this extension
         /// </summary>
         public abstract string Name { get; }
@@ -41,16 +21,48 @@
         public abstract VersionNumber Version { get; }
 
         /// <summary>
+        /// Gets the filename of the extension
+        /// </summary>
+        public string Filename { get; set; }
+
+        /// <summary>
         /// Gets the branch of this extension
         /// </summary>
-        public virtual string Branch { get; }
+        public virtual string Branch { get; } = "public";
+
+        /// <summary>
+        /// Gets whether this extension is a core extension
+        /// </summary>
+        public virtual bool IsCoreExtension { get; } = false;
+
+        /// <summary>
+        /// Gets whether this extension is for a specific game
+        /// </summary>
+        public virtual bool IsGameExtension { get; } = false;
+
+        /// <summary>
+        /// Gets whether the extension supports extension-reloading
+        /// </summary>
+        public virtual bool SupportsReloading { get; } = false;
 
         /// <summary>
         /// Gets the extension manager responsible for this extension
         /// </summary>
-        public ExtensionManager Manager { get; private set; }
+        public ExtensionManager Manager { get; }
 
+        /// <summary>
+        /// Gets the default references for plugins
+        /// </summary>
+        public virtual string[] DefaultReferences { get; protected set; } = new string[0];
+
+        /// <summary>
+        /// Gets the whitelisted assemblies for plugins
+        /// </summary>
         public virtual string[] WhitelistAssemblies { get; protected set; } = new string[0];
+
+        /// <summary>
+        /// Gets the whitelisted namespaces for plugins
+        /// </summary>
         public virtual string[] WhitelistNamespaces { get; protected set; } = new string[0];
 
         /// <summary>
