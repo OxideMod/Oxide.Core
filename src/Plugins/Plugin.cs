@@ -33,7 +33,7 @@ namespace Oxide.Core.Plugins
 
         public string Name
         {
-            get { return name; }
+            get => name;
             set
             {
                 if (string.IsNullOrEmpty(Name) || name == GetType().Name)
@@ -90,7 +90,7 @@ namespace Oxide.Core.Plugins
 
         public bool IsCorePlugin
         {
-            get { return isCorePlugin; }
+            get => isCorePlugin;
             set
             {
                 if (!Interface.Oxide.HasLoadedCorePlugins)
