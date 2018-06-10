@@ -23,8 +23,12 @@
     <ThisAssemblyNamespace>Oxide.Core</ThisAssemblyNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="GitInfo" Version="2.0.*" />
-    <PackageReference Include="Oxide.References" Version="2.0.*" />
+    <PackageReference Include="GitInfo" Version="2.0.*">
+      <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Oxide.References" Version="2.0.*">
+      <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
+    </PackageReference>
     <Compile Remove="Commands.cs" /> <!-- Remove when ready -->
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
