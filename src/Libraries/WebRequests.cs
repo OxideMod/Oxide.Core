@@ -91,7 +91,7 @@ namespace Oxide.Core.Libraries
             private WaitHandle waitHandle;
             private RegisteredWaitHandle registeredWaitHandle;
             private Event.Callback<Plugin, PluginManager> removedFromManager;
-            private readonly Covalence Covalence = Interface.Oxide.GetLibrary<Covalence>();
+            private readonly Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
 
             /// <summary>
             /// Initializes a new instance of the WebRequest class
