@@ -1,4 +1,3 @@
-using Oxide.Core.Libraries.Covalence; 
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
@@ -27,6 +26,8 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public class WebRequests : Library
     {
+        private readonly Covalence.Covalence covalence = Interface.Oxide.GetLibrary<Covalence.Covalence>();
+
         /// <summary>
         /// Specifies the HTTP request timeout in seconds
         /// </summary>
@@ -91,7 +92,6 @@ namespace Oxide.Core.Libraries
             private WaitHandle waitHandle;
             private RegisteredWaitHandle registeredWaitHandle;
             private Event.Callback<Plugin, PluginManager> removedFromManager;
-            private readonly Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
 
             /// <summary>
             /// Initializes a new instance of the WebRequest class
