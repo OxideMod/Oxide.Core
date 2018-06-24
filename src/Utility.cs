@@ -213,7 +213,7 @@ namespace Oxide.Core
             return JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
         }
 
-        public bool ValidateIPv4(string ip)
+        public static bool ValidateIPv4(string ip)
         {
             if (!string.IsNullOrEmpty(ip.Trim()))
             {
