@@ -212,5 +212,16 @@ namespace Oxide.Core
         {
             return JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
         }
+
+        public bool ValidateIPv4(string ip)
+        {
+            if (!string.IsNullOrEmpty(ip.Trim()))
+            {
+                string[] splitValues = ip.Trim().Split('.');
+                return splitValues.Length == 4 && splitValues.All(r => byte.TryParse(r, out _));
+            }
+
+            return false;
+        }
     }
 }
