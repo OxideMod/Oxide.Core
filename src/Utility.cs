@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace Oxide.Core
@@ -217,22 +218,60 @@ namespace Oxide.Core
 
         public static IPAddress GetLocalIP()
         {
-            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (IPAddress ipAddress in host.AddressList)
+            UnicastIPAddressInformation mostSuitableIp = null;
+            NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach (NetworkInterface network in networkInterfaces)
             {
-                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+                if (network.OperationalStatus == OperationalStatus.Up)
                 {
-                    return ipAddress;
+                    IPInterfaceProperties properties = network.GetIPProperties();
+
+                    if (properties.GatewayAddresses.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (UnicastIPAddressInformation address in properties.UnicastAddresses)
+                    {
+                        if (address.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address.Address))
+                        {
+                            continue;
+                        }
+
+                        if (!address.IsDnsEligible)
+                        {
+                            if (mostSuitableIp == null)
+                            {
+                                mostSuitableIp = address;
+                            }
+
+                            continue;
+                        }
+
+                        if (address.PrefixOrigin != PrefixOrigin.Dhcp)
+                        {
+                            if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
+                            {
+                                mostSuitableIp = address;
+                            }
+
+                            continue;
+                        }
+
+                        return address.Address;
+                    }
                 }
             }
-            throw new Exception("Could not find any network adapters with an IPv4 address"); // TODO: Localization
+
+            return mostSuitableIp?.Address;
         }
 
         public static bool IsLocalIP(string ipAddress)
         {
             string[] split = ipAddress.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
             int[] ip = { int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]), int.Parse(split[3]) };
-            return ip[0] == 10 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
+            return ip[0] == 0 || ip[0] == 10 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
         }
 
         public static bool ValidateIPv4(string ipAddress)
