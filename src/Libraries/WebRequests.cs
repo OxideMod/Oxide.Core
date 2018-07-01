@@ -125,7 +125,9 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
-                    request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => new IPEndPoint(covalence.Server.Address ?? IPAddress.Any, 0);
+
+                    // Try to assign server's assigned IP address, not primary network adapter address
+                    request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
 
                     // Optional request body for POST requests
                     byte[] data = new byte[0];
