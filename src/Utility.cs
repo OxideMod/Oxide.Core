@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Oxide.Core
 {
@@ -213,11 +215,31 @@ namespace Oxide.Core
             return JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
         }
 
-        public static bool ValidateIPv4(string ip)
+        public static IPAddress GetLocalIP()
         {
-            if (!string.IsNullOrEmpty(ip.Trim()))
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ipAddress in host.AddressList)
             {
-                string[] splitValues = ip.Trim().Split('.');
+                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ipAddress;
+                }
+            }
+            throw new Exception("Could not find any network adapters with an IPv4 address"); // TODO: Localization
+        }
+
+        public static bool IsLocalIP(string ipAddress)
+        {
+            string[] split = ipAddress.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
+            int[] ip = { int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]), int.Parse(split[3]) };
+            return ip[0] == 10 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
+        }
+
+        public static bool ValidateIPv4(string ipAddress)
+        {
+            if (!string.IsNullOrEmpty(ipAddress.Trim()))
+            {
+                string[] splitValues = ipAddress.Replace("\"", string.Empty).Trim().Split('.');
                 return splitValues.Length == 4 && splitValues.All(r => byte.TryParse(r, out _));
             }
 
