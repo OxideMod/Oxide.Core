@@ -129,10 +129,8 @@ namespace Oxide.Core.Libraries
                     // Try to assign server's assigned IP address, not primary network adapter address
                     request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
                     {
-#if DEBUG
                         Interface.Oxide.LogWarning($"Local IP address: {Utility.GetLocalIP()}");
                         Interface.Oxide.LogWarning($"Covalence IP address: {covalence.Server.Address}");
-#endif
                         return new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
                     };
 
