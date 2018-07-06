@@ -119,7 +119,7 @@ namespace Oxide.Core.Libraries
                     request.Method = Method;
                     request.Credentials = CredentialCache.DefaultCredentials;
                     request.Proxy = null; // Make sure no proxy is set
-                    request.KeepAlive = false; // Don't bind IP each web request
+                    request.KeepAlive = false;
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
                     request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
                     request.ServicePoint.MaxIdleTime = request.Timeout;
@@ -131,11 +131,12 @@ namespace Oxide.Core.Libraries
                     {
                         request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => // TODO: Figure out why this doesn't work on Linux
                         {
+                            IPAddress localIp = Utility.GetLocalIP();
 #if DEBUG
-                            Interface.Oxide.LogWarning($"Local IP address: {Utility.GetLocalIP()}");
-                            Interface.Oxide.LogWarning($"External IP address: {covalence.Server.Address}");
+                            Interface.Oxide.LogDebug($"Local IP address: {localIp}");
+                            Interface.Oxide.LogDebug($"External IP address: {covalence.Server.Address}");
 #endif
-                            return new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
+                            return new IPEndPoint(localIp ?? covalence.Server.Address, 0);
                         };
                     }
 

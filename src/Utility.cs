@@ -223,6 +223,11 @@ namespace Oxide.Core
 
             foreach (NetworkInterface network in networkInterfaces)
             {
+#if DEBUG
+                StringBuilder debugOutput = new StringBuilder();
+                debugOutput.AppendLine(string.Empty);
+#endif
+
                 if (network.OperationalStatus == OperationalStatus.Up)
                 {
                     IPInterfaceProperties properties = network.GetIPProperties();
@@ -232,37 +237,63 @@ namespace Oxide.Core
                         continue;
                     }
 
-                    foreach (UnicastIPAddressInformation address in properties.UnicastAddresses)
+#if DEBUG
+                    debugOutput.AppendLine($"Gateway address count: {properties.GatewayAddresses.Count}");
+#endif
+
+                    foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses)
                     {
-                        if (address.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address.Address))
+                        if (ip.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(ip.Address))
                         {
                             continue;
                         }
 
-                        if (!address.IsDnsEligible)
+                        if (ip.Address.ToString().StartsWith("172.")) // TODO: Find a better way to exclude virtual adapters from Docker and others
+                        {
+                            continue;
+                        }
+
+#if DEBUG
+                        debugOutput.AppendLine($"IP address: {ip.Address}");
+                        debugOutput.AppendLine($"Is DNS eligible: {ip.IsDnsEligible}");
+                        debugOutput.AppendLine($"Is lookback: {IPAddress.IsLoopback(ip.Address)}");
+                        debugOutput.AppendLine($"Is using DHCP: {ip.PrefixOrigin == PrefixOrigin.Dhcp}");
+                        debugOutput.AppendLine($"Address family: {ip.Address.AddressFamily}");
+#endif
+
+                        if (!ip.IsDnsEligible)
                         {
                             if (mostSuitableIp == null)
                             {
-                                mostSuitableIp = address;
+                                mostSuitableIp = ip;
                             }
 
                             continue;
                         }
 
-                        if (address.PrefixOrigin != PrefixOrigin.Dhcp)
+                        if (ip.PrefixOrigin != PrefixOrigin.Dhcp)
                         {
                             if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
                             {
-                                mostSuitableIp = address;
+                                mostSuitableIp = ip;
                             }
 
                             continue;
                         }
 
-                        return address.Address;
+#if DEBUG
+                        debugOutput.AppendLine($"Resulting IP address: {ip.Address}");
+                        Interface.Oxide.LogDebug(debugOutput.ToString());
+#endif
+
+                        return ip.Address;
                     }
                 }
             }
+
+#if DEBUG
+            Interface.Oxide.LogDebug($"Most suitable IP: {mostSuitableIp?.Address}");
+#endif
 
             return mostSuitableIp?.Address;
         }
