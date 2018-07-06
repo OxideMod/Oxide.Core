@@ -118,8 +118,8 @@ namespace Oxide.Core.Libraries
                     request = (HttpWebRequest)System.Net.WebRequest.Create(Url);
                     request.Method = Method;
                     request.Credentials = CredentialCache.DefaultCredentials;
-                    request.Proxy = null;
-                    request.KeepAlive = false;
+                    request.Proxy = null; // Make sure no proxy is set
+                    request.KeepAlive = false; // Don't bind IP each web request
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
                     request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
                     request.ServicePoint.MaxIdleTime = request.Timeout;
@@ -127,12 +127,15 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
                     // Try to assign server's assigned IP address, not primary network adapter address
-                    request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
+                    if (Environment.OSVersion.Platform != PlatformID.Unix)
                     {
-                        Interface.Oxide.LogWarning($"Local IP address: {Utility.GetLocalIP()}");
-                        Interface.Oxide.LogWarning($"Covalence IP address: {covalence.Server.Address}");
-                        return new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
-                    };
+                        request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => // TODO: Figure out why this doesn't work on Linux
+                        {
+                            Interface.Oxide.LogWarning($"Local IP address: {Utility.GetLocalIP()}");
+                            Interface.Oxide.LogWarning($"External IP address: {covalence.Server.Address}");
+                            return new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
+                        };
+                    }
 
                     // Optional request body for POST requests
                     byte[] data = new byte[0];
