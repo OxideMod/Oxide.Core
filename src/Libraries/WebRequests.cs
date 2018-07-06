@@ -131,8 +131,10 @@ namespace Oxide.Core.Libraries
                     {
                         request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => // TODO: Figure out why this doesn't work on Linux
                         {
+#if DEBUG
                             Interface.Oxide.LogWarning($"Local IP address: {Utility.GetLocalIP()}");
                             Interface.Oxide.LogWarning($"External IP address: {covalence.Server.Address}");
+#endif
                             return new IPEndPoint(Utility.GetLocalIP() ?? covalence.Server.Address, 0);
                         };
                     }
