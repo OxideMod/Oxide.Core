@@ -129,14 +129,9 @@ namespace Oxide.Core.Libraries
                     // Try to assign server's assigned IP address, not primary network adapter address
                     if (Environment.OSVersion.Platform != PlatformID.Unix)
                     {
-                        request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) => // TODO: Figure out why this doesn't work on Linux
+                        request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
                         {
-                            IPAddress localIp = Utility.GetLocalIP();
-#if DEBUG
-                            Interface.Oxide.LogDebug($"Local IP address: {localIp}");
-                            Interface.Oxide.LogDebug($"External IP address: {covalence.Server.Address}");
-#endif
-                            return new IPEndPoint(localIp ?? covalence.Server.Address, 0);
+                            return new IPEndPoint(covalence.Server.LocalAddress ?? covalence.Server.Address, 0); // TODO: Figure out why this doesn't work on Linux
                         };
                     }
 
