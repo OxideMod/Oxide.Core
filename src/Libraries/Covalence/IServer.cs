@@ -22,6 +22,11 @@ namespace Oxide.Core.Libraries.Covalence
         IPAddress Address { get; }
 
         /// <summary>
+        /// Gets the internal IP address of the server, if known
+        /// </summary>
+        IPAddress LocalAddress { get; }
+
+        /// <summary>
         /// Gets the public-facing network port of the server, if known
         /// </summary>
         ushort Port { get; }
