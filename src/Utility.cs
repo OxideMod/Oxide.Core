@@ -10,6 +10,9 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+#if DEBUG
+using System.Text;
+#endif
 
 namespace Oxide.Core
 {
@@ -232,23 +235,14 @@ namespace Oxide.Core
                 {
                     IPInterfaceProperties properties = network.GetIPProperties();
 
-                    if (properties.GatewayAddresses.Count == 0)
+                    if (properties.GatewayAddresses.Count == 0 || properties.GatewayAddresses[0].Address.Equals(IPAddress.Parse("0.0.0.0")))
                     {
                         continue;
                     }
 
-#if DEBUG
-                    debugOutput.AppendLine($"Gateway address count: {properties.GatewayAddresses.Count}");
-#endif
-
                     foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses)
                     {
                         if (ip.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(ip.Address))
-                        {
-                            continue;
-                        }
-
-                        if (ip.Address.ToString().StartsWith("172.")) // TODO: Find a better way to exclude virtual adapters from Docker and others
                         {
                             continue;
                         }
@@ -259,6 +253,7 @@ namespace Oxide.Core
                         debugOutput.AppendLine($"Is lookback: {IPAddress.IsLoopback(ip.Address)}");
                         debugOutput.AppendLine($"Is using DHCP: {ip.PrefixOrigin == PrefixOrigin.Dhcp}");
                         debugOutput.AppendLine($"Address family: {ip.Address.AddressFamily}");
+                        debugOutput.AppendLine($"Gateway address: {properties.GatewayAddresses[0].Address}");
 #endif
 
                         if (!ip.IsDnsEligible)
