@@ -39,7 +39,15 @@ namespace Oxide.Core.Plugins.Watchers
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
             timers = Interface.Oxide.GetLibrary<Timer>();
-            LoadWatcher(directory, filter);
+
+            if (Interface.Oxide.Config.Options.PluginWatchers)
+            {
+                LoadWatcher(directory, filter);
+            }
+            else
+            {
+                Interface.Oxide.LogWarning("Automatic plugin reloading and unloading has been disabled");
+            }
         }
 
         /// <summary>
