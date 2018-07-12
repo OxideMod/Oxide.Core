@@ -17,6 +17,7 @@ namespace Oxide.Core.Configuration
         public class OxideOptions
         {
             public bool Modded;
+            public bool PluginWatchers;
             public DefaultGroups DefaultGroups;
         }
 
@@ -104,7 +105,7 @@ namespace Oxide.Core.Configuration
         /// </summary>
         public OxideConfig(string filename) : base(filename)
         {
-            Options = new OxideOptions { Modded = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
+            Options = new OxideOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
             Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new OxideRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }
