@@ -197,7 +197,7 @@ namespace Oxide.Core
 
             if (CommandLine.HasVariable("rcon.port"))
             {
-                Config.Rcon.Port = int.Parse(CommandLine.GetVariable("rcon.port"));
+                Config.Rcon.Port = Utility.GetNumbers(CommandLine.GetVariable("rcon.port"));
             }
 
             if (CommandLine.HasVariable("rcon.password"))
