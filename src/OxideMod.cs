@@ -290,7 +290,7 @@ namespace Oxide.Core
         /// <param name="format"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public void LogDebug(string format, params object[] args) => RootLogger.Write(LogType.Warning, format, args);
+        public void LogDebug(string format, params object[] args) => RootLogger.Write(LogType.Warning, $"[DEBUG] {format}", args);
 
         /// <summary>
         /// Logs a formatted error message to the root logger
