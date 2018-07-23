@@ -10,6 +10,8 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
+
 #if DEBUG
 using System.Text;
 #endif
@@ -309,6 +311,13 @@ namespace Oxide.Core
             }
 
             return false;
+        }
+
+        public static int GetNumbers(string input)
+        {
+            int numbers;
+            int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out numbers);
+            return numbers;
         }
     }
 }
