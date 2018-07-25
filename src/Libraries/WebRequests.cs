@@ -126,11 +126,12 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-                    // Try to assign server's assigned IP address, not primary network adapter address
-                    if (Environment.OSVersion.Platform != PlatformID.Unix)
+                    // Exclude loopback requests and Linux from IP binding for now
+                    if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
                     {
                         request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
                         {
+                            // Try to assign server's assigned IP address, not primary network adapter address
                             return new IPEndPoint(covalence.Server.LocalAddress ?? covalence.Server.Address, 0); // TODO: Figure out why this doesn't work on Linux
                         };
                     }
