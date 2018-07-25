@@ -74,13 +74,13 @@ namespace Oxide.Core
         public static string[] Split(string input)
         {
             input = input.Replace("\\\"", "&quot;");
-            MatchCollection matchs = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
-            string[] strArray = new string[matchs.Count];
+            MatchCollection matches = new Regex("\"([^\"]+)\"|'([^']+)'|\\S+").Matches(input);
+            string[] strArray = new string[matches.Count];
 
-            for (int i = 0; i < matchs.Count; i++)
+            for (int i = 0; i < matches.Count; i++)
             {
                 char[] trimChars = { ' ', '"' };
-                strArray[i] = matchs[i].Groups[0].Value.Trim(trimChars);
+                strArray[i] = matches[i].Groups[0].Value.Trim(trimChars);
                 strArray[i] = strArray[i].Replace("&quot;", "\"");
             }
 

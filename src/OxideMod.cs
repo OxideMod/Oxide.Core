@@ -333,7 +333,7 @@ namespace Oxide.Core
         /// </summary>
         public void LoadAllPlugins(bool init = false)
         {
-            IEnumerable<PluginLoader> loaders = extensionManager.GetPluginLoaders();
+            IEnumerable<PluginLoader> loaders = extensionManager.GetPluginLoaders().ToArray();
 
             // Load all core plugins first
             if (!HasLoadedCorePlugins)
