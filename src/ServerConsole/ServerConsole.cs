@@ -78,7 +78,7 @@ namespace Oxide.Core.ServerConsole
         public void AddMessage(string message, ConsoleColor color = ConsoleColor.Gray)
         {
             Console.ForegroundColor = color;
-            int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + line.Length);
+            int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + (int)Math.Ceiling((double)line.Length / Console.BufferWidth));
             input.ClearLine((Interface.Oxide.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
             Console.WriteLine(message);
             input.RedrawInputLine();
