@@ -420,6 +420,12 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
+            // Always allow the server console
+            if (id.Equals("server_console"))
+            {
+                return true;
+            }
+
             perm = perm.ToLower();
 
             // First, get the player data
