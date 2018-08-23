@@ -101,6 +101,24 @@ namespace Oxide.Core.Configuration
                 _keyvalues = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, _settings);
             }
         }
+        
+        /// <summary>
+        /// Converts object contents to JSON
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(_keyvalues, Formatting.Indented, _settings);
+        }
+        
+        /// <summary>
+        /// Imports raw JSON into object
+        /// </summary>
+        /// <param name="json"></param>
+        public void FromString(string json)
+        {
+            _keyvalues = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, _settings);
+        }
 
         /// <summary>
         /// Checks if the file or specified file exists
