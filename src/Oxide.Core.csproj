@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
@@ -29,6 +29,21 @@
     <PackageReference Include="Oxide.References" Version="2.0.*">
       <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
     </PackageReference>
+    <!--<PackageReference Include="Rebex.Common" Version="2.5.*" />-->
+    <PackageReference Include="Rebex.Elliptic.Castle" Version="0.9.*" />
+    <PackageReference Include="Rebex.Elliptic.Curve25519" Version="0.9.*" />
+    <PackageReference Include="Rebex.Elliptic.Ed25519" Version="0.9.*" />
+    <!--<PackageReference Include="Rebex.Http" Version="1.0.*" />
+    <PackageReference Include="Rebex.Networking" Version="3.5.*" />-->
+    <Reference Include="Rebex.Common">
+      <HintPath>Dependencies\net35\Rebex.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Rebex.Http">
+      <HintPath>Dependencies\net35\Rebex.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Rebex.Networking">
+      <HintPath>Dependencies\net35\Rebex.Common.dll</HintPath>
+    </Reference>
     <Compile Remove="Commands.cs" /> <!-- Remove when ready -->
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
