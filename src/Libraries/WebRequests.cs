@@ -1,9 +1,15 @@
 using Oxide.Core.Plugins;
+using Rebex.Net;
+using Rebex.Security.Certificates;
+using Rebex.Security.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -88,7 +94,7 @@ namespace Oxide.Core.Libraries
             /// </summary>
             public Dictionary<string, string> RequestHeaders { get; set; }
 
-            private HttpWebRequest request;
+            private HttpRequest request;
             private WaitHandle waitHandle;
             private RegisteredWaitHandle registeredWaitHandle;
             private Event.Callback<Plugin, PluginManager> removedFromManager;
@@ -107,6 +113,51 @@ namespace Oxide.Core.Libraries
                 removedFromManager = Owner?.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
             }
 
+            private void ValidatingCertificate(object sender, SslCertificateValidationEventArgs args)
+            {
+                X509Chain chain = new X509Chain();
+
+                // Alter how the chain is built/validated
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+                // Build the new certificate chain
+                Certificate primaryCert = args.CertificateChain[0];
+#if DEBUG
+                Interface.Oxide.LogDebug($"{args.CertificateChain.Count} certificates in chain");
+                Interface.Oxide.LogDebug($"Primary common name: {primaryCert.GetCommonName()}");
+                Interface.Oxide.LogDebug($"  Thumbprint:  {primaryCert.Thumbprint}");
+                Interface.Oxide.LogDebug($"  Expires on:  {primaryCert.GetExpirationDate():d}");
+                Interface.Oxide.LogDebug($"  Key algorithm: {primaryCert.KeyAlgorithm}");
+#endif
+
+                // Add extra certificates to the chain
+                foreach (Certificate cert in args.CertificateChain.Skip(1))
+                {
+#if DEBUG
+                    Interface.Oxide.LogDebug($"Extra common name: {cert.GetCommonName()}");
+                    Interface.Oxide.LogDebug($"  Thumbprint:  {cert.Thumbprint}");
+                    Interface.Oxide.LogDebug($"  Expires on:  {cert.GetExpirationDate():d}");
+                    Interface.Oxide.LogDebug($"  Key algorithm: {cert.KeyAlgorithm}");
+#endif
+                    chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(cert.GetRawCertData()));
+                }
+
+                bool isValid = chain.Build(new X509Certificate2(primaryCert.GetRawCertData()));
+                if (isValid)
+                {
+#if DEBUG
+                    Interface.Oxide.LogDebug("Certificate is valid, accepting");
+#endif
+                    args.Accept();
+                    return;
+                }
+
+                // Reject certificate if not valid
+                args.Reject();
+            }
+
             /// <summary>
             /// Used by the worker thread to start the request
             /// </summary>
@@ -114,26 +165,38 @@ namespace Oxide.Core.Libraries
             {
                 try
                 {
-                    // Create the request
-                    request = (HttpWebRequest)System.Net.WebRequest.Create(Url);
+                    Rebex.Licensing.Key = "==AalPQQNr+9/cVETMK9N0H6ivXNQRw4C/a6E8SXx7Z5Q0=="; // 8-22-18, TODO: Obfuscate production key
+
+                    // Override the web request creator
+                    HttpRequestCreator creator = new HttpRequestCreator();
+                    creator.Register();
+
+                    // Import NIST and Brainpool curves crypto
+                    AsymmetricKeyAlgorithm.Register(EllipticCurveAlgorithm.Create);
+
+                    // Import Curve25519 crypto
+                    AsymmetricKeyAlgorithm.Register(Curve25519.Create);
+
+                    // Import Ed25519 crypto
+                    AsymmetricKeyAlgorithm.Register(Ed25519.Create);
+
+                    // Override certificate validation (necessary for Mono)
+                    //creator.ValidatingCertificate += ValidatingCertificate;
+                    creator.ValidatingCertificate += (sender, args) => args.Accept();
+
+                    // Create the web request
+                    request = creator.Create(Url);
                     request.Method = Method;
                     request.Credentials = CredentialCache.DefaultCredentials;
-                    request.Proxy = null; // Make sure no proxy is set
                     request.KeepAlive = false;
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
                     request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
-                    request.ServicePoint.MaxIdleTime = request.Timeout;
-                    request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
-                    request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-                    // Exclude loopback requests and Linux from IP binding for now
-                    if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
+                    // Exclude loopback requests from IP address binding
+                    if (!request.RequestUri.IsLoopback)
                     {
-                        request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
-                        {
-                            // Try to assign server's assigned IP address, not primary network adapter address
-                            return new IPEndPoint(covalence.Server.LocalAddress ?? covalence.Server.Address, 0); // TODO: Figure out why this doesn't work on Linux
-                        };
+                        // Assign server's assigned IP address, not primary network adapter address
+                        creator.SetSocketFactory(SimpleSocket.GetFactory(covalence.Server.LocalAddress ?? covalence.Server.Address));
                     }
 
                     // Optional request body for POST requests
@@ -204,7 +267,7 @@ namespace Oxide.Core.Libraries
                 {
                     try
                     {
-                        using (HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(res))
+                        using (HttpResponse response = (HttpResponse)request.EndGetResponse(res))
                         {
                             using (Stream stream = response.GetResponseStream())
                             using (StreamReader reader = new StreamReader(stream))
@@ -218,7 +281,7 @@ namespace Oxide.Core.Libraries
                     catch (WebException ex)
                     {
                         ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                        HttpWebResponse response = ex.Response as HttpWebResponse;
+                        HttpResponse response = ex.Response as HttpResponse;
                         if (response != null)
                         {
                             try
@@ -509,8 +572,8 @@ namespace Oxide.Core.Libraries
         public int GetQueueLength() => queue.Count;
     }
 
-    // HttpWebRequest extensions to add raw header support
-    public static class HttpWebRequestExtensions
+    // HttpRequest extensions to add raw header support
+    public static class HttpRequestExtensions
     {
         /// <summary>
         /// Headers that require modification via a property
@@ -540,9 +603,9 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Initialize the HeaderProperties dictionary
         /// </summary>
-        static HttpWebRequestExtensions()
+        static HttpRequestExtensions()
         {
-            Type type = typeof(HttpWebRequest);
+            Type type = typeof(HttpRequest);
             foreach (string header in RestrictedHeaders)
             {
                 HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
@@ -594,6 +657,228 @@ namespace Oxide.Core.Libraries
             {
                 request.Headers[name] = value;
             }
+        }
+    }
+}
+
+// SimpleSocket implementation (c) Rebex and does not fall under this project's license
+// TODO: Clean up SimpleSocket to more closely match project, maybe move?
+namespace Rebex.Net
+{
+    public class SimpleSocket : ISocket
+    {
+        private class SimpleSocketFactory : ISocketFactory
+        {
+            private readonly IPEndPoint _localEndPoint;
+
+            public SimpleSocketFactory(IPEndPoint localEndPoint)
+            {
+                _localEndPoint = localEndPoint;
+            }
+
+            public ISocket CreateSocket()
+            {
+                return new SimpleSocket(this, _localEndPoint);
+            }
+        }
+
+        public static ISocketFactory GetFactory(IPAddress localEndPoint)
+        {
+            return new SimpleSocketFactory(new IPEndPoint(localEndPoint, 0));
+        }
+
+        private class SyncResult : IAsyncResult
+        {
+            private readonly ManualResetEvent _resetEvent = new ManualResetEvent(true);
+
+            public SyncResult(object state, object result)
+            {
+                AsyncState = state;
+                AsyncResult = result;
+            }
+
+            public object AsyncState { get; }
+
+            public object AsyncResult { get; }
+
+            public WaitHandle AsyncWaitHandle => _resetEvent;
+
+            public bool CompletedSynchronously => true;
+
+            public bool IsCompleted => true;
+        }
+
+        private readonly Socket _socket;
+        private readonly SimpleSocketFactory _factory;
+
+        private SimpleSocket(SimpleSocketFactory factory, Socket socket)
+        {
+            _factory = factory;
+            _socket = socket;
+        }
+
+        private SimpleSocket(SimpleSocketFactory factory, IPEndPoint localEndPoint)
+        {
+            _factory = factory;
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socket.Bind(localEndPoint);
+        }
+
+        public ISocketFactory Factory => _factory;
+
+        public int Timeout
+        {
+            get => 0;
+            set { }
+        }
+
+        public int Available => _socket.Available;
+
+        public bool Connected => _socket.Connected;
+
+        public EndPoint LocalEndPoint => _socket.LocalEndPoint;
+
+        public EndPoint RemoteEndPoint => _socket.RemoteEndPoint;
+
+        public SocketState GetConnectionState()
+        {
+            if (!Connected)
+            {
+                return SocketState.NotConnected;
+            }
+
+            if (!_socket.Poll(100, SelectMode.SelectRead))
+            {
+                return SocketState.Connected;
+            }
+
+            if (_socket.Available > 0)
+            {
+                return SocketState.Connected;
+            }
+
+            return SocketState.NotConnected;
+        }
+
+        public bool Poll(int microSeconds, SocketSelectMode mode)
+        {
+            return _socket.Poll(microSeconds, (SelectMode)mode);
+        }
+
+        public void Connect(EndPoint remoteEP)
+        {
+            _socket.Connect(remoteEP);
+        }
+
+        public void Connect(string serverName, int serverPort)
+        {
+            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
+            IPEndPoint endPoint = ProxySocket.ToEndPoint(hostEntry, serverPort);
+            _socket.Connect(endPoint);
+        }
+
+        public IAsyncResult BeginConnect(EndPoint remoteEP, AsyncCallback callback, object state)
+        {
+            return _socket.BeginConnect(remoteEP, callback, state);
+        }
+
+        public IAsyncResult BeginConnect(string serverName, int serverPort, AsyncCallback callback, object state)
+        {
+            IPHostEntry hostEntry = Dns.GetHostEntry(serverName);
+            IPEndPoint endPoint = ProxySocket.ToEndPoint(hostEntry, serverPort);
+            return _socket.BeginConnect(endPoint, callback, state);
+        }
+
+        public void EndConnect(IAsyncResult asyncResult)
+        {
+            _socket.EndConnect(asyncResult);
+        }
+
+        public EndPoint Listen(ISocket controlSocket)
+        {
+            _socket.Listen(0);
+            return _socket.LocalEndPoint;
+        }
+
+        public IAsyncResult BeginListen(ISocket controlSocket, AsyncCallback callback, object state)
+        {
+            IPEndPoint ep = (IPEndPoint)controlSocket.LocalEndPoint;
+            _socket.Bind(new IPEndPoint(ep.Address, 0));
+            _socket.Listen(0);
+
+            SyncResult result = new SyncResult(state, _socket.LocalEndPoint);
+
+            callback?.Invoke(result);
+
+            return result;
+        }
+
+        public EndPoint EndListen(IAsyncResult asyncResult)
+        {
+            SyncResult result = asyncResult as SyncResult;
+            if (result == null)
+            {
+                throw new ArgumentException("The IAsyncResult object supplied to EndListen was not returned from the corresponding BeginListen method on this class.", nameof(asyncResult));
+            }
+
+            return (EndPoint)result.AsyncResult;
+        }
+
+        public ISocket Accept()
+        {
+            Socket socket = _socket.Accept();
+            return new SimpleSocket(_factory, socket);
+        }
+
+        public IAsyncResult BeginAccept(AsyncCallback callback, object state)
+        {
+            return _socket.BeginAccept(callback, state);
+        }
+
+        public ISocket EndAccept(IAsyncResult asyncResult)
+        {
+            Socket socket = _socket.EndAccept(asyncResult);
+            return new SimpleSocket(_factory, socket);
+        }
+
+        public int Send(byte[] buffer, int offset, int count, SocketFlags socketFlags)
+        {
+            return _socket.Send(buffer, offset, count, socketFlags);
+        }
+
+        public IAsyncResult BeginSend(byte[] buffer, int offset, int count, SocketFlags socketFlags, AsyncCallback callback, object state)
+        {
+            return _socket.BeginSend(buffer, offset, count, socketFlags, callback, state);
+        }
+
+        public int EndSend(IAsyncResult asyncResult)
+        {
+            return _socket.EndSend(asyncResult);
+        }
+
+        public int Receive(byte[] buffer, int offset, int count, SocketFlags socketFlags)
+        {
+            return _socket.Receive(buffer, offset, count, socketFlags);
+        }
+
+        public IAsyncResult BeginReceive(byte[] buffer, int offset, int count, SocketFlags socketFlags, AsyncCallback callback, object state)
+        {
+            return _socket.BeginReceive(buffer, offset, count, socketFlags, callback, state);
+        }
+
+        public int EndReceive(IAsyncResult asyncResult)
+        {
+            return _socket.EndReceive(asyncResult);
+        }
+
+        public void Shutdown(SocketShutdown how)
+        {
+            _socket.Shutdown(how);
+        }
+
+        public void Close()
+        {
+            _socket.Close();
         }
     }
 }
