@@ -181,7 +181,7 @@ namespace Oxide.Core.Libraries
                     AsymmetricKeyAlgorithm.Register(Ed25519.Create);
 
                     // Override certificate validation (necessary for Mono)
-                    //creator.ValidatingCertificate += ValidatingCertificate;
+                    //creator.ValidatingCertificate += ValidatingCertificate; // TODO: Use this when ECDSA issue is resolved in dep update
                     creator.ValidatingCertificate += (sender, args) => args.Accept();
 
                     // Create the web request
@@ -218,27 +218,26 @@ namespace Oxide.Core.Libraries
                     {
                         request.BeginGetRequestStream(result =>
                         {
-                            if (request == null)
+                            if (request != null)
                             {
-                                return;
-                            }
-
-                            try
-                            {
-                                // Write request body
-                                using (Stream stream = request.EndGetRequestStream(result))
+                                try
                                 {
-                                    stream.Write(data, 0, data.Length);
+                                    // Write request body
+                                    using (Stream stream = request.EndGetRequestStream(result))
+                                    {
+                                        stream.Write(data, 0, data.Length);
+                                    }
                                 }
+                                catch (Exception ex)
+                                {
+                                    ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
+                                    request?.Abort();
+                                    OnComplete();
+                                    return;
+                                }
+
+                                WaitForResponse();
                             }
-                            catch (Exception ex)
-                            {
-                                ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                                request?.Abort();
-                                OnComplete();
-                                return;
-                            }
-                            WaitForResponse();
                         }, null);
                     }
                     else
@@ -310,13 +309,12 @@ namespace Oxide.Core.Libraries
 
                         Interface.Oxide.LogException(message, ex);
                     }
-                    if (request == null)
-                    {
-                        return;
-                    }
 
-                    request.Abort();
-                    OnComplete();
+                    if (request != null)
+                    {
+                        request.Abort();
+                        OnComplete();
+                    }
                 }, null);
                 waitHandle = result.AsyncWaitHandle;
                 registeredWaitHandle = ThreadPool.RegisterWaitForSingleObject(waitHandle, OnTimeout, null, request.Timeout, true);
@@ -329,13 +327,11 @@ namespace Oxide.Core.Libraries
                     request?.Abort();
                 }
 
-                if (Owner == null)
+                if (Owner != null)
                 {
-                    return;
+                    Event.Remove(ref removedFromManager);
+                    Owner = null;
                 }
-
-                Event.Remove(ref removedFromManager);
-                Owner = null;
             }
 
             private void OnComplete()
@@ -344,29 +340,28 @@ namespace Oxide.Core.Libraries
                 registeredWaitHandle?.Unregister(waitHandle);
                 Interface.Oxide.NextTick(() =>
                 {
-                    if (request == null)
+                    if (request != null)
                     {
-                        return;
-                    }
-
-                    request = null;
-                    Owner?.TrackStart();
-                    try
-                    {
-                        Callback(ResponseCode, ResponseText);
-                    }
-                    catch (Exception ex)
-                    {
-                        string message = "Web request callback raised an exception";
-                        if (Owner && Owner != null)
+                        request = null;
+                        Owner?.TrackStart();
+                        try
                         {
-                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                            Callback(ResponseCode, ResponseText);
+                        }
+                        catch (Exception ex)
+                        {
+                            string message = "Web request callback raised an exception";
+                            if (Owner && Owner != null)
+                            {
+                                message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                            }
+
+                            Interface.Oxide.LogException(message, ex);
                         }
 
-                        Interface.Oxide.LogException(message, ex);
+                        Owner?.TrackEnd();
+                        Owner = null;
                     }
-                    Owner?.TrackEnd();
-                    Owner = null;
                 });
             }
 
@@ -377,14 +372,12 @@ namespace Oxide.Core.Libraries
             /// <param name="manager"></param>
             private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager)
             {
-                if (request == null)
+                if (request != null)
                 {
-                    return;
+                    HttpRequest outstandingRequest = request;
+                    request = null;
+                    outstandingRequest.Abort();
                 }
-
-                HttpWebRequest outstandingRequest = request;
-                request = null;
-                outstandingRequest.Abort();
             }
         }
 
@@ -443,15 +436,13 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public override void Shutdown()
         {
-            if (shutdown)
+            if (!shutdown)
             {
-                return;
+                shutdown = true;
+                workevent.Set();
+                Thread.Sleep(250);
+                workerthread.Abort();
             }
-
-            shutdown = true;
-            workevent.Set();
-            Thread.Sleep(250);
-            workerthread.Abort();
         }
 
         /// <summary>

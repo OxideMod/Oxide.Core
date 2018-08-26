@@ -218,7 +218,7 @@ namespace Oxide.Core
 
         public static string ConvertToJson(object obj, bool indented = false)
         {
-            return JsonConvert.SerializeObject(obj, (indented) ? Formatting.Indented : Formatting.None);
+            return JsonConvert.SerializeObject(obj, indented ? Formatting.Indented : Formatting.None);
         }
 
         public static IPAddress GetLocalIP()
