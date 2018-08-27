@@ -20,11 +20,35 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public enum RequestMethod
     {
+        /// <summary>
+        /// Requsts deletion of the specified resource
+        /// </summary>
         DELETE,
+
+        /// <summary>
+        /// Requests data from the specified resource
+        /// </summary>
         GET,
+
+        /// <summary>
+        /// Applies partial modifications to the specified resource
+        /// </summary>
         PATCH,
+
+        /// <summary>
+        /// Submits data to be processed to the specified resource
+        /// </summary>
         POST,
-        PUT
+
+        /// <summary>
+        /// Uploads a representation of the specified URI
+        /// </summary>
+        PUT,
+
+        /// <summary>
+        /// Grabs only HTTP headers and no document body
+        /// </summary>
+        HEAD
     };
 
     /// <summary>
@@ -34,10 +58,19 @@ namespace Oxide.Core.Libraries
     {
         private static readonly Covalence.Covalence covalence = Interface.Oxide.GetLibrary<Covalence.Covalence>();
 
+        private readonly AutoResetEvent workevent = new AutoResetEvent(false);
+        private readonly Queue<WebRequest> queue = new Queue<WebRequest>();
+        private readonly Thread workerthread;
+        private readonly int maxCompletionPortThreads;
+        private readonly int maxWorkerThreads;
+        private readonly object syncRoot = new object();
+
+        private bool shutdown;
+
         /// <summary>
-        /// Specifies the HTTP request timeout in seconds
+        /// Specifies the default HTTP request timeout in seconds
         /// </summary>
-        public static float Timeout = 30f;
+        public static float DefaultTimeout = 30f;
 
         /// <summary>
         /// Specifies the HTTP request decompression support
@@ -55,12 +88,17 @@ namespace Oxide.Core.Libraries
             public Action<int, string> Callback { get; }
 
             /// <summary>
-            /// Overrides the default request timeout
+            /// Gets the v2 callback delegate
+            /// </summary>
+            public Action<WebResponse> CallbackV2 { get; }
+
+            /// <summary>
+            /// Gets or sets the request timeout
             /// </summary>
             public float Timeout { get; set; }
 
             /// <summary>
-            /// Gets the web request method
+            /// Gets or sets the web request method
             /// </summary>
             public string Method { get; set; }
 
@@ -75,14 +113,19 @@ namespace Oxide.Core.Libraries
             public string Body { get; set; }
 
             /// <summary>
-            /// Gets the response code
+            /// Gets the HTTP response code
             /// </summary>
             public int ResponseCode { get; protected set; }
 
             /// <summary>
-            /// Gets the response text
+            /// Gets the HTTP response text
             /// </summary>
             public string ResponseText { get; protected set; }
+
+            /// <summary>
+            /// Gets the HTTP response object
+            /// </summary>
+            public WebResponse Response { get; protected set; }
 
             /// <summary>
             /// Gets the plugin to which this web request belongs, if any
@@ -90,7 +133,7 @@ namespace Oxide.Core.Libraries
             public Plugin Owner { get; protected set; }
 
             /// <summary>
-            /// Gets the web request headers
+            /// Gets or sets the web request headers
             /// </summary>
             public Dictionary<string, string> RequestHeaders { get; set; }
 
@@ -113,6 +156,22 @@ namespace Oxide.Core.Libraries
                 removedFromManager = Owner?.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
             }
 
+            /// <summary>
+            /// Initializes a new instance of the WebRequest class
+            /// </summary>
+            /// <param name="url"></param>
+            /// <param name="owner"></param>
+            /// <param name="callback"></param>
+            public WebRequest(string url, Plugin owner, Action<WebResponse> callback) : this(url, null, owner)
+            {
+                CallbackV2 = callback;
+            }
+
+            /// <summary>
+            /// Validates certificates for the web request
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="args"></param>
             private void ValidatingCertificate(object sender, SslCertificateValidationEventArgs args)
             {
                 X509Chain chain = new X509Chain();
@@ -189,7 +248,7 @@ namespace Oxide.Core.Libraries
                     request.Method = Method;
                     request.Credentials = CredentialCache.DefaultCredentials;
                     request.KeepAlive = false;
-                    request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
+                    request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? DefaultTimeout : Timeout) * 1000f);
                     request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
 
                     // Exclude loopback requests from IP address binding
@@ -201,7 +260,7 @@ namespace Oxide.Core.Libraries
 
                     // Optional request body for POST requests
                     byte[] data = new byte[0];
-                    if (Body != null)
+                    if (Body != null && !request.Method.Equals("HEAD"))
                     {
                         data = Encoding.UTF8.GetBytes(Body);
                         request.ContentLength = data.Length;
@@ -231,6 +290,13 @@ namespace Oxide.Core.Libraries
                                 catch (Exception ex)
                                 {
                                     ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
+                                    if (Response == null)
+                                    {
+                                        Response = new WebResponse(ResponseText,
+                                            Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
+                                            (RequestMethod)Enum.Parse(typeof(RequestMethod), request.Method));
+                                    }
+
                                     request?.Abort();
                                     OnComplete();
                                     return;
@@ -255,6 +321,14 @@ namespace Oxide.Core.Libraries
                     }
 
                     Interface.Oxide.LogException(message, ex);
+
+                    if (Response == null)
+                    {
+                        Response = new WebResponse(ResponseText,
+                            Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
+                            (RequestMethod)Enum.Parse(typeof(RequestMethod), request.Method));
+                    }
+
                     request?.Abort();
                     OnComplete();
                 }
@@ -268,13 +342,9 @@ namespace Oxide.Core.Libraries
                     {
                         using (HttpResponse response = (HttpResponse)request.EndGetResponse(res))
                         {
-                            using (Stream stream = response.GetResponseStream())
-                            using (StreamReader reader = new StreamReader(stream))
-                            {
-                                ResponseText = reader.ReadToEnd();
-                            }
-
-                            ResponseCode = (int)response.StatusCode;
+                            Response = new WebResponse(response, Owner);
+                            ResponseText = Response.ReadAsString();
+                            ResponseCode = Response.StatusCode;
                         }
                     }
                     catch (WebException ex)
@@ -285,17 +355,19 @@ namespace Oxide.Core.Libraries
                         {
                             try
                             {
-                                using (Stream stream = response.GetResponseStream())
-                                using (StreamReader reader = new StreamReader(stream))
-                                {
-                                    ResponseText = reader.ReadToEnd();
-                                }
+                                Response = new WebResponse(response, Owner);
+                                ResponseCode = Response.StatusCode;
+                                ResponseText = Response.ReadAsString();
                             }
                             catch (Exception)
                             {
-                                // Ignored
+                                if (Response == null)
+                                {
+                                    Response = new WebResponse(ResponseText,
+                                        Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
+                                        (RequestMethod)Enum.Parse(typeof(RequestMethod), Method));
+                                }
                             }
-                            ResponseCode = (int)response.StatusCode;
                         }
                     }
                     catch (Exception ex)
@@ -308,6 +380,12 @@ namespace Oxide.Core.Libraries
                         }
 
                         Interface.Oxide.LogException(message, ex);
+                        if (Response == null)
+                        {
+                            Response = new WebResponse(ResponseText, Uri.TryCreate(Url,
+                                UriKind.Absolute, out Uri uri) ? uri : null,
+                                (RequestMethod)Enum.Parse(typeof(RequestMethod), Method));
+                        }
                     }
 
                     if (request != null)
@@ -316,6 +394,7 @@ namespace Oxide.Core.Libraries
                         OnComplete();
                     }
                 }, null);
+
                 waitHandle = result.AsyncWaitHandle;
                 registeredWaitHandle = ThreadPool.RegisterWaitForSingleObject(waitHandle, OnTimeout, null, request.Timeout, true);
             }
@@ -346,7 +425,8 @@ namespace Oxide.Core.Libraries
                         Owner?.TrackStart();
                         try
                         {
-                            Callback(ResponseCode, ResponseText);
+                            Callback?.Invoke(ResponseCode, ResponseText);
+                            CallbackV2?.Invoke(Response);
                         }
                         catch (Exception ex)
                         {
@@ -381,13 +461,198 @@ namespace Oxide.Core.Libraries
             }
         }
 
-        private readonly Queue<WebRequest> queue = new Queue<WebRequest>();
-        private readonly object syncroot = new object();
-        private readonly Thread workerthread;
-        private readonly AutoResetEvent workevent = new AutoResetEvent(false);
-        private bool shutdown;
-        private readonly int maxWorkerThreads;
-        private readonly int maxCompletionPortThreads;
+        /// <summary>
+        /// Represents a Response from a WebRequest
+        /// </summary>
+        public class WebResponse : IDisposable
+        {
+            // Holds the response data if any
+            private MemoryStream responseStream;
+
+            /// <summary>
+            /// The Headers from the response
+            /// </summary>
+            public IDictionary<string, string> Headers { get; protected set; }
+
+            /// <summary>
+            /// The Content-Length returned from the response
+            /// </summary>
+            public virtual long ContentLength => responseStream?.Length ?? 0;
+
+            /// <summary>
+            /// Content-Type set by the Content-Type Header of the response
+            /// </summary>
+            public string ContentType { get; protected set; }
+
+            /// <summary>
+            /// Gets the Content-Encoding from the response
+            /// </summary>
+            public string ContentEncoding { get; protected set; }
+
+            /// <summary>
+            /// Gets the status code returned from the responding server
+            /// </summary>
+            public int StatusCode { get; protected set; }
+
+            /// <summary>
+            /// Gets information on the returned status code
+            /// </summary>
+            public string StatusDescription { get; protected set; }
+
+            /// <summary>
+            /// The original method used to get this response
+            /// </summary>
+            public RequestMethod Method { get; protected set; }
+
+            /// <summary>
+            /// Gets the Uri of the responding server
+            /// </summary>
+            public Uri ResponseUri { get; protected set; }
+
+            /// <summary>
+            /// Gets the HTTP protocol version
+            /// </summary>
+            public VersionNumber ProtocolVersion { get; protected set; }
+
+            protected WebResponse(HttpResponse response, Plugin Owner = null)
+            {
+                // Make sure we aren't creating an empty response
+                if (response == null)
+                {
+                    throw new ArgumentNullException(nameof(response), "A WebResponse cannot be created from an null HttpResponse");
+                }
+
+                // Verify the original Request Method
+                switch (response.Method.ToUpper())
+                {
+                    case "DELETE":
+                        Method = RequestMethod.DELETE;
+                        break;
+
+                    case "GET":
+                        Method = RequestMethod.GET;
+                        break;
+
+                    case "HEAD":
+                        Method = RequestMethod.HEAD;
+                        break;
+
+                    case "PATCH":
+                        Method = RequestMethod.PATCH;
+                        break;
+
+                    case "POST":
+                        Method = RequestMethod.POST;
+                        break;
+
+                    case "PUT":
+                        Method = RequestMethod.PUT;
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"Unknown request method was defined '{response.Method}'");
+                }
+
+                ContentType = response.ContentType;
+                ResponseUri = response.ResponseUri;
+                StatusCode = (int)response.StatusCode;
+                StatusDescription = response.StatusDescription;
+                ProtocolVersion = new VersionNumber(response.ProtocolVersion?.Major ?? 1, response.ProtocolVersion?.Minor ?? 1, response.ProtocolVersion?.Revision ?? 0);
+                ContentEncoding = response.ContentEncoding;
+
+                if (response.Headers != null)
+                {
+                    Headers = new Dictionary<string, string>();
+
+                    for (int h = 0; h < response.Headers.Count; h++)
+                    {
+                        string key = response.Headers.GetKey(h);
+                        string[] values = response.Headers.GetValues(h);
+
+                        if (values != null && values.Length > 0 && !Headers.ContainsKey(key))
+                        {
+                            Headers.Add(key, string.Join(";", values));
+                        }
+                    }
+                }
+
+                if (Method != RequestMethod.HEAD)
+                {
+                    try
+                    {
+                        using (Stream stream = response.GetResponseStream())
+                        {
+                            responseStream = new MemoryStream();
+
+                            byte[] responseCache = new byte[256];
+                            int currentBytes;
+
+                            while (stream != null && (currentBytes = stream.Read(responseCache, 0, 256)) != 0)
+                            {
+                                responseStream.Write(responseCache, 0, currentBytes);
+                                responseCache = new byte[256];
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        string message = $"Web request produced exception (Url: {ResponseUri?.AbsoluteUri})";
+                        if (Owner)
+                        {
+                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        }
+
+                        Interface.Oxide.LogException(message, ex);
+                    }
+                }
+            }
+
+            internal WebResponse(System.Net.WebResponse response, Plugin Owner = null) : this((HttpResponse)response, Owner)
+            {
+            }
+
+            internal WebResponse(string errorText, Uri originalUri, RequestMethod method)
+            {
+                StatusDescription = errorText;
+            }
+
+            /// <summary>
+            /// Reads the Response in it's raw data
+            /// </summary>
+            /// <returns></returns>
+            public byte[] ReadAsBytes() => ContentLength != 0 ? responseStream.ToArray() : new byte[0];
+
+            /// <summary>
+            /// Reads the response as a string
+            /// </summary>
+            /// <param name="encoding"></param>
+            /// <returns></returns>
+            public string ReadAsString(Encoding encoding = null) => ContentLength != 0 ? encoding?.GetString(ReadAsBytes()) ?? Encoding.UTF8.GetString(ReadAsBytes()) : null;
+
+            /// <summary>
+            /// Converts the response string from Json to a .NET Object
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="encoding"></param>
+            /// <returns></returns>
+            public T ConvertFromJson<T>(Encoding encoding = null) => ContentLength != 0 ? Utility.ConvertFromJson<T>(ReadAsString(encoding)) : default(T);
+
+            /// <summary>
+            /// Safely disposes this object
+            /// </summary>
+            public virtual void Dispose()
+            {
+                responseStream?.Dispose();
+                responseStream = null;
+                Headers?.Clear();
+                Headers = null;
+
+                ContentType = null;
+                ContentEncoding = null;
+                ResponseUri = null;
+                StatusDescription = null;
+            }
+        }
 
         /// <summary>
         /// Formats given WebException to string
@@ -402,9 +667,9 @@ namespace Oxide.Core.Libraries
                 response += Environment.NewLine;
             }
 
-            response += exception.Message;
+            response += exception.Message; // TODO: Fix duplicate messages
 
-            if (exception.InnerException != null)
+            if (exception.InnerException != null && !response.Equals(exception.InnerException.Message))
             {
                 response = FormatWebException(exception.InnerException, response);
             }
@@ -461,8 +726,9 @@ namespace Oxide.Core.Libraries
                         Thread.Sleep(100);
                         continue;
                     }
+
                     WebRequest request = null;
-                    lock (syncroot)
+                    lock (syncRoot)
                     {
                         if (queue.Count > 0)
                         {
@@ -534,7 +800,7 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Enqueues a DELETE, GET, PATCH, POST, or PUT web request
+        /// Enqueues a DELETE, GET, PATCH, POST, HEAD, or PUT web request
         /// </summary>
         /// <param name="url"></param>
         /// <param name="body"></param>
@@ -547,11 +813,31 @@ namespace Oxide.Core.Libraries
         public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
         {
             WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            lock (syncroot)
+            lock (syncRoot)
             {
                 queue.Enqueue(request);
             }
+            workevent.Set();
+        }
 
+        /// <summary>
+        /// Enqueues a DELETE, GET, PATCH, POST, HEAD, or PUT web request
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="body"></param>
+        /// <param name="callback"></param>
+        /// <param name="owner"></param>
+        /// <param name="method"></param>
+        /// <param name="headers"></param>
+        /// <param name="timeout"></param>
+        [LibraryFunction("EnqueueV2")]
+        public void Enqueue(string url, string body, Action<WebResponse> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+        {
+            WebRequest request = new WebRequest(url, owner, callback) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
+            lock (syncRoot)
+            {
+                queue.Enqueue(request);
+            }
             workevent.Set();
         }
 
