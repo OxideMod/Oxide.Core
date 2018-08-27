@@ -753,53 +753,6 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Enqueues a get request
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="callback"></param>
-        /// <param name="owner"></param>
-        /// <param name="headers"></param>
-        /// <param name="timeout"></param>
-        [LibraryFunction("EnqueueGet")]
-        [Obsolete("EnqueueGet is deprecated, use Enqueue instead")]
-        public void EnqueueGet(string url, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
-        {
-            Enqueue(url, null, callback, owner, RequestMethod.GET, headers, timeout);
-        }
-
-        /// <summary>
-        /// Enqueues a post request
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="body"></param>
-        /// <param name="callback"></param>
-        /// <param name="owner"></param>
-        /// <param name="headers"></param>
-        /// <param name="timeout"></param>
-        [LibraryFunction("EnqueuePost")]
-        [Obsolete("EnqueuePost is deprecated, use Enqueue instead")]
-        public void EnqueuePost(string url, string body, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
-        {
-            Enqueue(url, body, callback, owner, RequestMethod.POST, headers, timeout);
-        }
-
-        /// <summary>
-        /// Enqueues a put request
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="body"></param>
-        /// <param name="callback"></param>
-        /// <param name="owner"></param>
-        /// <param name="headers"></param>
-        /// <param name="timeout"></param>
-        [LibraryFunction("EnqueuePut")]
-        [Obsolete("EnqueuePut is deprecated, use Enqueue instead")]
-        public void EnqueuePut(string url, string body, Action<int, string> callback, Plugin owner, Dictionary<string, string> headers = null, float timeout = 0f)
-        {
-            Enqueue(url, body, callback, owner, RequestMethod.PUT, headers, timeout);
-        }
-
-        /// <summary>
         /// Enqueues a DELETE, GET, PATCH, POST, HEAD, or PUT web request
         /// </summary>
         /// <param name="url"></param>
