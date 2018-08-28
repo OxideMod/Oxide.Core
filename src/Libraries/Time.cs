@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// The time library

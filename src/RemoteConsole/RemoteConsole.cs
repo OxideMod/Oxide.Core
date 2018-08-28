@@ -1,7 +1,5 @@
 extern alias References;
 
-using Oxide.Core.Configuration;
-using Oxide.Core.Libraries.Covalence;
 using References::WebSocketSharp;
 using References::WebSocketSharp.Net.WebSockets;
 using References::WebSocketSharp.Server;
@@ -9,15 +7,17 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using Umod.Configuration;
+using Umod.Libraries.Covalence;
 
-namespace Oxide.Core.RemoteConsole
+namespace Umod.RemoteConsole
 {
     public class RemoteConsole
     {
         #region Initialization
 
-        private readonly Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
-        private readonly OxideConfig.OxideRcon config = Interface.Oxide.Config.Rcon;
+        private readonly Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
+        private readonly UmodConfig.UmodRcon config = Interface.Umod.Config.Rcon;
 
         private RconListener listener;
         private WebSocketServer server;
@@ -27,29 +27,31 @@ namespace Oxide.Core.RemoteConsole
         /// </summary>
         public void Initalize()
         {
-            if (!config.Enabled || listener != null || server != null)
+            if (config.Enabled && listener == null && server == null)
             {
-                return;
-            }
+                if (string.IsNullOrEmpty(config.Password))
+                {
+                    Interface.Umod.LogWarning("[Rcon] Remote console password is not set, disabling");
+                    return;
+                }
 
-            if (string.IsNullOrEmpty(config.Password))
-            {
-                Interface.Oxide.LogWarning("[Rcon] Remote console password is not set, disabling");
-                return;
-            }
+                try
+                {
+                    server = new WebSocketServer(config.Port)
+                    {
+                        WaitTime = TimeSpan.FromSeconds(5.0),
+                        ReuseAddress = true
+                    };
+                    server.AddWebSocketService($"/{config.Password}", () => listener = new RconListener(this));
+                    server.Start();
 
-            try
-            {
-                server = new WebSocketServer(config.Port) { WaitTime = TimeSpan.FromSeconds(5.0), ReuseAddress = true };
-                server.AddWebSocketService($"/{config.Password}", () => listener = new RconListener(this));
-                server.Start();
-
-                Interface.Oxide.LogInfo($"[Rcon] Server started successfully on port {server.Port}");
-            }
-            catch (Exception ex)
-            {
-                Interface.Oxide.LogException($"[Rcon] Failed to start server on port {server?.Port}", ex);
-                RemoteLogger.Exception($"Failed to start RCON server on port {server?.Port}", ex);
+                    Interface.Umod.LogInfo($"[Rcon] Server started successfully on port {server.Port}");
+                }
+                catch (Exception ex)
+                {
+                    Interface.Umod.LogException($"[Rcon] Failed to start server on port {server?.Port}", ex);
+                    RemoteLogger.Exception($"Failed to start RCON server on port {server?.Port}", ex);
+                }
             }
         }
 
@@ -63,7 +65,7 @@ namespace Oxide.Core.RemoteConsole
                 server.Stop(code, reason);
                 server = null;
                 listener = null;
-                Interface.Oxide.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
+                Interface.Umod.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
             }
         }
 
@@ -119,7 +121,7 @@ namespace Oxide.Core.RemoteConsole
         {
             if (covalence == null)
             {
-                Interface.Oxide.LogError("[Rcon] Failed to process command, Covalence is null");
+                Interface.Umod.LogError("[Rcon] Failed to process command, Covalence is null");
                 return;
             }
 
@@ -127,13 +129,13 @@ namespace Oxide.Core.RemoteConsole
 
             if (message == null)
             {
-                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage is null");
+                Interface.Umod.LogError("[Rcon] Failed to process command, RemoteMessage is null");
                 return;
             }
 
             if (string.IsNullOrEmpty(message.Message))
             {
-                Interface.Oxide.LogError("[Rcon] Failed to process command, RemoteMessage.Text is not set");
+                Interface.Umod.LogError("[Rcon] Failed to process command, RemoteMessage.Text is not set");
                 return;
             }
 
@@ -141,12 +143,10 @@ namespace Oxide.Core.RemoteConsole
             string command = fullCommand[0].ToLower();
             string[] args = fullCommand.Skip(1).ToArray();
 
-            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint, command, args) != null)
+            if (Interface.CallHook("OnRconCommand", connection.UserEndPoint, command, args) == null)
             {
-                return;
+                covalence.Server.Command(command, args);
             }
-
-            covalence.Server.Command(command, args);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -198,17 +198,17 @@ namespace Oxide.Core.RemoteConsole
             protected override void OnClose(CloseEventArgs e)
             {
                 string reason = string.IsNullOrEmpty(e.Reason) ? "Unknown" : e.Reason;
-                Interface.Oxide.LogInfo($"[Rcon] Connection from {Address} closed: {reason} ({e.Code})");
+                Interface.Umod.LogInfo($"[Rcon] Connection from {Address} closed: {reason} ({e.Code})");
             }
 
-            protected override void OnError(ErrorEventArgs e) => Interface.Oxide.LogException(e.Message, e.Exception);
+            protected override void OnError(ErrorEventArgs e) => Interface.Umod.LogException(e.Message, e.Exception);
 
             protected override void OnMessage(MessageEventArgs e) => Parent?.OnMessage(e, Context);
 
             protected override void OnOpen()
             {
                 Address = Context.UserEndPoint.Address;
-                Interface.Oxide.LogInfo($"[Rcon] New connection from {Address}");
+                Interface.Umod.LogInfo($"[Rcon] New connection from {Address}");
             }
         }
 

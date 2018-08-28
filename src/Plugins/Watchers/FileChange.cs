@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Oxide.Core.Plugins.Watchers
+namespace Umod.Plugins.Watchers
 {
     /// <summary>
     /// Represents a file change

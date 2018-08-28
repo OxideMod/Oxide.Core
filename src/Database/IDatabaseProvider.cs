@@ -1,8 +1,8 @@
-using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
+using Umod.Plugins;
 
-namespace Oxide.Core.Database
+namespace Umod.Database
 {
     public interface IDatabaseProvider
     {

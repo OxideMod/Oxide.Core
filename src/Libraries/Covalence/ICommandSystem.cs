@@ -1,6 +1,6 @@
-﻿using Oxide.Core.Plugins;
+﻿using Umod.Plugins;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     /// <summary>
     /// Represents a source of commands

@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Oxide.Core.Logging
+namespace Umod.Logging
 {
     /// <summary>
     /// Represents a logger that processes messages on a worker thread

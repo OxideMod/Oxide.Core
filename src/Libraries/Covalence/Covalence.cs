@@ -1,12 +1,12 @@
-﻿using Oxide.Core.Logging;
-using Oxide.Core.Plugins;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Umod.Logging;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     /// <summary>
     /// The Covalence library
@@ -64,7 +64,7 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         public Covalence()
         {
-            logger = Interface.Oxide.RootLogger;
+            logger = Interface.Umod.RootLogger;
         }
 
         /// <summary>

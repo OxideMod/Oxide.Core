@@ -1,11 +1,11 @@
-﻿using Oxide.Core.Libraries;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
+using Umod.Libraries;
 
-namespace Oxide.Core.Plugins.Watchers
+namespace Umod.Plugins.Watchers
 {
     /// <summary>
     /// Represents a file system watcher
@@ -38,15 +38,15 @@ namespace Oxide.Core.Plugins.Watchers
         {
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
-            timers = Interface.Oxide.GetLibrary<Timer>();
+            timers = Interface.Umod.GetLibrary<Timer>();
 
-            if (Interface.Oxide.Config.Options.PluginWatchers)
+            if (Interface.Umod.Config.Options.PluginWatchers)
             {
                 LoadWatcher(directory, filter);
             }
             else
             {
-                Interface.Oxide.LogWarning("Automatic plugin reloading and unloading has been disabled");
+                Interface.Umod.LogWarning("Automatic plugin reloading and unloading has been disabled");
             }
         }
 
@@ -131,7 +131,7 @@ namespace Oxide.Core.Plugins.Watchers
                     change.type = WatcherChangeTypes.Deleted;
                     break;
             }
-            Interface.Oxide.NextTick(() =>
+            Interface.Umod.NextTick(() =>
             {
                 change.timer?.Destroy();
                 change.timer = timers.Once(.2f, () =>
@@ -179,9 +179,9 @@ namespace Oxide.Core.Plugins.Watchers
 
         private void watcher_Error(object sender, ErrorEventArgs e)
         {
-            Interface.Oxide.NextTick(() =>
+            Interface.Umod.NextTick(() =>
             {
-                Interface.Oxide.LogError("FSWatcher error: {0}", e.GetException());
+                Interface.Umod.LogError("FSWatcher error: {0}", e.GetException());
                 RemoteLogger.Exception("FSWatcher error", e.GetException());
             });
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Oxide.Core.ServerConsole
+namespace Umod.ServerConsole
 {
     public class ConsoleInput
     {
@@ -34,7 +34,7 @@ namespace Oxide.Core.ServerConsole
 
         public void RedrawInputLine()
         {
-            if (nextUpdate - 0.45f > Interface.Oxide.Now || LineWidth <= 0)
+            if (nextUpdate - 0.45f > Interface.Umod.Now || LineWidth <= 0)
             {
                 return;
             }
@@ -44,7 +44,7 @@ namespace Oxide.Core.ServerConsole
                 Console.CursorTop = Console.CursorTop + 1;
                 for (int i = 0; i < StatusTextLeft.Length; i++)
                 {
-                    if (!Interface.Oxide.Config.Console.ShowStatusBar)
+                    if (!Interface.Umod.Config.Console.ShowStatusBar)
                     {
                         break;
                     }
@@ -55,7 +55,7 @@ namespace Oxide.Core.ServerConsole
                     Console.ForegroundColor = StatusTextRightColor[i];
                     Console.Write(StatusTextRight[i].PadRight(LineWidth));
                 }
-                Console.CursorTop = Console.CursorTop - (Interface.Oxide.Config.Console.ShowStatusBar ? StatusTextLeft.Length + 1 : 1);
+                Console.CursorTop = Console.CursorTop - (Interface.Umod.Config.Console.ShowStatusBar ? StatusTextLeft.Length + 1 : 1);
                 Console.CursorLeft = 0;
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -70,7 +70,7 @@ namespace Oxide.Core.ServerConsole
             }
             catch (Exception e)
             {
-                Interface.Oxide.LogException("RedrawInputLine: ", e);
+                Interface.Umod.LogException("RedrawInputLine: ", e);
             }
         }
 
@@ -81,10 +81,10 @@ namespace Oxide.Core.ServerConsole
                 return;
             }
 
-            if (nextUpdate < Interface.Oxide.Now)
+            if (nextUpdate < Interface.Umod.Now)
             {
                 RedrawInputLine();
-                nextUpdate = Interface.Oxide.Now + 0.5f;
+                nextUpdate = Interface.Umod.Now + 0.5f;
             }
             try
             {
@@ -106,7 +106,7 @@ namespace Oxide.Core.ServerConsole
             switch (consoleKeyInfo.Key)
             {
                 case ConsoleKey.Enter:
-                    ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? StatusTextLeft.Length : 1);
+                    ClearLine(Interface.Umod.Config.Console.ShowStatusBar ? StatusTextLeft.Length : 1);
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine(string.Concat("> ", inputString));
                     inputHistory.Insert(0, inputString);
@@ -182,7 +182,7 @@ namespace Oxide.Core.ServerConsole
 
                     if (results.Length > 1)
                     {
-                        ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? StatusTextLeft.Length + 1 : 1);
+                        ClearLine(Interface.Umod.Config.Console.ShowStatusBar ? StatusTextLeft.Length + 1 : 1);
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         int lowestDiff = results.Max(r => r.Length);
                         for (int index = 0; index < results.Length; index++)

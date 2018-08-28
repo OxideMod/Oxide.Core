@@ -1,13 +1,13 @@
 ﻿extern alias References;
 
-using Oxide.Core.Configuration;
 using References::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Umod.Configuration;
 
-namespace Oxide.Core
+namespace Umod
 {
     /// <summary>
     /// Manages all data files
@@ -39,13 +39,13 @@ namespace Oxide.Core
         {
             name = DynamicConfigFile.SanitizeName(name);
             DynamicConfigFile datafile;
-            if (_datafiles.TryGetValue(name, out datafile))
+            if (!_datafiles.TryGetValue(name, out datafile))
             {
+                datafile = new DynamicConfigFile(Path.Combine(Directory, $"{name}.json"));
+                _datafiles.Add(name, datafile);
                 return datafile;
             }
 
-            datafile = new DynamicConfigFile(Path.Combine(Directory, $"{name}.json"));
-            _datafiles.Add(name, datafile);
             return datafile;
         }
 

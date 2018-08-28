@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Oxide.Core
+namespace Umod
 {
     public static class Localization
     {
@@ -10,23 +10,23 @@ namespace Oxide.Core
 
             ["en"] = new Dictionary<string, string>
             {
-                ["CommandUsageExtLoad"] = "Usage: oxide.ext.load <extname>+",
-                ["CommandUsageExtUnload"] = "Usage: oxide.ext.unload <extname>+",
-                ["CommandUsageExtReload"] = "Usage: oxide.ext.reload <extname>+",
-                ["CommandUsageGrant"] = "Usage: oxide.grant <group|user> <name|id> <permission>",
-                ["CommandUsageGroup"] = "Usage: oxide.group <add|set> <name> [title] [rank]",
-                ["CommandUsageGroupParent"] = "Usage: oxide.group <parent> <name> <parentName>",
-                ["CommandUsageGroupRemove"] = "Usage: oxide.group <remove> <name>",
-                ["CommandUsageLang"] = "Usage: oxide.lang <two-digit language code>",
-                ["CommandUsageLoad"] = "Usage: oxide.load *|<pluginname>+",
-                ["CommandUsageReload"] = "Usage: oxide.reload *|<pluginname>+",
-                ["CommandUsageRevoke"] = "Usage: oxide.revoke <group|user> <name|id> <permission>",
-                ["CommandUsageShow"] = "Usage: oxide.show <groups|perms>",
-                ["CommandUsageShowName"] = "Usage: oxide.show <group|user> <name>",
-                ["CommandUsageUnload"] = "Usage: oxide.unload *|<pluginname>+",
-                ["CommandUsageUserGroup"] = "Usage: oxide.usergroup <add|remove> <username> <groupname>",
+                ["CommandUsageExtLoad"] = "Usage: umod.ext.load <extname>+",
+                ["CommandUsageExtUnload"] = "Usage: umod.ext.unload <extname>+",
+                ["CommandUsageExtReload"] = "Usage: umod.ext.reload <extname>+",
+                ["CommandUsageGrant"] = "Usage: umod.grant <group|user> <name|id> <permission>",
+                ["CommandUsageGroup"] = "Usage: umod.group <add|set> <name> [title] [rank]",
+                ["CommandUsageGroupParent"] = "Usage: umod.group <parent> <name> <parentName>",
+                ["CommandUsageGroupRemove"] = "Usage: umod.group <remove> <name>",
+                ["CommandUsageLang"] = "Usage: umod.lang <two-digit language code>",
+                ["CommandUsageLoad"] = "Usage: umod.load *|<pluginname>+",
+                ["CommandUsageReload"] = "Usage: umod.reload *|<pluginname>+",
+                ["CommandUsageRevoke"] = "Usage: umod.revoke <group|user> <name|id> <permission>",
+                ["CommandUsageShow"] = "Usage: umod.show <groups|perms>",
+                ["CommandUsageShowName"] = "Usage: umod.show <group|user> <name>",
+                ["CommandUsageUnload"] = "Usage: umod.unload *|<pluginname>+",
+                ["CommandUsageUserGroup"] = "Usage: umod.usergroup <add|remove> <username> <groupname>",
                 ["ConnectionRejected"] = "Connection was rejected",
-                ["DataSaved"] = "Saving Oxide data...",
+                ["DataSaved"] = "Saving Umod data...",
                 ["GroupAlreadyExists"] = "Group '{0}' already exists",
                 ["GroupAlreadyHasPermission"] = "Group '{0}' already has permission '{1}'",
                 ["GroupDoesNotHavePermission"] = "Group '{0}' does not have permission '{1}'",
@@ -73,7 +73,7 @@ namespace Oxide.Core
                 ["PlayerPermissionRevoked"] = "Player '{0}' revoked permission '{1}'",
                 ["PlayerRemovedFromGroup"] = "Player '{0}' removed from group '{1}'",
                 ["PlayersFound"] = "Multiple players were found, please specify: {0}",
-                ["Version"] = "Server is running [#ffb658]Oxide {0}[/#] and [#ee715c]{1} {2} ({3})[/#]",
+                ["Version"] = "Server is running [#ffb658]Umod {0}[/#] and [#ee715c]{1} {2} ({3})[/#]",
                 ["YouAreNotAdmin"] = "You are not an admin"
             }
 

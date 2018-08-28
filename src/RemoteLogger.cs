@@ -1,8 +1,5 @@
 ﻿extern alias References;
 
-using Oxide.Core.Extensions;
-using Oxide.Core.Libraries;
-using Oxide.Core.Plugins;
 using References::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,8 +7,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Umod.Extensions;
+using Umod.Libraries;
+using Umod.Plugins;
 
-namespace Oxide.Core
+namespace Umod
 {
     public static class RemoteLogger
     {
@@ -64,7 +64,7 @@ namespace Oxide.Core
             public string level;
             public string culprit;
             public string platform = "csharp";
-            public string release = OxideMod.Version.ToString();
+            public string release = Umod.Version.ToString();
             public Dictionary<string, string> tags = Tags;
             public Dictionary<string, string> modules;
             public Dictionary<string, string> extra;
@@ -78,7 +78,7 @@ namespace Oxide.Core
                 this.message = message.Length > 1000 ? message.Substring(0, 1000) : message;
                 this.culprit = culprit;
                 this.modules = new Dictionary<string, string>();
-                foreach (Extension extension in Interface.Oxide.GetAllExtensions())
+                foreach (Extension extension in Interface.Umod.GetAllExtensions())
                 {
                     modules[extension.GetType().Assembly.GetName().Name] = extension.Version.ToString();
                 }
@@ -106,7 +106,7 @@ namespace Oxide.Core
                     Type pluginType = assembly.GetTypes().FirstOrDefault(t => IsTypeDerivedFrom(t, typeof(Plugin)));
                     if (pluginType != null)
                     {
-                        Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginType.Name);
+                        Plugin plugin = Interface.Umod.RootPluginManager.GetPlugin(pluginType.Name);
                         if (plugin != null)
                         {
                             modules["Plugins." + plugin.Name] = plugin.Version.ToString();
@@ -119,19 +119,17 @@ namespace Oxide.Core
             {
                 foreach (string line in stackTrace)
                 {
-                    if (!line.StartsWith("Oxide.Plugins.PluginCompiler") || !line.Contains("+"))
+                    if (line.StartsWith("Umod.Plugins.PluginCompiler") && line.Contains("+"))
                     {
-                        continue;
-                    }
+                        string pluginName = line.Split('+')[0];
+                        Plugin plugin = Interface.Umod.RootPluginManager.GetPlugin(pluginName);
+                        if (plugin != null)
+                        {
+                            modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        }
 
-                    string pluginName = line.Split('+')[0];
-                    Plugin plugin = Interface.Oxide.RootPluginManager.GetPlugin(pluginName);
-                    if (plugin != null)
-                    {
-                        modules["Plugins." + plugin.Name] = plugin.Version.ToString();
+                        break;
                     }
-
-                    break;
                 }
             }
 
@@ -149,8 +147,8 @@ namespace Oxide.Core
             }
         }
 
-        private static readonly Timer Timers = Interface.Oxide.GetLibrary<Timer>();
-        private static readonly WebRequests Webrequests = Interface.Oxide.GetLibrary<WebRequests>();
+        private static readonly Timer Timers = Interface.Umod.GetLibrary<Timer>();
+        private static readonly WebRequests Webrequests = Interface.Umod.GetLibrary<WebRequests>();
         private static readonly List<QueuedReport> QueuedReports = new List<QueuedReport>();
         private static bool submittingReports;
 
@@ -177,9 +175,9 @@ namespace Oxide.Core
             "FileNotFoundException",
             "IOException",
             "KeyNotFoundException",
-            "Oxide.Core.Configuration",
-            "Oxide.Ext.",
-            "Oxide.Plugins.<",
+            "Umod.Configuration",
+            "Umod.Ext.",
+            "Umod.Plugins.<",
             "ReflectionTypeLoadException",
             "Sharing violation",
             "UnauthorizedAccessException",
@@ -188,20 +186,19 @@ namespace Oxide.Core
 
         public static void Exception(string message, Exception exception)
         {
-            if (!exception.StackTrace.Contains("Oxide.Core") && !exception.StackTrace.Contains("Oxide.Plugins.Compiler"))
+            if (exception.StackTrace.Contains("Umod") || exception.StackTrace.Contains("Umod.Plugins.Compiler"))
             {
-                return;
-            }
-
-            foreach (string filter in ExceptionFilter)
-            {
-                if (exception.StackTrace.Contains(filter) || message.Contains(filter))
+                foreach (string filter in ExceptionFilter)
                 {
-                    return;
+                    if (exception.StackTrace.Contains(filter) || message.Contains(filter))
+                    {
+                        return;
+                    }
                 }
-            }
 
-            EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message, exception.ToString());
+                EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message,
+                    exception.ToString());
+            }
         }
 
         public static void Exception(string message, string rawStackTrace)
@@ -228,48 +225,44 @@ namespace Oxide.Core
         private static void EnqueueReport(Report report)
         {
             Dictionary<string, string>.ValueCollection stackTrace = report.extra.Values;
-            if (!stackTrace.Contains("Oxide.Core") && !stackTrace.Contains("Oxide.Plugins.Compiler"))
+            if (stackTrace.Contains("Umod") || stackTrace.Contains("Umod.Plugins.Compiler"))
             {
-                return;
-            }
-
-            foreach (string filter in ExceptionFilter)
-            {
-                if (stackTrace.Contains(filter) || stackTrace.Contains(filter))
+                foreach (string filter in ExceptionFilter)
                 {
-                    return;
+                    if (stackTrace.Contains(filter) || stackTrace.Contains(filter))
+                    {
+                        return;
+                    }
                 }
-            }
 
-            QueuedReports.Add(new QueuedReport(report));
-            if (!submittingReports)
-            {
-                SubmitNextReport();
+                QueuedReports.Add(new QueuedReport(report));
+                if (!submittingReports)
+                {
+                    SubmitNextReport();
+                }
             }
         }
 
         private static void SubmitNextReport()
         {
-            if (QueuedReports.Count < 1)
+            if (QueuedReports.Count >= 1)
             {
-                return;
+                QueuedReport queuedReport = QueuedReports[0];
+                submittingReports = true;
+                Webrequests.Enqueue(Url, queuedReport.Body, (code, response) =>
+                {
+                    if (code == 200)
+                    {
+                        QueuedReports.RemoveAt(0);
+                        submittingReports = false;
+                        SubmitNextReport();
+                    }
+                    else
+                    {
+                        Timers.Once(5f, SubmitNextReport);
+                    }
+                }, null, RequestMethod.POST, queuedReport.Headers);
             }
-
-            QueuedReport queuedReport = QueuedReports[0];
-            submittingReports = true;
-            Webrequests.Enqueue(Url, queuedReport.Body, (code, response) =>
-            {
-                if (code == 200)
-                {
-                    QueuedReports.RemoveAt(0);
-                    submittingReports = false;
-                    SubmitNextReport();
-                }
-                else
-                {
-                    Timers.Once(5f, SubmitNextReport);
-                }
-            }, null, RequestMethod.POST, queuedReport.Headers);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

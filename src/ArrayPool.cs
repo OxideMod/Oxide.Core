@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace Oxide.Core
+namespace Umod
 {
     public static class ArrayPool
     {
+        private static readonly List<Queue<object[]>> _pooledArrays = new List<Queue<object[]>>();
+
         private const int MaxArrayLength = 50;
         private const int InitialPoolAmount = 64;
         private const int MaxPoolAmount = 256;
-
-        private static List<Queue<object[]>> _pooledArrays = new List<Queue<object[]>>();
 
         static ArrayPool()
         {
@@ -39,29 +39,29 @@ namespace Oxide.Core
 
         public static void Free(object[] array)
         {
-            if (array == null || array.Length == 0 || array.Length > MaxArrayLength)
+            if (array != null && array.Length != 0 && array.Length <= MaxArrayLength)
             {
-                return;
-            }
-
-            // Cleanup array
-            for (int i = 0; i < array.Length; i++)
-            {
-                array[i] = null;
-            }
-            Queue<object[]> arrays = _pooledArrays[array.Length - 1];
-            lock (arrays)
-            {
-                if (arrays.Count > MaxPoolAmount)
+                // Cleanup array
+                for (int i = 0; i < array.Length; i++)
                 {
-                    for (int i = 0; i < InitialPoolAmount; i++)
-                    {
-                        arrays.Dequeue();
-                    }
-                    return;
+                    array[i] = null;
                 }
 
-                arrays.Enqueue(array);
+                Queue<object[]> arrays = _pooledArrays[array.Length - 1];
+                lock (arrays)
+                {
+                    if (arrays.Count > MaxPoolAmount)
+                    {
+                        for (int i = 0; i < InitialPoolAmount; i++)
+                        {
+                            arrays.Dequeue();
+                        }
+
+                        return;
+                    }
+
+                    arrays.Enqueue(array);
+                }
             }
         }
 

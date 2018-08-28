@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core
+﻿namespace Umod
 {
     public static class Random
     {

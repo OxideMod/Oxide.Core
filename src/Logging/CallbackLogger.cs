@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core.Logging
+﻿namespace Umod.Logging
 {
     public class CallbackLogger : Logger
     {

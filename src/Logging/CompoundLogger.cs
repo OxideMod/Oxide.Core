@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Oxide.Core.Logging
+namespace Umod.Logging
 {
     /// <summary>
     /// Represents a set of loggers that fall under a single logger

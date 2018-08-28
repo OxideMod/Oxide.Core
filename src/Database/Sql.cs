@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Oxide.Core.Database
+namespace Umod.Database
 {
     // Simple helper class for building SQL statements
     public class Sql

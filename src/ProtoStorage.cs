@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Oxide.Core
+namespace Umod
 {
     public class ProtoStorage
     {
@@ -42,7 +42,7 @@ namespace Oxide.Core
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException($"Failed to load protobuf data from {name}", ex);
+                Interface.Umod.LogException($"Failed to load protobuf data from {name}", ex);
             }
             return default(T);
         }
@@ -66,7 +66,7 @@ namespace Oxide.Core
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException($"Failed to save protobuf data to {name}", ex);
+                Interface.Umod.LogException($"Failed to save protobuf data to {name}", ex);
             }
         }
 
@@ -77,6 +77,6 @@ namespace Oxide.Core
             return string.Join(Path.DirectorySeparatorChar.ToString(), subPaths).Replace("..", "") + ".data";
         }
 
-        public static string GetFileDataPath(string name) => Path.Combine(Interface.Oxide.DataDirectory, name);
+        public static string GetFileDataPath(string name) => Path.Combine(Interface.Umod.DataDirectory, name);
     }
 }

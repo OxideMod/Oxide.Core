@@ -1,17 +1,17 @@
-﻿using Oxide.Core.Libraries;
-using Oxide.Core.Logging;
-using Oxide.Core.Plugins;
-using Oxide.Core.Plugins.Watchers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Umod.Libraries;
+using Umod.Logging;
+using Umod.Plugins;
+using Umod.Plugins.Watchers;
 
-namespace Oxide.Core.Extensions
+namespace Umod.Extensions
 {
     /// <summary>
-    /// Responsible for managing all Oxide extensions
+    /// Responsible for managing all Umod extensions
     /// </summary>
     public sealed class ExtensionManager
     {
@@ -19,7 +19,7 @@ namespace Oxide.Core.Extensions
         private IList<Extension> extensions;
 
         // The search patterns for extensions
-        private const string extSearchPattern = "Oxide.*.dll";
+        private const string extSearchPattern = "Umod.*.dll";
 
         /// <summary>
         /// Gets the logger to which this extension manager writes
@@ -71,7 +71,7 @@ namespace Oxide.Core.Extensions
         {
             if (libraries.ContainsKey(name))
             {
-                Interface.Oxide.LogError("An extension tried to register an already registered library: " + name);
+                Interface.Umod.LogError("An extension tried to register an already registered library: " + name);
             }
             else
             {
@@ -139,13 +139,11 @@ namespace Oxide.Core.Extensions
                 Type extensionType = null;
                 foreach (Type type in assembly.GetExportedTypes())
                 {
-                    if (!extType.IsAssignableFrom(type))
+                    if (extType.IsAssignableFrom(type))
                     {
-                        continue;
+                        extensionType = type;
+                        break;
                     }
-
-                    extensionType = type;
-                    break;
                 }
 
                 if (extensionType == null)
@@ -276,31 +274,31 @@ namespace Oxide.Core.Extensions
             List<string> foundGame = new List<string>();
             List<string> foundOther = new List<string>();
             string[] coreExtensions = {
-                "Oxide.CSharp", "Oxide.JavaScript", "Oxide.Lua", "Oxide.MySql", "Oxide.Python", "Oxide.SQLite", "Oxide.Unity"
+                "Umod.CSharp", "Umod.JavaScript", "Umod.Lua", "Umod.MySql", "Umod.Python", "Umod.SQLite", "Umod.Unity"
             };
             string[] gameExtensions = {
-                "Oxide.Blackwake", "Oxide.Blockstorm", "Oxide.FortressCraft", "Oxide.FromTheDepths", "Oxide.GangBeasts", "Oxide.Hurtworld",
-                "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings",  "Oxide.Rust",
-                "Oxide.RustLegacy", "Oxide.SavageLands", "Oxide.SevenDaysToDie", "Oxide.SpaceEngineers", "Oxide.TheForest", "Oxide.Terraria",
-                "Oxide.Unturned"
+                "Umod.Blackwake", "Umod.Blockstorm", "Umod.FortressCraft", "Umod.FromTheDepths", "Umod.GangBeasts", "Umod.Hurtworld",
+                "Umod.InterstellarRift", "Umod.MedievalEngineers", "Umod.Nomad", "Umod.PlanetExplorers", "Umod.ReignOfKings",  "Umod.Rust",
+                "Umod.RustLegacy", "Umod.SavageLands", "Umod.SevenDaysToDie", "Umod.SpaceEngineers", "Umod.TheForest", "Umod.Terraria",
+                "Umod.Unturned"
             };
             string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
 
-            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
+            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Umod.dll") && !e.EndsWith("Umod.References.dll")))
             {
-                if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
+                if (extPath.Contains("Umod.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
                 {
                     Cleanup.Add(extPath);
                     continue;
                 }
 
-                if (extPath.Contains("Oxide.Ext.") && Array.IndexOf(foundExtensions, extPath.Replace(".Ext", "")) != -1)
+                if (extPath.Contains("Umod.Ext.") && Array.IndexOf(foundExtensions, extPath.Replace(".Ext", "")) != -1)
                 {
                     Cleanup.Add(extPath);
                     continue;
                 }
 
-                if (extPath.Contains("Oxide.Game."))
+                if (extPath.Contains("Umod.Game."))
                 {
                     Cleanup.Add(extPath);
                     continue;

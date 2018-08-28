@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Oxide.Core
+namespace Umod
 {
     /// <summary>
     /// Represents a command line string in managed form
@@ -30,33 +30,32 @@ namespace Oxide.Core
 
             foreach (string str in Split(cmdline))
             {
-                if (str.Length <= 0)
+                if (str.Length > 0)
                 {
-                    continue;
-                }
-
-                string val = str;
-                if (str[0] == '-' || str[0] == '+')
-                {
-                    if (key != string.Empty && !variables.ContainsKey(key))
+                    string val = str;
+                    if (str[0] == '-' || str[0] == '+')
                     {
-                        variables.Add(key, string.Empty);
-                    }
-
-                    key = val.Substring(1);
-                }
-                else if (key != string.Empty)
-                {
-                    if (!variables.ContainsKey(key))
-                    {
-                        if (key.Contains("dir"))
+                        if (key != string.Empty && !variables.ContainsKey(key))
                         {
-                            val = val.Replace('/', '\\');
+                            variables.Add(key, string.Empty);
                         }
 
-                        variables.Add(key, val);
+                        key = val.Substring(1);
                     }
-                    key = string.Empty;
+                    else if (key != string.Empty)
+                    {
+                        if (!variables.ContainsKey(key))
+                        {
+                            if (key.Contains("dir"))
+                            {
+                                val = val.Replace('/', '\\');
+                            }
+
+                            variables.Add(key, val);
+                        }
+
+                        key = string.Empty;
+                    }
                 }
             }
 

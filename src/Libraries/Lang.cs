@@ -1,13 +1,13 @@
 ﻿extern alias References;
 
-using Oxide.Core.Plugins;
 using References::Newtonsoft.Json;
 using References::ProtoBuf;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     public class Lang : Library
     {
@@ -32,8 +32,10 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public Lang()
         {
+            // TODO: Rename oxide.lang if exists
+
             langFiles = new Dictionary<string, Dictionary<string, string>>();
-            langData = ProtoStorage.Load<LangData>("oxide.lang") ?? new LangData();
+            langData = ProtoStorage.Load<LangData>("umod.lang") ?? new LangData();
             pluginRemovedFromManager = new Dictionary<Plugin, Event.Callback<Plugin, PluginManager>>();
         }
 
@@ -76,12 +78,12 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            if (!Directory.Exists(Path.Combine(Interface.Oxide.LangDirectory, lang)))
+            if (!Directory.Exists(Path.Combine(Interface.Umod.LangDirectory, lang)))
             {
-                Directory.CreateDirectory(Path.Combine(Interface.Oxide.LangDirectory, lang));
+                Directory.CreateDirectory(Path.Combine(Interface.Umod.LangDirectory, lang));
             }
 
-            File.WriteAllText(Path.Combine(Interface.Oxide.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
+            File.WriteAllText(Path.Combine(Interface.Umod.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
         }
 
         /// <summary>
@@ -110,7 +112,7 @@ namespace Oxide.Core.Libraries
         public string[] GetLanguages(Plugin plugin = null)
         {
             List<string> languages = new List<string>();
-            foreach (string directory in Directory.GetDirectories(Interface.Oxide.LangDirectory))
+            foreach (string directory in Directory.GetDirectories(Interface.Umod.LangDirectory))
             {
                 if (Directory.GetFiles(directory).Length == 0)
                 {
@@ -119,7 +121,7 @@ namespace Oxide.Core.Libraries
 
                 if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
                 {
-                    languages.Add(directory.Substring(Interface.Oxide.LangDirectory.Length + 1));
+                    languages.Add(directory.Substring(Interface.Umod.LangDirectory.Length + 1));
                 }
             }
             return languages.ToArray();
@@ -244,19 +246,19 @@ namespace Oxide.Core.Libraries
         /// <returns></returns>
         private Dictionary<string, string> GetMessageFile(string plugin, string lang = defaultLang)
         {
-            if (string.IsNullOrEmpty(plugin))
+            if (!string.IsNullOrEmpty(plugin))
             {
-                return null;
+                foreach (char invalidChar in Path.GetInvalidFileNameChars())
+                {
+                    lang = lang.Replace(invalidChar, '_');
+                }
+
+                string file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
+                string filename = Path.Combine(Interface.Umod.LangDirectory, file);
+                return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
             }
 
-            foreach (char invalidChar in Path.GetInvalidFileNameChars())
-            {
-                lang = lang.Replace(invalidChar, '_');
-            }
-
-            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
-            string filename = Path.Combine(Interface.Oxide.LangDirectory, file);
-            return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
+            return null;
         }
 
         /// <summary>
@@ -276,14 +278,14 @@ namespace Oxide.Core.Libraries
                 langFile = GetMessageFile(plugin.Name, lang) ?? (GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name));
                 if (langFile == null)
                 {
-                    Interface.Oxide.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");
+                    Interface.Umod.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");
                     return key;
                 }
 
                 Dictionary<string, string> defaultLangFile = GetMessageFile(plugin.Name);
-                if (defaultLangFile != null && MergeMessages(langFile, defaultLangFile) && File.Exists(Path.Combine(Interface.Oxide.LangDirectory, file)))
+                if (defaultLangFile != null && MergeMessages(langFile, defaultLangFile) && File.Exists(Path.Combine(Interface.Umod.LangDirectory, file)))
                 {
-                    File.WriteAllText(Path.Combine(Interface.Oxide.LangDirectory, file), JsonConvert.SerializeObject(langFile, Formatting.Indented));
+                    File.WriteAllText(Path.Combine(Interface.Umod.LangDirectory, file), JsonConvert.SerializeObject(langFile, Formatting.Indented));
                 }
 
                 AddLangFile(file, langFile, plugin);
@@ -305,26 +307,22 @@ namespace Oxide.Core.Libraries
 
             foreach (KeyValuePair<string, string> message in messages)
             {
-                if (existingMessages.ContainsKey(message.Key))
+                if (!existingMessages.ContainsKey(message.Key))
                 {
-                    continue;
+                    existingMessages.Add(message.Key, message.Value);
+                    changed = true;
                 }
-
-                existingMessages.Add(message.Key, message.Value);
-                changed = true;
             }
 
             if (existingMessages.Count > 0)
             {
                 foreach (string message in existingMessages.Keys.ToArray())
                 {
-                    if (messages.ContainsKey(message))
+                    if (!messages.ContainsKey(message))
                     {
-                        continue;
+                        existingMessages.Remove(message);
+                        changed = true;
                     }
-
-                    existingMessages.Remove(message);
-                    changed = true;
                 }
             }
 
@@ -332,9 +330,9 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Saves all data to the "oxide.lang" file
+        /// Saves all data to the "umod.lang" file
         /// </summary>
-        private void SaveData() => ProtoStorage.Save(langData, "oxide.lang");
+        private void SaveData() => ProtoStorage.Save(langData, "umod.lang");
 
         /// <summary>
         /// Called when the plugin was unloaded

@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core
+﻿namespace Umod
 {
     /// <summary>
     /// Represents a version in major.minor.patch form
@@ -160,13 +160,13 @@
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (!(obj is VersionNumber))
+            if (obj is VersionNumber)
             {
-                return false;
+                VersionNumber other = (VersionNumber)obj;
+                return this == other;
             }
 
-            VersionNumber other = (VersionNumber)obj;
-            return this == other;
+            return false;
         }
 
         /// <summary>

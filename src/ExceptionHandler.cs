@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Oxide.Core
+namespace Umod
 {
     public class ExceptionHandler
     {

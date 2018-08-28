@@ -1,16 +1,16 @@
 ﻿using System;
 
-namespace Oxide.Core
+namespace Umod
 {
     /// <summary>
-    /// The interface class through which patched DLLs interact with Oxide
+    /// The interface class through which patched DLLs interact with Umod
     /// </summary>
     public static class Interface
     {
         /// <summary>
-        /// Gets the main Oxide mod instance
+        /// Gets the main Umod instance
         /// </summary>
-        public static OxideMod Oxide { get; private set; }
+        public static Umod Umod { get; private set; }
 
         /// <summary>
         /// Gets or sets the debug callback to use
@@ -18,18 +18,16 @@ namespace Oxide.Core
         public static NativeDebugCallback DebugCallback { get; set; }
 
         /// <summary>
-        /// Initializes Oxide
+        /// Initializes Umod
         /// </summary>
         public static void Initialize()
         {
             // Create if not already created
-            if (Oxide != null)
+            if (Umod == null)
             {
-                return;
+                Umod = new Umod(DebugCallback);
+                Umod.Load();
             }
-
-            Oxide = new OxideMod(DebugCallback);
-            Oxide.Load();
         }
 
         /// <summary>
@@ -42,7 +40,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
-            return Oxide.CallDeprecatedHook(oldHook, newHook, expireDate, args);
+            return Umod.CallDeprecatedHook(oldHook, newHook, expireDate, args);
         }
 
         /// <summary>
@@ -64,7 +62,7 @@ namespace Oxide.Core
         /// <param name="hook"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object[] args) => Oxide?.CallHook(hook, args);
+        public static object CallHook(string hook, object[] args) => Umod?.CallHook(hook, args);
 
         #region Hook Overloads
 
@@ -72,7 +70,6 @@ namespace Oxide.Core
         /// Calls the specified hook
         /// </summary>
         /// <param name="hook"></param>
-        /// <param name="args"></param>
         /// <returns></returns>
         public static object CallHook(string hook)
         {
@@ -339,9 +336,9 @@ namespace Oxide.Core
         public static T Call<T>(string hook, params object[] args) => (T)Convert.ChangeType(CallHook(hook, args), typeof(T));
 
         /// <summary>
-        /// Gets the Oxide mod
+        /// Gets the mod by the previous name, "Oxide"
         /// </summary>
         /// <returns></returns>
-        public static OxideMod GetMod() => Oxide;
+        public static Umod Oxide => Umod; // TODO: This needs to be removed
     }
 }

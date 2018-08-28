@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Net;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     /// <summary>
     /// Represents a generic server hosting the game instance

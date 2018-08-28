@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Oxide.Core.ServerConsole
+namespace Umod.ServerConsole
 {
     public class ServerConsole
     {
@@ -23,44 +23,44 @@ namespace Oxide.Core.ServerConsole
 
         public Func<string, string[]> Completion
         {
-            get { return input.Completion; }
-            set { input.Completion = value; }
+            get => input.Completion;
+            set => input.Completion = value;
         }
 
         public ConsoleColor Status1LeftColor
         {
-            get { return input.StatusTextLeftColor[1]; }
-            set { input.StatusTextLeftColor[1] = value; }
+            get => input.StatusTextLeftColor[1];
+            set => input.StatusTextLeftColor[1] = value;
         }
 
         public ConsoleColor Status1RightColor
         {
-            get { return input.StatusTextRightColor[1]; }
-            set { input.StatusTextRightColor[1] = value; }
+            get => input.StatusTextRightColor[1];
+            set => input.StatusTextRightColor[1] = value;
         }
 
         public ConsoleColor Status2LeftColor
         {
-            get { return input.StatusTextLeftColor[2]; }
-            set { input.StatusTextLeftColor[2] = value; }
+            get => input.StatusTextLeftColor[2];
+            set => input.StatusTextLeftColor[2] = value;
         }
 
         public ConsoleColor Status2RightColor
         {
-            get { return input.StatusTextRightColor[2]; }
-            set { input.StatusTextRightColor[2] = value; }
+            get => input.StatusTextRightColor[2];
+            set => input.StatusTextRightColor[2] = value;
         }
 
         public ConsoleColor Status3RightColor
         {
-            get { return input.StatusTextRightColor[3]; }
-            set { input.StatusTextRightColor[3] = value; }
+            get => input.StatusTextRightColor[3];
+            set => input.StatusTextRightColor[3] = value;
         }
 
         public ConsoleColor Status3LeftColor
         {
-            get { return input.StatusTextLeftColor[3]; }
-            set { input.StatusTextLeftColor[3] = value; }
+            get => input.StatusTextLeftColor[3];
+            set => input.StatusTextLeftColor[3] = value;
         }
 
         private string title => Title?.Invoke();
@@ -79,7 +79,7 @@ namespace Oxide.Core.ServerConsole
         {
             Console.ForegroundColor = color;
             int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + (int)Math.Ceiling((double)line.Length / Console.BufferWidth));
-            input.ClearLine((Interface.Oxide.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
+            input.ClearLine((Interface.Umod.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
             Console.WriteLine(message);
             input.RedrawInputLine();
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -87,29 +87,25 @@ namespace Oxide.Core.ServerConsole
 
         public void OnDisable()
         {
-            if (!init)
+            if (init)
             {
-                return;
+                input.OnInputText -= OnInputText;
+                console.Shutdown();
             }
-
-            input.OnInputText -= OnInputText;
-            console.Shutdown();
         }
 
         public void OnEnable()
         {
-            if (!console.Initialize())
+            if (console.Initialize())
             {
-                return;
-            }
-
-            init = true;
-            input.OnInputText += OnInputText;
-            input.ClearLine(1);
-            input.ClearLine(Console.WindowHeight);
-            for (int i = 0; i < Console.WindowHeight; i++)
-            {
-                Console.WriteLine();
+                init = true;
+                input.OnInputText += OnInputText;
+                input.ClearLine(1);
+                input.ClearLine(Console.WindowHeight);
+                for (int i = 0; i < Console.WindowHeight; i++)
+                {
+                    Console.WriteLine();
+                }
             }
         }
 
@@ -121,18 +117,18 @@ namespace Oxide.Core.ServerConsole
             }
             catch (Exception e)
             {
-                Interface.Oxide.LogException("OnInputText: ", e);
+                Interface.Umod.LogException("OnInputText: ", e);
             }
         }
 
         public static void PrintColored(params object[] objects)
         {
-            if (Interface.Oxide.ServerConsole == null)
+            if (Interface.Umod.ServerConsole == null)
             {
                 return;
             }
 
-            Interface.Oxide.ServerConsole.input.ClearLine(Interface.Oxide.Config.Console.ShowStatusBar ? Interface.Oxide.ServerConsole.input.StatusTextLeft.Length : 1);
+            Interface.Umod.ServerConsole.input.ClearLine(Interface.Umod.Config.Console.ShowStatusBar ? Interface.Umod.ServerConsole.input.StatusTextLeft.Length : 1);
             for (int i = 0; i < objects.Length; i++)
             {
                 if (i % 2 != 0)
@@ -149,53 +145,49 @@ namespace Oxide.Core.ServerConsole
                 Console.CursorTop = Console.CursorTop + 1;
             }
 
-            Interface.Oxide.ServerConsole.input.RedrawInputLine();
+            Interface.Umod.ServerConsole.input.RedrawInputLine();
         }
 
         public void Update()
         {
-            if (!init)
+            if (init)
             {
-                return;
-            }
+                if (Interface.Umod.Config.Console.ShowStatusBar)
+                {
+                    UpdateStatus();
+                }
 
-            if (Interface.Oxide.Config.Console.ShowStatusBar)
-            {
-                UpdateStatus();
-            }
+                input.Update();
+                if (nextTitleUpdate > Interface.Umod.Now)
+                {
+                    return;
+                }
 
-            input.Update();
-            if (nextTitleUpdate > Interface.Oxide.Now)
-            {
-                return;
+                nextTitleUpdate = Interface.Umod.Now + 1f;
+                console.SetTitle(title);
             }
-
-            nextTitleUpdate = Interface.Oxide.Now + 1f;
-            console.SetTitle(title);
         }
 
         private void UpdateStatus()
         {
-            if (nextUpdate > Interface.Oxide.Now)
+            if (!(nextUpdate > Interface.Umod.Now))
             {
-                return;
-            }
+                nextUpdate = Interface.Umod.Now + 0.66f;
+                if (input.Valid)
+                {
+                    string left1 = status1Left, left2 = status2Left, left3 = status3Left;
 
-            nextUpdate = Interface.Oxide.Now + 0.66f;
-            if (!input.Valid)
-            {
-                return;
-            }
+                    //input.StatusTextLeft[0] = string.Empty;
+                    input.StatusTextLeft[1] = left1;
+                    input.StatusTextLeft[2] = left2;
+                    input.StatusTextLeft[3] = left3;
 
-            string left1 = status1Left, left2 = status2Left, left3 = status3Left;
-            //input.StatusTextLeft[0] = string.Empty;
-            input.StatusTextLeft[1] = left1;
-            input.StatusTextLeft[2] = left2;
-            input.StatusTextLeft[3] = left3;
-            //input.StatusTextRight[0] = string.Empty;
-            input.StatusTextRight[1] = GetStatusRight(left1.Length, status1Right);
-            input.StatusTextRight[2] = GetStatusRight(left2.Length, status2Right);
-            input.StatusTextRight[3] = GetStatusRight(left3.Length, status3Right);
+                    //input.StatusTextRight[0] = string.Empty;
+                    input.StatusTextRight[1] = GetStatusRight(left1.Length, status1Right);
+                    input.StatusTextRight[2] = GetStatusRight(left2.Length, status2Right);
+                    input.StatusTextRight[3] = GetStatusRight(left3.Length, status3Right);
+                }
+            }
         }
     }
 }

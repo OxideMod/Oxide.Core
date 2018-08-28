@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core.Plugins.Watchers
+﻿namespace Umod.Plugins.Watchers
 {
     public delegate void PluginChangeEvent(string name);
 

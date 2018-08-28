@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     [Serializable]
     public class CommandAlreadyExistsException : Exception

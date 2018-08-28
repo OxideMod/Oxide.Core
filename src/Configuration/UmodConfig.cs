@@ -4,17 +4,17 @@ using References::Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Oxide.Core.Configuration
+namespace Umod.Configuration
 {
     /// <summary>
-    /// Represents all Oxide config settings
+    /// Represents all Umod config settings
     /// </summary>
-    public class OxideConfig : ConfigFile
+    public class UmodConfig : ConfigFile
     {
         /// <summary>
         /// Settings for the modded server
         /// </summary>
-        public class OxideOptions
+        public class UmodOptions
         {
             public bool Modded;
             public bool PluginWatchers;
@@ -37,77 +37,77 @@ namespace Oxide.Core.Configuration
         }
 
         /// <summary>
-        /// Settings for the custom Oxide console
+        /// Settings for the custom Umod console
         /// </summary>
-        public class OxideConsole
+        public class UmodConsole
         {
             /// <summary>
-            /// Gets or sets if the Oxide console should be setup
+            /// Gets or sets if the Umod console should be setup
             /// </summary>
             public bool Enabled { get; set; }
 
             /// <summary>
-            /// Gets or sets if the Oxide console should run in minimalist mode (no tags in the console)
+            /// Gets or sets if the Umod console should run in minimalist mode (no tags in the console)
             /// </summary>
             public bool MinimalistMode { get; set; }
 
             /// <summary>
-            /// Gets or sets if the Oxide console should show the toolbar on the bottom with server information
+            /// Gets or sets if the Umod console should show the toolbar on the bottom with server information
             /// </summary>
             public bool ShowStatusBar { get; set; }
         }
 
         /// <summary>
-        /// Settings for the custom Oxide remote console
+        /// Settings for the custom Umod remote console
         /// </summary>
-        public class OxideRcon
+        public class UmodRcon
         {
             /// <summary>
-            /// Gets or sets if the Oxide remote console should be setup
+            /// Gets or sets if the Umod remote console should be setup
             /// </summary>
             public bool Enabled { get; set; }
 
             /// <summary>
-            /// Gets or sets the Oxide remote console port
+            /// Gets or sets the Umod remote console port
             /// </summary>
             public int Port { get; set; }
 
             /// <summary>
-            /// Gets or sets the Oxide remote console password
+            /// Gets or sets the Umod remote console password
             /// </summary>
             public string Password { get; set; }
 
             /// <summary>
-            /// Gets or sets the Oxide remote console chat prefix
+            /// Gets or sets the Umod remote console chat prefix
             /// </summary>
             public string ChatPrefix { get; set; }
         }
 
         /// <summary>
-        /// Gets or sets information regarding the Oxide mod
+        /// Gets or sets information regarding the Umod mod
         /// </summary>
-        public OxideOptions Options { get; set; }
+        public UmodOptions Options { get; set; }
 
         /// <summary>
-        /// Gets or sets information regarding the Oxide console
+        /// Gets or sets information regarding the Umod console
         /// </summary>
-        [JsonProperty(PropertyName = "OxideConsole")]
-        public OxideConsole Console { get; set; }
+        [JsonProperty(PropertyName = "UmodConsole")]
+        public UmodConsole Console { get; set; }
 
         /// <summary>
-        /// Gets or sets information regarding the Oxide remote console
+        /// Gets or sets information regarding the Umod remote console
         /// </summary>
-        [JsonProperty(PropertyName = "OxideRcon")]
-        public OxideRcon Rcon { get; set; }
+        [JsonProperty(PropertyName = "UmodRcon")]
+        public UmodRcon Rcon { get; set; }
 
         /// <summary>
-        /// Sets defaults for Oxide configuration
+        /// Sets defaults for Umod configuration
         /// </summary>
-        public OxideConfig(string filename) : base(filename)
+        public UmodConfig(string filename) : base(filename)
         {
-            Options = new OxideOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
-            Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
-            Rcon = new OxideRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
+            Options = new UmodOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
+            Console = new UmodConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
+            Rcon = new UmodRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }
     }
 }

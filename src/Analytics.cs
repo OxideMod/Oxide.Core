@@ -1,17 +1,17 @@
-﻿using Oxide.Core.Libraries;
-using Oxide.Core.Libraries.Covalence;
-using Oxide.Core.Plugins;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Umod.Libraries;
+using Umod.Libraries.Covalence;
+using Umod.Plugins;
 
-namespace Oxide.Core
+namespace Umod
 {
     public static class Analytics
     {
-        private static readonly WebRequests Webrequests = Interface.Oxide.GetLibrary<WebRequests>();
-        private static readonly PluginManager PluginManager = Interface.Oxide.RootPluginManager;
-        private static readonly Covalence Covalence = Interface.Oxide.GetLibrary<Covalence>();
-        private static readonly Lang Lang = Interface.Oxide.GetLibrary<Lang>();
+        private static readonly WebRequests Webrequests = Interface.Umod.GetLibrary<WebRequests>();
+        private static readonly PluginManager PluginManager = Interface.Umod.RootPluginManager;
+        private static readonly Covalence Covalence = Interface.Umod.GetLibrary<Covalence>();
+        private static readonly Lang Lang = Interface.Umod.GetLibrary<Lang>();
 
         private const string trackingId = "UA-48448359-3";
         private const string url = "https://www.google-analytics.com/collect";
@@ -37,7 +37,7 @@ namespace Oxide.Core
         public static void Collect()
         {
             string payload = $"v=1&tid={trackingId}&cid={Identifier}&t=screenview&cd={Covalence.Game}+{Covalence.Server.Version}";
-            payload += $"&an=Oxide&av={OxideMod.Version}&ul={Lang.GetServerLanguage()}";
+            payload += $"&an=Umod&av={Umod.Version}&ul={Lang.GetServerLanguage()}";
             //payload += string.Join("&", Tags.Select(kv => kv.Key + "=" + kv.Value).ToArray());
             SendPayload(payload);
         }
@@ -50,7 +50,7 @@ namespace Oxide.Core
 
         public static void SendPayload(string payload)
         {
-            Dictionary<string, string> headers = new Dictionary<string, string> { { "User-Agent", $"Oxide/{OxideMod.Version} ({Environment.OSVersion}; {Environment.OSVersion.Platform})" } };
+            Dictionary<string, string> headers = new Dictionary<string, string> { { "User-Agent", $"Umod/{Umod.Version} ({Environment.OSVersion}; {Environment.OSVersion.Platform})" } };
             Webrequests.Enqueue(url, Uri.EscapeUriString(payload), (code, response) => { }, null, RequestMethod.POST, headers);
         }
     }

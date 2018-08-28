@@ -1,9 +1,9 @@
-﻿using Oxide.Core.Libraries;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Umod.Libraries;
 
-namespace Oxide.Core.Plugins
+namespace Umod.Plugins
 {
     /// <summary>
     /// Indicates that the specified method should be a handler for a hook
@@ -36,7 +36,7 @@ namespace Oxide.Core.Plugins
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static T GetLibrary<T>(string name = null) where T : Library => Interface.Oxide.GetLibrary<T>(name);
+        public static T GetLibrary<T>(string name = null) where T : Library => Interface.Umod.GetLibrary<T>(name);
 
         // All hooked methods
         protected Dictionary<string, List<HookMethod>> Hooks = new Dictionary<string, List<HookMethod>>();
@@ -54,7 +54,7 @@ namespace Oxide.Core.Plugins
             List<Type> types = new List<Type> { type };
             while (type != typeof(CSPlugin))
             {
-                types.Add(type = type.BaseType);
+                types.Add(type = type?.BaseType);
             }
 
             // Add hooks implemented in base classes before user implemented methods
@@ -63,13 +63,11 @@ namespace Oxide.Core.Plugins
                 foreach (MethodInfo method in types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
                 {
                     object[] attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
-                    if (attr.Length < 1)
+                    if (attr.Length >= 1)
                     {
-                        continue;
+                        HookMethodAttribute hookmethod = attr[0] as HookMethodAttribute;
+                        AddHookMethod(hookmethod?.Name, method);
                     }
-
-                    HookMethodAttribute hookmethod = attr[0] as HookMethodAttribute;
-                    AddHookMethod(hookmethod?.Name, method);
                 }
             }
         }
@@ -96,7 +94,7 @@ namespace Oxide.Core.Plugins
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
+                Interface.Umod.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
                 if (Loader != null)
                 {
                     Loader.PluginErrors[Name] = ex.Message;

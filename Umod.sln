@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 15.0
-Project("{1EA255A1-D331-41E9-8D3E-A49D240741BE}") = "Oxide.Core", "src\Oxide.Core.csproj", "{67F65F5D-A62A-4752-849D-BFF30D828107}"
+Project("{1EA255A1-D331-41E9-8D3E-A49D240741BE}") = "Umod", "src\Umod.csproj", "{67F65F5D-A62A-4752-849D-BFF30D828107}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
