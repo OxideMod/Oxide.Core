@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core.Extensions
+﻿namespace Umod.Extensions
 {
     /// <summary>
     /// Represents a single binary extension

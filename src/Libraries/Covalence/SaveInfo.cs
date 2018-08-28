@@ -1,11 +1,11 @@
 ﻿using System;
 using System.IO;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     public class SaveInfo
     {
-        private readonly Time time = Interface.Oxide.GetLibrary<Time>();
+        private readonly Time time = Interface.Umod.GetLibrary<Time>();
         private readonly string FullPath;
 
         /// <summary>

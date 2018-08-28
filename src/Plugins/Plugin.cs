@@ -1,12 +1,12 @@
-﻿using Oxide.Core.Configuration;
-using Oxide.Core.Libraries;
-using Oxide.Core.Libraries.Covalence;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Umod.Configuration;
+using Umod.Libraries;
+using Umod.Libraries.Covalence;
 
-namespace Oxide.Core.Plugins
+namespace Umod.Plugins
 {
     public delegate void PluginError(Plugin sender, string message);
 
@@ -93,7 +93,7 @@ namespace Oxide.Core.Plugins
             get => isCorePlugin;
             set
             {
-                if (!Interface.Oxide.HasLoadedCorePlugins)
+                if (!Interface.Umod.HasLoadedCorePlugins)
                 {
                     isCorePlugin = value;
                 }
@@ -168,7 +168,7 @@ namespace Oxide.Core.Plugins
 
         private IDictionary<string, CommandInfo> commandInfos;
 
-        private Permission permission = Interface.Oxide.GetLibrary<Permission>();
+        private Permission permission = Interface.Umod.GetLibrary<Permission>();
 
         /// <summary>
         /// Initializes an empty version of the Plugin class
@@ -249,7 +249,7 @@ namespace Oxide.Core.Plugins
             if (!IsCorePlugin && nestcount == 0)
             {
                 preHookGcCount = GC.CollectionCount(0);
-                startedAt = Interface.Oxide.Now;
+                startedAt = Interface.Umod.Now;
                 stopwatch.Start();
                 if (averageAt < 1)
                 {
@@ -264,7 +264,7 @@ namespace Oxide.Core.Plugins
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex);
+                Interface.Umod.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex);
                 return null;
             }
             finally
@@ -278,7 +278,7 @@ namespace Oxide.Core.Plugins
                     if (duration > 0.1)
                     {
                         string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
-                        Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
+                        Interface.Umod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
                     }
                     stopwatch.Reset();
                     double total = sum + duration;
@@ -289,7 +289,7 @@ namespace Oxide.Core.Plugins
                         if (total > 0.1)
                         {
                             string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
-                            Interface.Oxide.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
+                            Interface.Umod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
                         }
                         sum = 0;
                         averageAt = 0;
@@ -335,36 +335,28 @@ namespace Oxide.Core.Plugins
 
         public void TrackStart()
         {
-            if (IsCorePlugin || nestcount > 0)
+            if (!IsCorePlugin && nestcount <= 0)
             {
-                return;
+                Stopwatch stopwatch = trackStopwatch;
+                if (!stopwatch.IsRunning)
+                {
+                    stopwatch.Start();
+                }
             }
-
-            Stopwatch stopwatch = trackStopwatch;
-            if (stopwatch.IsRunning)
-            {
-                return;
-            }
-
-            stopwatch.Start();
         }
 
         public void TrackEnd()
         {
-            if (IsCorePlugin || nestcount > 0)
+            if (!IsCorePlugin && nestcount <= 0)
             {
-                return;
+                Stopwatch stopwatch = trackStopwatch;
+                if (stopwatch.IsRunning)
+                {
+                    stopwatch.Stop();
+                    TotalHookTime += stopwatch.Elapsed.TotalSeconds;
+                    stopwatch.Reset();
+                }
             }
-
-            Stopwatch stopwatch = trackStopwatch;
-            if (!stopwatch.IsRunning)
-            {
-                return;
-            }
-
-            stopwatch.Stop();
-            TotalHookTime += stopwatch.Elapsed.TotalSeconds;
-            stopwatch.Reset();
         }
 
         #region Config
@@ -400,18 +392,16 @@ namespace Oxide.Core.Plugins
         /// </summary>
         protected virtual void SaveConfig()
         {
-            if (Config == null)
+            if (Config != null)
             {
-                return;
-            }
-
-            try
-            {
-                Config.Save();
-            }
-            catch (Exception ex)
-            {
-                RaiseError($"Failed to save config file (does the config have illegal objects in it?) ({ex.Message})");
+                try
+                {
+                    Config.Save();
+                }
+                catch (Exception ex)
+                {
+                    RaiseError($"Failed to save config file (does the config have illegal objects in it?) ({ex.Message})");
+                }
             }
         }
 
@@ -446,7 +436,7 @@ namespace Oxide.Core.Plugins
                 return true;
             });
 
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
             foreach (string command in commands)
             {
                 covalence.RegisterCommand(command, this, CovalenceCommandCallback);
@@ -459,31 +449,28 @@ namespace Oxide.Core.Plugins
             {
                 if (commandInfos.ContainsKey(cmdName.ToLowerInvariant()))
                 {
-                    Interface.Oxide.LogWarning("Covalence command alias already exists: {0}", cmdName);
+                    Interface.Umod.LogWarning("Covalence command alias already exists: {0}", cmdName);
                     continue;
                 }
+
                 commandInfos.Add(cmdName.ToLowerInvariant(), new CommandInfo(commands, perms, callback));
             }
 
-            if (perms == null)
+            if (perms != null)
             {
-                return;
-            }
-
-            foreach (string perm in perms)
-            {
-                if (permission.PermissionExists(perm))
+                foreach (string perm in perms)
                 {
-                    continue;
+                    if (!permission.PermissionExists(perm))
+                    {
+                        permission.RegisterPermission(perm, this);
+                    }
                 }
-
-                permission.RegisterPermission(perm, this);
             }
         }
 
         private void RegisterWithCovalence()
         {
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.RegisterCommand(pair.Key, this, CovalenceCommandCallback);
@@ -493,38 +480,36 @@ namespace Oxide.Core.Plugins
         private bool CovalenceCommandCallback(IPlayer caller, string cmd, string[] args)
         {
             CommandInfo cmdInfo;
-            if (!commandInfos.TryGetValue(cmd, out cmdInfo))
+            if (commandInfos.TryGetValue(cmd, out cmdInfo))
             {
-                return false;
-            }
-
-            if (caller == null)
-            {
-                Interface.Oxide.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
-                return false;
-            }
-
-            if (cmdInfo.PermissionsRequired != null)
-            {
-                foreach (string perm in cmdInfo.PermissionsRequired)
+                if (caller == null)
                 {
-                    if (caller.HasPermission(perm) || caller.IsServer || caller.IsAdmin && IsCorePlugin)
-                    {
-                        continue;
-                    }
-
-                    caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
-                    return true;
+                    Interface.Umod.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
+                    return false;
                 }
+
+                if (cmdInfo.PermissionsRequired != null)
+                {
+                    foreach (string perm in cmdInfo.PermissionsRequired)
+                    {
+                        if (!caller.HasPermission(perm) && !caller.IsServer && (!caller.IsAdmin || !IsCorePlugin))
+                        {
+                            caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
+                            return true;
+                        }
+                    }
+                }
+
+                cmdInfo.Callback(caller, cmd, args);
+                return true;
             }
 
-            cmdInfo.Callback(caller, cmd, args);
-            return true;
+            return false;
         }
 
         private void UnregisterWithCovalence()
         {
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.UnregisterCommand(pair.Key, this);

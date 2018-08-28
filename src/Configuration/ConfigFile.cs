@@ -4,7 +4,7 @@ using References::Newtonsoft.Json;
 using System;
 using System.IO;
 
-namespace Oxide.Core.Configuration
+namespace Umod.Configuration
 {
     /// <summary>
     /// Represents a config file

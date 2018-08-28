@@ -2,9 +2,9 @@ using System.Data.Common;
 #if NET35
 using System.Security.Permissions;
 #endif
-using Oxide.Core.Plugins;
+using Umod.Plugins;
 
-namespace Oxide.Core.Database
+namespace Umod.Database
 {
 #if NET35
     [ReflectionPermission(SecurityAction.Deny, Flags = ReflectionPermissionFlag.AllFlags)]

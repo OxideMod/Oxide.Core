@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// Indicates that the specified function is a library function with a name
@@ -114,7 +114,7 @@ namespace Oxide.Core.Libraries
                 string name = attribute.Name ?? method.Name;
                 if (functions.ContainsKey(name))
                 {
-                    Interface.Oxide.LogError(type.FullName + " library tried to register an already registered function: " + name);
+                    Interface.Umod.LogError(type.FullName + " library tried to register an already registered function: " + name);
                 }
                 else
                 {
@@ -140,7 +140,7 @@ namespace Oxide.Core.Libraries
                 string name = attribute.Name ?? property.Name;
                 if (properties.ContainsKey(name))
                 {
-                    Interface.Oxide.LogError("{0} library tried to register an already registered property: {1}", type.FullName, name);
+                    Interface.Umod.LogError("{0} library tried to register an already registered property: {1}", type.FullName, name);
                 }
                 else
                 {

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
-namespace Oxide.Core.Plugins
+namespace Umod.Plugins
 {
     public class HookMethod
     {
@@ -43,48 +43,39 @@ namespace Oxide.Core.Plugins
             {
                 if (args[i] == null)
                 {
-                    if (CanAssignNull(Parameters[i].ParameterType))
-                    {
-                        continue;
-                    }
-
-                    return false;
+                    return !CanAssignNull(Parameters[i].ParameterType);
                 }
 
                 if (exact)
                 {
-                    if (args[i].GetType() != Parameters[i].ParameterType &&
-                        args[i].GetType().MakeByRefType() != Parameters[i].ParameterType &&
+                    if (args[i].GetType() != Parameters[i].ParameterType && args[i].GetType().MakeByRefType() != Parameters[i].ParameterType &&
                         !CanConvertNumber(args[i], Parameters[i].ParameterType))
                     {
                         exact = false;
                     }
                 }
 
-                if (exact)
+                if (!exact)
                 {
-                    continue;
-                }
-
-                if (args[i].GetType() == Parameters[i].ParameterType ||
-                    args[i].GetType().MakeByRefType() == Parameters[i].ParameterType ||
-                    Parameters[i].ParameterType.FullName == "System.Object")
-                {
-                    continue;
-                }
-
-                if (args[i].GetType().IsValueType)
-                {
-                    if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()) && !CanConvertNumber(args[i], Parameters[i].ParameterType))
+                    if (args[i].GetType() == Parameters[i].ParameterType || args[i].GetType().MakeByRefType() == Parameters[i].ParameterType ||
+                        Parameters[i].ParameterType.FullName == "System.Object")
                     {
-                        return false;
+                        continue;
                     }
-                }
-                else
-                {
-                    if (!Parameters[i].ParameterType.IsInstanceOfType(args[i]))
+
+                    if (args[i].GetType().IsValueType)
                     {
-                        return false;
+                        if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()) && !CanConvertNumber(args[i], Parameters[i].ParameterType))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (!Parameters[i].ParameterType.IsInstanceOfType(args[i]))
+                        {
+                            return false;
+                        }
                     }
                 }
             }
@@ -94,12 +85,7 @@ namespace Oxide.Core.Plugins
 
         private bool CanAssignNull(Type type)
         {
-            if (!type.IsValueType)
-            {
-                return true;
-            }
-
-            return Nullable.GetUnderlyingType(type) != null;
+            return !type.IsValueType || Nullable.GetUnderlyingType(type) != null;
         }
 
         private bool IsNumber(object obj)
@@ -119,12 +105,7 @@ namespace Oxide.Core.Plugins
 
         private bool CanConvertNumber(object value, Type type)
         {
-            if (!IsNumber(value) || !IsNumber(type))
-            {
-                return false;
-            }
-
-            return TypeDescriptor.GetConverter(type).IsValid(value);
+            return IsNumber(value) && IsNumber(type) && TypeDescriptor.GetConverter(type).IsValid(value);
         }
     }
 }

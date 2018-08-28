@@ -1,13 +1,13 @@
 ﻿extern alias References;
 
-using Oxide.Core.Plugins;
 using References::ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// Contains all data for a specified user
@@ -99,20 +99,20 @@ namespace Oxide.Core.Libraries
         /// </summary>
         private void LoadFromDatafile()
         {
+            // TODO: Rename oxide.users.data and oxide.groups.data if exists
+
             // Initialize
-            Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
-            Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
-            userdata = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>();
-            groupdata = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups") ?? new Dictionary<string, GroupData>();
+            Utility.DatafileToProto<Dictionary<string, UserData>>("umod.users");
+            Utility.DatafileToProto<Dictionary<string, GroupData>>("umod.groups");
+            userdata = ProtoStorage.Load<Dictionary<string, UserData>>("umod.users") ?? new Dictionary<string, UserData>();
+            groupdata = ProtoStorage.Load<Dictionary<string, GroupData>>("umod.groups") ?? new Dictionary<string, GroupData>();
             foreach (KeyValuePair<string, GroupData> pair in groupdata)
             {
-                if (string.IsNullOrEmpty(pair.Value.ParentGroup) || !HasCircularParent(pair.Key, pair.Value.ParentGroup))
+                if (!string.IsNullOrEmpty(pair.Value.ParentGroup) && HasCircularParent(pair.Key, pair.Value.ParentGroup))
                 {
-                    continue;
+                    Interface.Umod.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
+                    pair.Value.ParentGroup = null;
                 }
-
-                Interface.Oxide.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
-                pair.Value.ParentGroup = null;
             }
             IsLoaded = true;
         }
@@ -123,13 +123,11 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("Export")]
         public void Export(string prefix = "auth")
         {
-            if (!IsLoaded)
+            if (IsLoaded)
             {
-                return;
+                Interface.Umod.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
+                Interface.Umod.DataFileSystem.WriteObject(prefix + ".users", userdata);
             }
-
-            Interface.Oxide.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
-            Interface.Oxide.DataFileSystem.WriteObject(prefix + ".users", userdata);
         }
 
         /// <summary>
@@ -144,12 +142,12 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Saves users permissions data to the data file
         /// </summary>
-        public void SaveUsers() => ProtoStorage.Save(userdata, "oxide.users");
+        public void SaveUsers() => ProtoStorage.Save(userdata, "umod.users");
 
         /// <summary>
         /// Saves groups permissions data to the data file
         /// </summary>
-        public void SaveGroups() => ProtoStorage.Save(groupdata, "oxide.groups");
+        public void SaveGroups() => ProtoStorage.Save(groupdata, "umod.groups");
 
         /// <summary>
         /// Register user ID validation
@@ -162,20 +160,16 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public void CleanUp()
         {
-            if (!IsLoaded || validate == null)
+            if (IsLoaded && validate != null)
             {
-                return;
-            }
-
-            string[] invalid = userdata.Keys.Where(k => !validate(k)).ToArray();
-            if (invalid.Length <= 0)
-            {
-                return;
-            }
-
-            foreach (string i in invalid)
-            {
-                userdata.Remove(i);
+                string[] invalid = userdata.Keys.Where(k => !validate(k)).ToArray();
+                if (invalid.Length > 0)
+                {
+                    foreach (string i in invalid)
+                    {
+                        userdata.Remove(i);
+                    }
+                }
             }
         }
 
@@ -184,24 +178,22 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public void MigrateGroup(string oldGroup, string newGroup)
         {
-            if (!IsLoaded)
+            if (IsLoaded)
             {
-                return;
-            }
-
-            if (GroupExists(oldGroup))
-            {
-                string groups = ProtoStorage.GetFileDataPath("oxide.groups.data");
-                File.Copy(groups, groups + ".old", true);
-
-                foreach (string perm in GetGroupPermissions(oldGroup))
+                if (GroupExists(oldGroup))
                 {
-                    GrantGroupPermission(newGroup, perm, null);
-                }
+                    string groups = ProtoStorage.GetFileDataPath("umod.groups.data");
+                    File.Copy(groups, groups + ".old", true);
 
-                if (GetUsersInGroup(oldGroup).Length == 0)
-                {
-                    RemoveGroup(oldGroup);
+                    foreach (string perm in GetGroupPermissions(oldGroup))
+                    {
+                        GrantGroupPermission(newGroup, perm, null);
+                    }
+
+                    if (GetUsersInGroup(oldGroup).Length == 0)
+                    {
+                        RemoveGroup(oldGroup);
+                    }
                 }
             }
         }
@@ -216,34 +208,33 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("RegisterPermission")]
         public void RegisterPermission(string name, Plugin owner)
         {
-            if (string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(name))
             {
-                return;
-            }
+                name = name.ToLower();
 
-            name = name.ToLower();
+                if (PermissionExists(name))
+                {
+                    Interface.Umod.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
+                    return;
+                }
 
-            if (PermissionExists(name))
-            {
-                Interface.Oxide.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
-                return;
-            }
+                HashSet<string> set;
+                if (!permset.TryGetValue(owner, out set))
+                {
+                    set = new HashSet<string>();
+                    permset.Add(owner, set);
+                    owner.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
+                }
 
-            HashSet<string> set;
-            if (!permset.TryGetValue(owner, out set))
-            {
-                set = new HashSet<string>();
-                permset.Add(owner, set);
-                owner.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
-            }
-            set.Add(name);
+                set.Add(name);
 
-            Interface.CallHook("OnPermissionRegistered", name, owner);
+                Interface.CallHook("OnPermissionRegistered", name, owner);
 
-            string prefix = owner.Name.ToLower() + ".";
-            if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
-            {
-                Interface.Oxide.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
+                string prefix = owner.Name.ToLower() + ".";
+                if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
+                {
+                    Interface.Umod.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
+                }
             }
         }
 

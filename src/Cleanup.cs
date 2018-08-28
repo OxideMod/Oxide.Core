@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Oxide.Core
+namespace Umod
 {
     public static class Cleanup
     {
@@ -11,29 +11,26 @@ namespace Oxide.Core
 
         internal static void Run()
         {
-            if (files == null)
+            if (files != null)
             {
-                return;
-            }
-
-            foreach (string file in files)
-            {
-                try
+                foreach (string file in files)
                 {
-                    if (!File.Exists(file))
+                    try
                     {
-                        continue;
+                        if (File.Exists(file))
+                        {
+                            Interface.Umod.LogDebug("Cleanup file: {0}", file);
+                            File.Delete(file);
+                        }
                     }
+                    catch (Exception)
+                    {
+                        Interface.Umod.LogWarning("Failed to cleanup file: {0}", file);
+                    }
+                }
 
-                    Interface.Oxide.LogDebug("Cleanup file: {0}", file);
-                    File.Delete(file);
-                }
-                catch (Exception)
-                {
-                    Interface.Oxide.LogWarning("Failed to cleanup file: {0}", file);
-                }
+                files = null;
             }
-            files = null;
         }
     }
 }

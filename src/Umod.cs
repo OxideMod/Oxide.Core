@@ -1,13 +1,5 @@
 ﻿extern alias References;
 
-using Oxide.Core.Configuration;
-using Oxide.Core.Extensions;
-using Oxide.Core.Libraries;
-using Oxide.Core.Libraries.Covalence;
-using Oxide.Core.Logging;
-using Oxide.Core.Plugins;
-using Oxide.Core.Plugins.Watchers;
-using Oxide.Core.ServerConsole;
 using References::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,21 +10,29 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Timer = Oxide.Core.Libraries.Timer;
+using Umod.Configuration;
+using Umod.Extensions;
+using Umod.Libraries;
+using Umod.Libraries.Covalence;
+using Umod.Logging;
+using Umod.Plugins;
+using Umod.Plugins.Watchers;
+using Umod.ServerConsole;
+using Timer = Umod.Libraries.Timer;
 
-namespace Oxide.Core
+namespace Umod
 {
     public delegate void NativeDebugCallback(string message);
 
     /// <summary>
-    /// Responsible for core Oxide logic
+    /// Responsible for core Umod logic
     /// </summary>
-    public sealed class OxideMod
+    public sealed class Umod
     {
         internal static readonly Version AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
         /// <summary>
-        /// The current Oxide version
+        /// The current Umod version
         /// </summary>
         public static readonly VersionNumber Version = new VersionNumber(AssemblyVersion.Major, AssemblyVersion.Minor, AssemblyVersion.Build);
 
@@ -77,7 +77,7 @@ namespace Oxide.Core
         public CommandLine CommandLine;
 
         // Various configs
-        public OxideConfig Config { get; private set; }
+        public UmodConfig Config { get; private set; }
 
         // Various libraries
         private Covalence covalence;
@@ -94,23 +94,22 @@ namespace Oxide.Core
 
         // Allow extensions to register a method to be called every frame
         private Action<float> onFrame;
-        private bool isInitialized;
-        public bool HasLoadedCorePlugins { get; private set; }
 
+        private NativeDebugCallback debugCallback;
+        private Stopwatch timer;
+        private bool isInitialized;
+
+        public bool HasLoadedCorePlugins { get; private set; }
         public RemoteConsole.RemoteConsole RemoteConsole;
         public ServerConsole.ServerConsole ServerConsole;
 
-        private Stopwatch timer;
-
-        private NativeDebugCallback debugCallback;
-
-        public OxideMod(NativeDebugCallback debugCallback)
+        public Umod(NativeDebugCallback debugCallback)
         {
             this.debugCallback = debugCallback;
         }
 
         /// <summary>
-        /// Initializes a new instance of the OxideMod class
+        /// Initializes a new instance of the Umod class
         /// </summary>
         public void Load()
         {
@@ -125,15 +124,16 @@ namespace Oxide.Core
                 throw new Exception("RootDirectory is null");
             }
 
-            InstanceDirectory = Path.Combine(RootDirectory, "oxide");
+            // TODO: Move files from old "oxide" directory to "umod"
+            InstanceDirectory = Path.Combine(RootDirectory, "umod");
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
             CommandLine = new CommandLine(Environment.GetCommandLineArgs());
 
-            if (CommandLine.HasVariable("oxide.directory"))
+            if (CommandLine.HasVariable("umod.directory") || CommandLine.HasVariable("oxide.directory"))
             {
                 string var, format;
-                CommandLine.GetArgument("oxide.directory", out var, out format);
+                CommandLine.GetArgument("umod.directory", out var, out format); // TODO: Handle oxide.directory too
                 if (string.IsNullOrEmpty(var) || CommandLine.HasVariable(var))
                 {
                     InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(var))));
@@ -183,14 +183,14 @@ namespace Oxide.Core
 
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
-            string config = Path.Combine(InstanceDirectory, "oxide.config.json");
+            string config = Path.Combine(InstanceDirectory, "umod.config.json"); // TODO: Rename existing oxide.config.json if exists
             if (File.Exists(config))
             {
-                Config = ConfigFile.Load<OxideConfig>(config);
+                Config = ConfigFile.Load<UmodConfig>(config);
             }
             else
             {
-                Config = new OxideConfig(config);
+                Config = new UmodConfig(config);
                 Config.Save();
             }
 
@@ -216,7 +216,7 @@ namespace Oxide.Core
                 RootLogger.AddLogger(new CallbackLogger(debugCallback));
             }
 
-            LogInfo("Loading Oxide Core v{0}...", Version);
+            LogInfo("Loading uMod v{0}...", Version);
 
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
             extensionManager = new ExtensionManager(RootLogger);
@@ -366,23 +366,22 @@ namespace Oxide.Core
                 }
             }
 
-            if (!init)
+            if (init)
             {
-                return;
-            }
-
-            float lastCall = Now;
-            foreach (PluginLoader loader in extensionManager.GetPluginLoaders())
-            {
-                // Wait until all async plugins have finished loading
-                while (loader.LoadingPlugins.Count > 0)
+                float lastCall = Now;
+                foreach (PluginLoader loader in extensionManager.GetPluginLoaders())
                 {
-                    Thread.Sleep(25);
-                    OnFrame(Now - lastCall);
-                    lastCall = Now;
+                    // Wait until all async plugins have finished loading
+                    while (loader.LoadingPlugins.Count > 0)
+                    {
+                        Thread.Sleep(25);
+                        OnFrame(Now - lastCall);
+                        lastCall = Now;
+                    }
                 }
+
+                isInitialized = true;
             }
-            isInitialized = true;
         }
 
         /// <summary>
@@ -440,14 +439,14 @@ namespace Oxide.Core
             try
             {
                 Plugin plugin = loader.Load(PluginDirectory, name);
-                if (plugin == null)
+                if (plugin != null)
                 {
-                    return true; // Async load
+                    plugin.Loader = loader;
+                    PluginLoaded(plugin);
+                    return true;
                 }
 
-                plugin.Loader = loader;
-                PluginLoaded(plugin);
-                return true;
+                return true; // Async load
             }
             catch (Exception ex)
             {
@@ -471,6 +470,7 @@ namespace Oxide.Core
                         return false;
                     }
                 }
+
                 plugin.IsLoaded = true;
                 CallHook("OnPluginLoaded", plugin);
                 LogInfo("Loaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
@@ -496,28 +496,28 @@ namespace Oxide.Core
         {
             // Get the plugin
             Plugin plugin = RootPluginManager.GetPlugin(name);
-            if (plugin == null)
+            if (plugin != null)
             {
-                return false;
+                PluginLoader loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
+                loader?.Unloading(plugin);
+
+                // Unload it
+                RootPluginManager.RemovePlugin(plugin);
+
+                // Let other plugins know that this plugin has been unloaded
+                if (plugin.IsLoaded)
+                {
+                    CallHook("OnPluginUnloaded", plugin);
+                }
+
+                plugin.IsLoaded = false;
+
+                LogInfo("Unloaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
+                return true;
             }
 
             // Let the plugin loader know that this plugin is being unloaded
-            PluginLoader loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
-            loader?.Unloading(plugin);
-
-            // Unload it
-            RootPluginManager.RemovePlugin(plugin);
-
-            // Let other plugins know that this plugin has been unloaded
-            if (plugin.IsLoaded)
-            {
-                CallHook("OnPluginUnloaded", plugin);
-            }
-
-            plugin.IsLoaded = false;
-
-            LogInfo("Unloaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -538,12 +538,14 @@ namespace Oxide.Core
                     name = name.Substring(subPath.Length + 1);
                 }
             }
+
             PluginLoader loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Contains(name));
             if (loader != null)
             {
                 loader.Reload(directory, name);
                 return true;
             }
+
             if (isNested)
             {
                 return false;

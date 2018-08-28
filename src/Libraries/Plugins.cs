@@ -1,7 +1,7 @@
-﻿using Oxide.Core.Plugins;
-using System.Linq;
+﻿using System.Linq;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// The plugins library

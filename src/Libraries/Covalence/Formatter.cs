@@ -1,4 +1,4 @@
-// A custom markup language for Oxide
+// A custom markup language for Umod
 //
 // Text 		::= {Element}
 // Element 		::= String | Bold | Italic | Color | Size
@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Oxide.Core.Libraries.Covalence
+namespace Umod.Libraries.Covalence
 {
     public class Element
     {

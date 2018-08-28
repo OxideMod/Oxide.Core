@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Oxide.Core.Configuration
+namespace Umod.Configuration
 {
     /// <summary>
     /// Represents a config file with a dynamic layout
@@ -28,7 +28,7 @@ namespace Oxide.Core.Configuration
             _keyvalues = new Dictionary<string, object>();
             _settings = new JsonSerializerSettings();
             _settings.Converters.Add(new KeyValuesConverter());
-            _chroot = Interface.Oxide.InstanceDirectory;
+            _chroot = Interface.Umod.InstanceDirectory;
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace Oxide.Core.Configuration
             string path = Path.GetFullPath(filename);
             if (!path.StartsWith(_chroot, StringComparison.Ordinal))
             {
-                throw new Exception($"Only access to oxide directory!\nPath: {path}");
+                throw new Exception($"Only access to 'umod' directory!\nPath: {path}");
             }
 
             return path;
@@ -205,10 +205,7 @@ namespace Oxide.Core.Configuration
                 object val;
                 return _keyvalues.TryGetValue(key, out val) ? val : null;
             }
-            set
-            {
-                _keyvalues[key] = value;
-            }
+            set => _keyvalues[key] = value;
         }
 
         /// <summary>
@@ -219,8 +216,8 @@ namespace Oxide.Core.Configuration
         /// <returns></returns>
         public object this[string keyLevel1, string keyLevel2]
         {
-            get { return Get(keyLevel1, keyLevel2); }
-            set { Set(keyLevel1, keyLevel2, value); }
+            get => Get(keyLevel1, keyLevel2);
+            set => Set(keyLevel1, keyLevel2, value);
         }
 
         /// <summary>
@@ -232,8 +229,8 @@ namespace Oxide.Core.Configuration
         /// <returns></returns>
         public object this[string keyLevel1, string keyLevel2, string keyLevel3]
         {
-            get { return Get(keyLevel1, keyLevel2, keyLevel3); }
-            set { Set(keyLevel1, keyLevel2, keyLevel3, value); }
+            get => Get(keyLevel1, keyLevel2, keyLevel3);
+            set => Set(keyLevel1, keyLevel2, keyLevel3, value);
         }
 
         /// <summary>

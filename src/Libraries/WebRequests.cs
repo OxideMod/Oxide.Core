@@ -1,4 +1,3 @@
-using Oxide.Core.Plugins;
 using Rebex.Net;
 using Rebex.Security.Certificates;
 using Rebex.Security.Cryptography;
@@ -12,8 +11,9 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// Request methods for web requests
@@ -56,7 +56,7 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public class WebRequests : Library
     {
-        private static readonly Covalence.Covalence covalence = Interface.Oxide.GetLibrary<Covalence.Covalence>();
+        private static readonly Covalence.Covalence covalence = Interface.Umod.GetLibrary<Covalence.Covalence>();
 
         private readonly AutoResetEvent workevent = new AutoResetEvent(false);
         private readonly Queue<WebRequest> queue = new Queue<WebRequest>();
@@ -184,21 +184,21 @@ namespace Oxide.Core.Libraries
                 // Build the new certificate chain
                 Certificate primaryCert = args.CertificateChain[0];
 #if DEBUG
-                Interface.Oxide.LogDebug($"{args.CertificateChain.Count} certificates in chain");
-                Interface.Oxide.LogDebug($"Primary common name: {primaryCert.GetCommonName()}");
-                Interface.Oxide.LogDebug($"  Thumbprint:  {primaryCert.Thumbprint}");
-                Interface.Oxide.LogDebug($"  Expires on:  {primaryCert.GetExpirationDate():d}");
-                Interface.Oxide.LogDebug($"  Key algorithm: {primaryCert.KeyAlgorithm}");
+                Interface.Umod.LogDebug($"{args.CertificateChain.Count} certificates in chain");
+                Interface.Umod.LogDebug($"Primary common name: {primaryCert.GetCommonName()}");
+                Interface.Umod.LogDebug($"  Thumbprint:  {primaryCert.Thumbprint}");
+                Interface.Umod.LogDebug($"  Expires on:  {primaryCert.GetExpirationDate():d}");
+                Interface.Umod.LogDebug($"  Key algorithm: {primaryCert.KeyAlgorithm}");
 #endif
 
                 // Add extra certificates to the chain
                 foreach (Certificate cert in args.CertificateChain.Skip(1))
                 {
 #if DEBUG
-                    Interface.Oxide.LogDebug($"Extra common name: {cert.GetCommonName()}");
-                    Interface.Oxide.LogDebug($"  Thumbprint:  {cert.Thumbprint}");
-                    Interface.Oxide.LogDebug($"  Expires on:  {cert.GetExpirationDate():d}");
-                    Interface.Oxide.LogDebug($"  Key algorithm: {cert.KeyAlgorithm}");
+                    Interface.Umod.LogDebug($"Extra common name: {cert.GetCommonName()}");
+                    Interface.Umod.LogDebug($"  Thumbprint:  {cert.Thumbprint}");
+                    Interface.Umod.LogDebug($"  Expires on:  {cert.GetExpirationDate():d}");
+                    Interface.Umod.LogDebug($"  Key algorithm: {cert.KeyAlgorithm}");
 #endif
                     chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(cert.GetRawCertData()));
                 }
@@ -207,7 +207,7 @@ namespace Oxide.Core.Libraries
                 if (isValid)
                 {
 #if DEBUG
-                    Interface.Oxide.LogDebug("Certificate is valid, accepting");
+                    Interface.Umod.LogDebug("Certificate is valid, accepting");
 #endif
                     args.Accept();
                     return;
@@ -320,7 +320,7 @@ namespace Oxide.Core.Libraries
                         message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                     }
 
-                    Interface.Oxide.LogException(message, ex);
+                    Interface.Umod.LogException(message, ex);
 
                     if (Response == null)
                     {
@@ -379,7 +379,7 @@ namespace Oxide.Core.Libraries
                             message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         }
 
-                        Interface.Oxide.LogException(message, ex);
+                        Interface.Umod.LogException(message, ex);
                         if (Response == null)
                         {
                             Response = new WebResponse(ResponseText, Uri.TryCreate(Url,
@@ -417,7 +417,7 @@ namespace Oxide.Core.Libraries
             {
                 Event.Remove(ref removedFromManager);
                 registeredWaitHandle?.Unregister(waitHandle);
-                Interface.Oxide.NextTick(() =>
+                Interface.Umod.NextTick(() =>
                 {
                     if (request != null)
                     {
@@ -436,7 +436,7 @@ namespace Oxide.Core.Libraries
                                 message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                             }
 
-                            Interface.Oxide.LogException(message, ex);
+                            Interface.Umod.LogException(message, ex);
                         }
 
                         Owner?.TrackEnd();
@@ -602,7 +602,7 @@ namespace Oxide.Core.Libraries
                             message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         }
 
-                        Interface.Oxide.LogException(message, ex);
+                        Interface.Umod.LogException(message, ex);
                     }
                 }
             }
@@ -748,7 +748,7 @@ namespace Oxide.Core.Libraries
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException("WebRequests worker: ", ex);
+                Interface.Umod.LogException("WebRequests worker: ", ex);
             }
         }
 

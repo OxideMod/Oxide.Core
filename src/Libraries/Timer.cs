@@ -1,8 +1,8 @@
-﻿using Oxide.Core.Plugins;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Umod.Plugins;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// The timer library
@@ -15,7 +15,7 @@ namespace Oxide.Core.Libraries
 
         internal static readonly object Lock = new object();
 
-        internal static readonly OxideMod Oxide = Interface.Oxide;
+        internal static readonly Umod Umod = Interface.Umod;
 
         public class TimeSlot
         {
@@ -177,7 +177,7 @@ namespace Oxide.Core.Libraries
                 Repetitions = repetitions;
                 Delay = delay;
                 Callback = callback;
-                ExpiresAt = Oxide.Now + delay;
+                ExpiresAt = Umod.Now + delay;
                 Owner = owner;
                 Destroyed = false;
                 if (owner != null)
@@ -205,7 +205,7 @@ namespace Oxide.Core.Libraries
                     }
 
                     Repetitions = repetitions;
-                    ExpiresAt = Oxide.Now + delay;
+                    ExpiresAt = Umod.Now + delay;
                     if (Destroyed)
                     {
                         Destroyed = false;
@@ -348,7 +348,7 @@ namespace Oxide.Core.Libraries
                         error_message += $" in '{Owner.Name} v{Owner.Version}'";
                     }
 
-                    Interface.Oxide.LogException(error_message, ex);
+                    Interface.Umod.LogException(error_message, ex);
                     return;
                 }
                 finally
@@ -386,7 +386,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public void Update(float delta)
         {
-            float now = Oxide.Now;
+            float now = Umod.Now;
             TimeSlot[] time_slots = timeSlots;
             Queue<TimerInstance> expired_queue = expiredInstanceQueue;
             int checked_slots = 0;
@@ -444,7 +444,7 @@ namespace Oxide.Core.Libraries
                 {
                     timer = new TimerInstance(this, repetitions, delay, callback, owner);
                 }
-                InsertTimer(timer, timer.ExpiresAt < Oxide.Now);
+                InsertTimer(timer, timer.ExpiresAt < Umod.Now);
                 return timer;
             }
         }

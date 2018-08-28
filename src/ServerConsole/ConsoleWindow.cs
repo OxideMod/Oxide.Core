@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Oxide.Core.ServerConsole
+namespace Umod.ServerConsole
 {
     public class ConsoleWindow
     {
@@ -48,13 +48,14 @@ namespace Oxide.Core.ServerConsole
                 case PlatformID.Win32S:
                 case PlatformID.Win32Windows:
                     IntPtr pDll = GetModuleHandle("ntdll.dll");
-                    if (pDll == IntPtr.Zero)
+                    if (pDll != IntPtr.Zero)
                     {
-                        return false;
+                        return GetProcAddress(pDll, "wine_get_version") == IntPtr.Zero && (force || GetConsoleWindow() == IntPtr.Zero);
                     }
 
-                    return GetProcAddress(pDll, "wine_get_version") == IntPtr.Zero && (force || GetConsoleWindow() == IntPtr.Zero);
+                    return false;
             }
+
             return false;
         }
 

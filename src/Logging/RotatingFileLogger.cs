@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Oxide.Core.Logging
+namespace Umod.Logging
 {
     /// <summary>
     /// A logger that writes to a set of files that rotate by day
@@ -21,7 +21,7 @@ namespace Oxide.Core.Logging
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        private string GetLogFilename(DateTime date) => Path.Combine(Directory, $"oxide_{date:yyyy-MM-dd}.txt");
+        private string GetLogFilename(DateTime date) => Path.Combine(Directory, $"umod_{date:yyyy-MM-dd}.txt");
 
         /// <summary>
         /// Begins a batch process operation

@@ -1,11 +1,11 @@
-﻿using Oxide.Core.Libraries.Covalence;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Umod.Libraries.Covalence;
 
-namespace Oxide.Core
+namespace Umod
 {
     /// <summary>
     /// Useful extension methods which are added to base types
@@ -107,7 +107,7 @@ namespace Oxide.Core
         /// <summary>
         /// Returns a random value from an array
         /// </summary>
-        public static T Sample<T>(this T[] array) => array[Core.Random.Range(0, array.Length)];
+        public static T Sample<T>(this T[] array) => array[Random.Range(0, array.Length)];
 
         /// <summary>
         /// Converts a string into a sanitized string for string.Format

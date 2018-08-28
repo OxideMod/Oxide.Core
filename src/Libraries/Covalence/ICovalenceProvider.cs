@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core.Libraries.Covalence
+﻿namespace Umod.Libraries.Covalence
 {
     /// <summary>
     /// Specifies a provider for core game-specific covalence functionality

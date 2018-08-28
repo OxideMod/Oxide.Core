@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Oxide.Core.Libraries
+namespace Umod.Libraries
 {
     /// <summary>
     /// A global library containing game-agnostic and language-agnostic utilities

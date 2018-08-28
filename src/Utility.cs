@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 #endif
 
-namespace Oxide.Core
+namespace Umod
 {
     /// <summary>
     /// A partially thread-safe HashSet (iterating is not thread-safe)
@@ -112,33 +112,32 @@ namespace Oxide.Core
     {
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
-            DataFileSystem dfs = Interface.Oxide.DataFileSystem;
-            if (!dfs.ExistsDatafile(name))
+            DataFileSystem dfs = Interface.Umod.DataFileSystem;
+            if (dfs.ExistsDatafile(name))
             {
-                return;
-            }
-
-            if (ProtoStorage.Exists(name))
-            {
-                Interface.Oxide.LogWarning("Failed to import JSON file: {0} already exists.", name);
-                return;
-            }
-            try
-            {
-                T data = dfs.ReadObject<T>(name);
-                ProtoStorage.Save(data, name);
-                if (deleteAfter)
+                if (ProtoStorage.Exists(name))
                 {
-                    File.Delete(dfs.GetFile(name).Filename);
+                    Interface.Umod.LogWarning("Failed to import JSON file: {0} already exists.", name);
+                    return;
                 }
-            }
-            catch (Exception ex)
-            {
-                Interface.Oxide.LogException("Failed to convert datafile to proto storage: " + name, ex);
+
+                try
+                {
+                    T data = dfs.ReadObject<T>(name);
+                    ProtoStorage.Save(data, name);
+                    if (deleteAfter)
+                    {
+                        File.Delete(dfs.GetFile(name).Filename);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Interface.Umod.LogException("Failed to convert datafile to proto storage: " + name, ex);
+                }
             }
         }
 
-        public static void PrintCallStack() => Interface.Oxide.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
+        public static void PrintCallStack() => Interface.Umod.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
 
         public static string FormatBytes(double bytes)
         {
@@ -184,13 +183,11 @@ namespace Oxide.Core
             int lastIndex = value.Length - 1;
             for (int i = lastIndex; i >= 1; i--)
             {
-                if (value[i] != '.')
+                if (value[i] == '.')
                 {
-                    continue;
+                    lastIndex = i - 1;
+                    break;
                 }
-
-                lastIndex = i - 1;
-                break;
             }
             int firstIndex = 0;
             for (int i = lastIndex - 1; i >= 0; i--)
@@ -280,7 +277,7 @@ namespace Oxide.Core
 
 #if DEBUG
                         debugOutput.AppendLine($"Resulting IP address: {ip.Address}");
-                        Interface.Oxide.LogDebug(debugOutput.ToString());
+                        Interface.Umod.LogDebug(debugOutput.ToString());
 #endif
 
                         return ip.Address;
@@ -289,7 +286,7 @@ namespace Oxide.Core
             }
 
 #if DEBUG
-            Interface.Oxide.LogDebug($"Most suitable IP: {mostSuitableIp?.Address}");
+            Interface.Umod.LogDebug($"Most suitable IP: {mostSuitableIp?.Address}");
 #endif
 
             return mostSuitableIp?.Address;

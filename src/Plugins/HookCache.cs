@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Oxide.Core.Plugins
+namespace Umod.Plugins
 {
     public class HookCache
     {
@@ -13,7 +13,7 @@ namespace Oxide.Core.Plugins
         public List<HookMethod> GetHookMethod(string hookName, object[] args, out HookCache cache)
         {
             HookCache nextCache;
-            //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {hookName}");
+            //Interface.Umod.ServerConsole.AddMessage($"GetHookMethod {hookName}");
             if (!_cache.TryGetValue(hookName, out nextCache))
             {
                 nextCache = new HookCache();
@@ -47,7 +47,7 @@ namespace Oxide.Core.Plugins
                     _cache.Add(args[index].GetType().FullName, nextCache);
                 }
             }
-            //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {key} {index}");
+            //Interface.Umod.ServerConsole.AddMessage($"GetHookMethod {key} {index}");
             return nextCache.GetHookMethod(args, index + 1, out cache);
         }
 

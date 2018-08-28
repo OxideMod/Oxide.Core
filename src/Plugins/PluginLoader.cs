@@ -1,10 +1,10 @@
-﻿using Oxide.Core.Libraries;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Umod.Libraries;
 
-namespace Oxide.Core.Plugins
+namespace Umod.Plugins
 {
     /// <summary>
     /// Represents a loader for a certain type of plugin
@@ -66,14 +66,14 @@ namespace Oxide.Core.Plugins
         {
             if (LoadingPlugins.Contains(name))
             {
-                Interface.Oxide.LogDebug("Load requested for plugin which is already loading: {0}", name);
+                Interface.Umod.LogDebug("Load requested for plugin which is already loading: {0}", name);
                 return null;
             }
 
             string filename = Path.Combine(directory, name + FileExtension);
             Plugin plugin = GetPlugin(filename);
             LoadingPlugins.Add(plugin.Name);
-            Interface.Oxide.NextTick(() => LoadPlugin(plugin));
+            Interface.Umod.NextTick(() => LoadPlugin(plugin));
 
             return null;
         }
@@ -95,30 +95,30 @@ namespace Oxide.Core.Plugins
             if (!File.Exists(plugin.Filename))
             {
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Oxide.LogWarning("Script no longer exists: {0}", plugin.Name);
+                Interface.Umod.LogWarning("Script no longer exists: {0}", plugin.Name);
                 return;
             }
 
             try
             {
                 plugin.Load();
-                Interface.Oxide.UnloadPlugin(plugin.Name);
+                Interface.Umod.UnloadPlugin(plugin.Name);
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Oxide.PluginLoaded(plugin);
+                Interface.Umod.PluginLoaded(plugin);
             }
             catch (IOException)
             {
                 if (!waitingForAccess)
                 {
-                    Interface.Oxide.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                    Interface.Umod.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
                 }
 
-                Interface.Oxide.GetLibrary<Timer>().Once(.5f, () => LoadPlugin(plugin, true));
+                Interface.Umod.GetLibrary<Timer>().Once(.5f, () => LoadPlugin(plugin, true));
             }
             catch (Exception ex)
             {
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Oxide.LogException($"Failed to load plugin {plugin.Name}", ex);
+                Interface.Umod.LogException($"Failed to load plugin {plugin.Name}", ex);
             }
         }
 
@@ -130,8 +130,8 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public virtual void Reload(string directory, string name)
         {
-            Interface.Oxide.UnloadPlugin(name);
-            Interface.Oxide.LoadPlugin(name);
+            Interface.Umod.UnloadPlugin(name);
+            Interface.Umod.LoadPlugin(name);
         }
 
         /// <summary>

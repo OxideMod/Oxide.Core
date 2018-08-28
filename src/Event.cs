@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Oxide.Core
+namespace Umod
 {
     public class Event
     {
@@ -9,68 +9,56 @@ namespace Oxide.Core
 
         public static void Remove(ref Callback callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public static void Remove<T1>(ref Callback<T1> callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public static void Remove<T1, T2>(ref Callback<T1, T2> callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public static void Remove<T1, T2, T3>(ref Callback<T1, T2, T3> callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public static void Remove<T1, T2, T3, T4>(ref Callback<T1, T2, T3, T4> callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public static void Remove<T1, T2, T3, T4, T5>(ref Callback<T1, T2, T3, T4, T5> callback)
         {
-            if (callback == null)
+            if (callback != null)
             {
-                return;
+                callback.Remove();
+                callback = null;
             }
-
-            callback.Remove();
-            callback = null;
         }
 
         public class Callback
@@ -88,18 +76,16 @@ namespace Oxide.Core
             public void Call()
             {
                 Action action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 
@@ -161,18 +147,16 @@ namespace Oxide.Core
             public void Call(T arg0)
             {
                 Action<T> action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke(arg0);
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke(arg0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 
@@ -234,18 +218,16 @@ namespace Oxide.Core
             public void Call(T1 arg0, T2 arg1)
             {
                 Action<T1, T2> action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke(arg0, arg1);
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke(arg0, arg1);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 
@@ -307,18 +289,16 @@ namespace Oxide.Core
             public void Call(T1 arg0, T2 arg1, T3 arg2)
             {
                 Action<T1, T2, T3> action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke(arg0, arg1, arg2);
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke(arg0, arg1, arg2);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 
@@ -380,18 +360,16 @@ namespace Oxide.Core
             public void Call(T1 arg0, T2 arg1, T3 arg2, T4 arg3)
             {
                 Action<T1, T2, T3, T4> action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke(arg0, arg1, arg2, arg3);
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke(arg0, arg1, arg2, arg3);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 
@@ -453,18 +431,16 @@ namespace Oxide.Core
             public void Call(T1 arg0, T2 arg1, T3 arg2, T4 arg3, T5 arg4)
             {
                 Action<T1, T2, T3, T4, T5> action = Invoke;
-                if (action == null)
+                if (action != null)
                 {
-                    return;
-                }
-
-                try
-                {
-                    action.Invoke(arg0, arg1, arg2, arg3, arg4);
-                }
-                catch (Exception ex)
-                {
-                    Interface.Oxide.LogException("Exception while invoking event handler", ex);
+                    try
+                    {
+                        action.Invoke(arg0, arg1, arg2, arg3, arg4);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                    }
                 }
             }
 

@@ -1,8 +1,8 @@
-﻿using Oxide.Core.RemoteConsole;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Umod.RemoteConsole;
 
-namespace Oxide.Core.Logging
+namespace Umod.Logging
 {
     /// <summary>
     /// Types for logger
@@ -62,10 +62,10 @@ namespace Oxide.Core.Logging
             LogMessage msg = new LogMessage
             {
                 Type = type,
-                ConsoleMessage = $"[Oxide] {DateTime.Now.ToShortTimeString()} [{type}] {format}",
+                ConsoleMessage = $"[Umod] {DateTime.Now.ToShortTimeString()} [{type}] {format}",
                 LogfileMessage = $"{DateTime.Now.ToShortTimeString()} [{type}] {format}"
             };
-            if (Interface.Oxide.Config.Console.MinimalistMode)
+            if (Interface.Umod.Config.Console.MinimalistMode)
             {
                 msg.ConsoleMessage = format;
             }
@@ -116,8 +116,8 @@ namespace Oxide.Core.Logging
                     break;
             }
 
-            Interface.Oxide.ServerConsole.AddMessage(message, consoleColor);
-            Interface.Oxide.RemoteConsole.SendMessage(new RemoteMessage
+            Interface.Umod.ServerConsole.AddMessage(message, consoleColor);
+            Interface.Umod.RemoteConsole.SendMessage(new RemoteMessage
             {
                 Message = message,
                 Identifier = -1,
