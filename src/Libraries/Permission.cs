@@ -214,7 +214,6 @@ namespace Umod.Libraries
 
                 if (PermissionExists(name))
                 {
-                    Interface.Umod.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
                     return;
                 }
 
