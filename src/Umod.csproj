@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Version>2.0.0</Version>
     <AssemblyName>Umod</AssemblyName>
-    <Authors>The uMod Team and Contributors</Authors>
+    <Authors>The uMod Project Team and Contributors</Authors>
     <Description>Core component for the uMod modding framework</Description>
     <RepositoryUrl>https://github.com/theumod/umod</RepositoryUrl>
     <PackageLicenseUrl>https://github.com/theumod/umod/blob/develop/LICENSE.md</PackageLicenseUrl>

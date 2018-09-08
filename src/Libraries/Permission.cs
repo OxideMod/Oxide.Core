@@ -218,6 +218,13 @@ namespace Umod.Libraries
                     return;
                 }
 
+                string prefix = owner.Name.ToLower() + ".";
+                if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
+                {
+                    Interface.Umod.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
+                    return;
+                }
+
                 HashSet<string> set;
                 if (!permset.TryGetValue(owner, out set))
                 {
@@ -229,12 +236,6 @@ namespace Umod.Libraries
                 set.Add(name);
 
                 Interface.CallHook("OnPermissionRegistered", name, owner);
-
-                string prefix = owner.Name.ToLower() + ".";
-                if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
-                {
-                    Interface.Umod.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
-                }
             }
         }
 
