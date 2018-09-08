@@ -118,6 +118,7 @@ namespace Umod.Extensions
         public void LoadExtension(string filename, bool forced)
         {
             string name = Utility.GetFileNameWithoutExtension(filename);
+            string pdbFileName = filename.Replace(".dll", "") + ".pdb";
 
             // Check if the extension is already loaded
             if (extensions.Any(x => x.Filename == filename))
@@ -131,8 +132,21 @@ namespace Umod.Extensions
                 // Read the assembly from file
                 byte[] data = File.ReadAllBytes(filename);
 
-                // Load the assembly
-                Assembly assembly = Assembly.Load(data);
+                Assembly assembly;
+
+                if (File.Exists(pdbFileName))
+                {
+                    //Read debug information from file
+                    byte[] pdbData = File.ReadAllBytes(pdbFileName);
+
+                    // Load the assembly with debug data
+                    assembly = Assembly.Load(data, pdbData);
+                }
+                else
+                {
+                    // Load the assembly
+                    assembly = Assembly.Load(data);
+                }
 
                 // Search for a type that derives Extension
                 Type extType = typeof(Extension);
