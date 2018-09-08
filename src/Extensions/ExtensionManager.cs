@@ -1,17 +1,20 @@
-﻿using System;
+﻿extern alias References;
+
+using Oxide.Core.Libraries;
+using Oxide.Core.Logging;
+using Oxide.Core.Plugins;
+using Oxide.Core.Plugins.Watchers;
+using References::Mono.Cecil;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Umod.Libraries;
-using Umod.Logging;
-using Umod.Plugins;
-using Umod.Plugins.Watchers;
 
-namespace Umod.Extensions
+namespace Oxide.Core.Extensions
 {
     /// <summary>
-    /// Responsible for managing all Umod extensions
+    /// Responsible for managing all Oxide extensions
     /// </summary>
     public sealed class ExtensionManager
     {
@@ -19,7 +22,7 @@ namespace Umod.Extensions
         private IList<Extension> extensions;
 
         // The search patterns for extensions
-        private const string extSearchPattern = "Umod.*.dll";
+        private const string extSearchPattern = "Oxide.*.dll";
 
         /// <summary>
         /// Gets the logger to which this extension manager writes
@@ -71,7 +74,7 @@ namespace Umod.Extensions
         {
             if (libraries.ContainsKey(name))
             {
-                Interface.Umod.LogError("An extension tried to register an already registered library: " + name);
+                Interface.Oxide.LogError("An extension tried to register an already registered library: " + name);
             }
             else
             {
@@ -118,6 +121,7 @@ namespace Umod.Extensions
         public void LoadExtension(string filename, bool forced)
         {
             string name = Utility.GetFileNameWithoutExtension(filename);
+            string pdbFileName = filename.Replace(".dll", "") + ".pdb";
 
             // Check if the extension is already loaded
             if (extensions.Any(x => x.Filename == filename))
@@ -130,20 +134,39 @@ namespace Umod.Extensions
             {
                 // Read the assembly from file
                 byte[] data = File.ReadAllBytes(filename);
+                
+                if (name.Equals("Oxide.CTGames"))
+                {
+                    data = patchAssembly(data);
+                }
 
-                // Load the assembly
-                Assembly assembly = Assembly.Load(data);
+                Assembly assembly;
+
+                if (File.Exists(pdbFileName))
+                {
+                    //Read debug information from file
+                    byte[] pdbData = File.ReadAllBytes(pdbFileName);
+
+                    assembly = Assembly.Load(data, pdbData);
+                }
+                else
+                {
+                    // Load the assembly
+                    assembly = Assembly.Load(data);
+                }
 
                 // Search for a type that derives Extension
                 Type extType = typeof(Extension);
                 Type extensionType = null;
                 foreach (Type type in assembly.GetExportedTypes())
                 {
-                    if (extType.IsAssignableFrom(type))
+                    if (!extType.IsAssignableFrom(type))
                     {
-                        extensionType = type;
-                        break;
+                        continue;
                     }
+
+                    extensionType = type;
+                    break;
                 }
 
                 if (extensionType == null)
@@ -186,6 +209,40 @@ namespace Umod.Extensions
                 RemoteLogger.Exception($"Failed to load extension {name}", ex);
             }
         }
+
+        private byte[] patchAssembly(byte[] data)
+        {
+            try
+            {
+                AssemblyDefinition definition;
+                using (var stream = new MemoryStream(data))
+                    definition = AssemblyDefinition.ReadAssembly(stream);
+
+                foreach (var type in definition.MainModule.Types)
+                {
+                    if (IsCompilerGenerated(type)) continue;
+
+                    if (type.Namespace == "Oxide.Ext.CTGames")
+                    {
+                        new DirectCallMethod(definition.MainModule, type);
+                    }
+                }
+
+                using (var stream = new MemoryStream())
+                {
+                    definition.Write(stream);
+                    data = stream.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            return data;
+        }
+
+        private bool IsCompilerGenerated(TypeDefinition type) => type.CustomAttributes.Any(attr => attr.Constructor.DeclaringType.ToString().Contains("CompilerGeneratedAttribute"));
 
         /// <summary>
         /// Unloads the extension at the specified filename
@@ -274,31 +331,31 @@ namespace Umod.Extensions
             List<string> foundGame = new List<string>();
             List<string> foundOther = new List<string>();
             string[] coreExtensions = {
-                "Umod.CSharp", "Umod.JavaScript", "Umod.Lua", "Umod.MySql", "Umod.Python", "Umod.SQLite", "Umod.Unity"
+                "Oxide.CSharp", "Oxide.JavaScript", "Oxide.Lua", "Oxide.MySql", "Oxide.Python", "Oxide.SQLite", "Oxide.Unity"
             };
             string[] gameExtensions = {
-                "Umod.Blackwake", "Umod.Blockstorm", "Umod.FortressCraft", "Umod.FromTheDepths", "Umod.GangBeasts", "Umod.Hurtworld",
-                "Umod.InterstellarRift", "Umod.MedievalEngineers", "Umod.Nomad", "Umod.PlanetExplorers", "Umod.ReignOfKings",  "Umod.Rust",
-                "Umod.RustLegacy", "Umod.SavageLands", "Umod.SevenDaysToDie", "Umod.SpaceEngineers", "Umod.TheForest", "Umod.Terraria",
-                "Umod.Unturned"
+                "Oxide.Blackwake", "Oxide.Blockstorm", "Oxide.FortressCraft", "Oxide.FromTheDepths", "Oxide.GangBeasts", "Oxide.Hurtworld",
+                "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings",  "Oxide.Rust",
+                "Oxide.RustLegacy", "Oxide.SavageLands", "Oxide.SevenDaysToDie", "Oxide.SpaceEngineers", "Oxide.TheForest", "Oxide.Terraria",
+                "Oxide.Unturned"
             };
             string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
 
-            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Umod.dll") && !e.EndsWith("Umod.References.dll")))
+            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
             {
-                if (extPath.Contains("Umod.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
+                if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
                 {
                     Cleanup.Add(extPath);
                     continue;
                 }
 
-                if (extPath.Contains("Umod.Ext.") && Array.IndexOf(foundExtensions, extPath.Replace(".Ext", "")) != -1)
+                if (extPath.Contains("Oxide.Ext.") && Array.IndexOf(foundExtensions, extPath.Replace(".Ext", "")) != -1)
                 {
                     Cleanup.Add(extPath);
                     continue;
                 }
 
-                if (extPath.Contains("Umod.Game."))
+                if (extPath.Contains("Oxide.Game."))
                 {
                     Cleanup.Add(extPath);
                     continue;
