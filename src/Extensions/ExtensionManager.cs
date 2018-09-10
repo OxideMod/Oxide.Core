@@ -299,24 +299,6 @@ namespace Umod.Extensions
 
             foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Umod.dll") && !e.EndsWith("Umod.References.dll")))
             {
-                if (extPath.Contains("Umod.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
-                {
-                    Cleanup.Add(extPath);
-                    continue;
-                }
-
-                if (extPath.Contains("Umod.Ext.") && Array.IndexOf(foundExtensions, extPath.Replace(".Ext", "")) != -1)
-                {
-                    Cleanup.Add(extPath);
-                    continue;
-                }
-
-                if (extPath.Contains("Umod.Game."))
-                {
-                    Cleanup.Add(extPath);
-                    continue;
-                }
-
                 if (coreExtensions.Contains(extPath.Basename()))
                 {
                     foundCore.Add(extPath);
