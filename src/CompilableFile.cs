@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins
 {
@@ -15,6 +16,7 @@ namespace uMod.Plugins
         private Libraries.Timer.TimerInstance timeoutTimer;
 
         public CSharpPluginLoader Loader;
+        public FSWatcher Watcher;
         public string Name;
         public string Directory;
         public string ScriptName;
@@ -37,10 +39,10 @@ namespace uMod.Plugins
 
         public byte[] ScriptSource => ScriptEncoding.GetBytes(string.Join(Environment.NewLine, ScriptLines));
 
-        public CompilableFile(CSharpExtension extension, CSharpPluginLoader loader, string directory, string name)
+        public CompilableFile(CSharpPluginLoader loader, FSWatcher watcher, string directory, string name)
         {
-            Extension = extension;
             Loader = loader;
+            Watcher = watcher;
             Directory = directory;
             ScriptName = name;
             ScriptPath = Path.Combine(Directory, $"{ScriptName}.cs");

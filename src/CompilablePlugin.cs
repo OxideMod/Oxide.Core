@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Reflection;
+using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins
 {
@@ -10,7 +11,7 @@ namespace uMod.Plugins
         public CompiledAssembly LastGoodAssembly;
         public bool IsLoading;
 
-        public CompilablePlugin(CSharpExtension extension, CSharpPluginLoader loader, string directory, string name) : base(extension, loader, directory, name)
+        public CompilablePlugin(CSharpPluginLoader loader, FSWatcher watcher, string directory, string name) : base(loader, watcher, directory, name)
         {
         }
 
@@ -85,7 +86,7 @@ namespace uMod.Plugins
                     return;
                 }
 
-                plugin.Watcher = Extension.Watcher;
+                plugin.Watcher = Watcher;
                 plugin.Loader = Loader;
 
                 if (!Interface.uMod.PluginLoaded(plugin))
