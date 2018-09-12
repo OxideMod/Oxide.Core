@@ -70,14 +70,17 @@ namespace uMod
         /// </summary>
         public bool IsShuttingDown { get; private set; }
 
-        // The extension manager
-        private ExtensionManager extensionManager;
-
         // The command line
         public CommandLine CommandLine;
 
         // Various configs
         public uModConfig Config { get; private set; }
+
+        // The extension manager
+        private ExtensionManager extensionManager;
+
+        // The core .cs plugin loader
+        private CSharpPluginLoader coreLoader;
 
         // Various libraries
         private Covalence covalence;
@@ -246,6 +249,28 @@ namespace uMod
                 getTimeSinceStartup = () => (float)timer.Elapsed.TotalSeconds;
                 LogWarning("A reliable clock is not available, falling back to a clock which may be unreliable on certain hardware");
             }
+
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                string extDir = Interface.uMod.ExtensionDirectory;
+                string configPath = Path.Combine(extDir, "Oxide.References.dll.config");
+                if (File.Exists(configPath) && !new[] { "target=\"x64", "target=\"./x64" }.Any(File.ReadAllText(configPath).Contains))
+                {
+                    return;
+                }
+
+                File.WriteAllText(configPath, $"<configuration>\n<dllmap dll=\"MonoPosixHelper\" target=\"{extDir}/x86/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"32\" />\n" +
+                                              $"<dllmap dll=\"MonoPosixHelper\" target=\"{extDir}/x64/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"64\" />\n</configuration>");
+            }
+
+            // Register core plugin watcher
+            FSWatcher coreWatcher = new FSWatcher(PluginDirectory, "*.cs");
+            extensionManager.RegisterPluginChangeWatcher(coreWatcher);
+
+            // Register core plugin loader
+            coreLoader = new CSharpPluginLoader(coreWatcher);
+            extensionManager.RegisterPluginLoader(coreLoader);
+            coreLoader.AddReferences();
 
             foreach (Extension ext in extensionManager.GetAllExtensions())
             {
@@ -698,6 +723,16 @@ namespace uMod
                 catch (Exception ex)
                 {
                     LogException($"{ex.GetType().Name} while invoke OnFrame in extensions", ex);
+                }
+
+                // Call OnFrame hook in plugins
+                foreach (KeyValuePair<string, Plugin> kv in coreLoader.LoadedPlugins)
+                {
+                    CSharpPlugin plugin = kv.Value as CSharpPlugin;
+                    if (plugin != null && plugin.HookedOnFrame)
+                    {
+                        plugin.CallHook("OnFrame", delta);
+                    }
                 }
             }
         }

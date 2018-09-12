@@ -1,19 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using uMod.Extensions;
+using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins
 {
     public class CSharpPluginLoader : PluginLoader
     {
+        public static CSharpPluginLoader Instance;
+        public static FSWatcher Watcher;
         public static string[] DefaultReferences = { "mscorlib", "System", "System.Core", "System.Data", "uMod" };
         public static HashSet<string> PluginReferences = new HashSet<string>(DefaultReferences);
-        public static CSharpPluginLoader Instance;
 
-        private static CSharpExtension extension;
         private static Dictionary<string, CompilablePlugin> plugins = new Dictionary<string, CompilablePlugin>();
         private static readonly string[] AssemblyBlacklist = { "Newtonsoft.Json", "protobuf-net", "websocket-sharp" };
 
@@ -23,7 +24,7 @@ namespace uMod.Plugins
             CompilablePlugin plugin;
             if (!plugins.TryGetValue(className, out plugin))
             {
-                plugin = new CompilablePlugin(extension, Instance, directory, name);
+                plugin = new CompilablePlugin(Instance, Watcher, directory, name);
                 plugins[className] = plugin;
             }
             return plugin;
@@ -34,15 +35,15 @@ namespace uMod.Plugins
         private List<CompilablePlugin> compilationQueue = new List<CompilablePlugin>();
         private PluginCompiler compiler;
 
-        public CSharpPluginLoader(CSharpExtension extension)
+        public CSharpPluginLoader(FSWatcher watcher)
         {
             Instance = this;
-            CSharpPluginLoader.extension = extension;
+            Watcher = watcher;
             PluginCompiler.CheckCompilerBinary();
             compiler = new PluginCompiler();
         }
 
-        public void OnModLoaded()
+        public void AddReferences()
         {
             // Include references to all loaded game extensions and any assemblies they reference
             foreach (Extension extension in Interface.uMod.GetAllExtensions())

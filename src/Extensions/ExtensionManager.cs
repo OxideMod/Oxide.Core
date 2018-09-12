@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,13 +27,13 @@ namespace uMod.Extensions
         public CompoundLogger Logger { get; private set; }
 
         // All registered plugin loaders
-        private IList<PluginLoader> pluginloaders;
+        private IList<PluginLoader> pluginLoaders;
 
         // All registered libraries
         private IDictionary<string, Library> libraries;
 
         // All registered watchers
-        private IList<PluginChangeWatcher> changewatchers;
+        private IList<PluginChangeWatcher> changeWatchers;
 
         /// <summary>
         /// Initializes a new instance of the ExtensionManager class
@@ -43,9 +43,9 @@ namespace uMod.Extensions
             // Initialize
             Logger = logger;
             extensions = new List<Extension>();
-            pluginloaders = new List<PluginLoader>();
+            pluginLoaders = new List<PluginLoader>();
             libraries = new Dictionary<string, Library>();
-            changewatchers = new List<PluginChangeWatcher>();
+            changeWatchers = new List<PluginChangeWatcher>();
         }
 
         #region Registering
@@ -54,13 +54,13 @@ namespace uMod.Extensions
         /// Registers the specified plugin loader
         /// </summary>
         /// <param name="loader"></param>
-        public void RegisterPluginLoader(PluginLoader loader) => pluginloaders.Add(loader);
+        public void RegisterPluginLoader(PluginLoader loader) => pluginLoaders.Add(loader);
 
         /// <summary>
         /// Gets all plugin loaders
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PluginLoader> GetPluginLoaders() => pluginloaders;
+        public IEnumerable<PluginLoader> GetPluginLoaders() => pluginLoaders;
 
         /// <summary>
         /// Registers the specified library
@@ -100,13 +100,13 @@ namespace uMod.Extensions
         /// Registers the specified watcher
         /// </summary>
         /// <param name="watcher"></param>
-        public void RegisterPluginChangeWatcher(PluginChangeWatcher watcher) => changewatchers.Add(watcher);
+        public void RegisterPluginChangeWatcher(PluginChangeWatcher watcher) => changeWatchers.Add(watcher);
 
         /// <summary>
         /// Gets all plugin change watchers
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PluginChangeWatcher> GetPluginChangeWatchers() => changewatchers;
+        public IEnumerable<PluginChangeWatcher> GetPluginChangeWatchers() => changeWatchers;
 
         #endregion Registering
 
