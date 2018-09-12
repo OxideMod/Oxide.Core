@@ -1,6 +1,6 @@
-﻿using Umod.Plugins;
+﻿using uMod.Plugins;
 
-namespace Umod.Libraries.Covalence
+namespace uMod.Libraries.Covalence
 {
     /// <summary>
     /// Represents a source of commands

@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Umod.Configuration;
+using uMod.Configuration;
 
-namespace Umod
+namespace uMod
 {
     /// <summary>
     /// Manages all data files

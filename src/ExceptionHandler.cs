@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Umod
+namespace uMod
 {
     public class ExceptionHandler
     {

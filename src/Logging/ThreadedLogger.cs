@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Umod.Logging
+namespace uMod.Logging
 {
     /// <summary>
     /// Represents a logger that processes messages on a worker thread

@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Umod.Libraries;
 
-namespace Umod.Plugins
+namespace uMod.Plugins
 {
     /// <summary>
     /// Represents a loader for a certain type of plugin
@@ -66,14 +65,14 @@ namespace Umod.Plugins
         {
             if (LoadingPlugins.Contains(name))
             {
-                Interface.Umod.LogDebug("Load requested for plugin which is already loading: {0}", name);
+                Interface.uMod.LogDebug("Load requested for plugin which is already loading: {0}", name);
                 return null;
             }
 
             string filename = Path.Combine(directory, name + FileExtension);
             Plugin plugin = GetPlugin(filename);
             LoadingPlugins.Add(plugin.Name);
-            Interface.Umod.NextTick(() => LoadPlugin(plugin));
+            Interface.uMod.NextTick(() => LoadPlugin(plugin));
 
             return null;
         }
@@ -95,30 +94,30 @@ namespace Umod.Plugins
             if (!File.Exists(plugin.Filename))
             {
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Umod.LogWarning("Script no longer exists: {0}", plugin.Name);
+                Interface.uMod.LogWarning("Script no longer exists: {0}", plugin.Name);
                 return;
             }
 
             try
             {
                 plugin.Load();
-                Interface.Umod.UnloadPlugin(plugin.Name);
+                Interface.uMod.UnloadPlugin(plugin.Name);
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Umod.PluginLoaded(plugin);
+                Interface.uMod.PluginLoaded(plugin);
             }
             catch (IOException)
             {
                 if (!waitingForAccess)
                 {
-                    Interface.Umod.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                    Interface.uMod.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
                 }
 
-                Interface.Umod.GetLibrary<Timer>().Once(.5f, () => LoadPlugin(plugin, true));
+                Interface.uMod.GetLibrary<Libraries.Timer>().Once(.5f, () => LoadPlugin(plugin, true));
             }
             catch (Exception ex)
             {
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.Umod.LogException($"Failed to load plugin {plugin.Name}", ex);
+                Interface.uMod.LogException($"Failed to load plugin {plugin.Name}", ex);
             }
         }
 
@@ -130,8 +129,8 @@ namespace Umod.Plugins
         /// <returns></returns>
         public virtual void Reload(string directory, string name)
         {
-            Interface.Umod.UnloadPlugin(name);
-            Interface.Umod.LoadPlugin(name);
+            Interface.uMod.UnloadPlugin(name);
+            Interface.uMod.LoadPlugin(name);
         }
 
         /// <summary>

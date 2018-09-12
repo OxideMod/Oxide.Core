@@ -1,4 +1,4 @@
-﻿namespace Umod.Extensions
+﻿namespace uMod.Extensions
 {
     /// <summary>
     /// Represents a single binary extension

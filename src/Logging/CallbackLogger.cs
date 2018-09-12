@@ -1,4 +1,4 @@
-﻿namespace Umod.Logging
+﻿namespace uMod.Logging
 {
     public class CallbackLogger : Logger
     {

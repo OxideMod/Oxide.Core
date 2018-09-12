@@ -3,9 +3,9 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Umod.Libraries.Covalence;
+using uMod.Libraries.Covalence;
 
-namespace Umod
+namespace uMod
 {
     /// <summary>
     /// Useful extension methods which are added to base types

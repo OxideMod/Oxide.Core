@@ -1,4 +1,4 @@
-﻿namespace Umod
+﻿namespace uMod
 {
     /// <summary>
     /// Represents a version in major.minor.patch form

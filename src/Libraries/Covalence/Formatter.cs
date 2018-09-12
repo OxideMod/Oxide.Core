@@ -1,4 +1,4 @@
-// A custom markup language for Umod
+// A custom markup language for uMod
 //
 // Text 		::= {Element}
 // Element 		::= String | Bold | Italic | Color | Size
@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Umod.Libraries.Covalence
+namespace uMod.Libraries.Covalence
 {
     public class Element
     {

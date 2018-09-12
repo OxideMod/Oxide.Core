@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Umod
+namespace uMod
 {
     public static class Cleanup
     {
@@ -19,13 +19,13 @@ namespace Umod
                     {
                         if (File.Exists(file))
                         {
-                            Interface.Umod.LogDebug("Cleanup file: {0}", file);
+                            Interface.uMod.LogDebug($"Cleanup file: {file}");
                             File.Delete(file);
                         }
                     }
                     catch (Exception)
                     {
-                        Interface.Umod.LogWarning("Failed to cleanup file: {0}", file);
+                        Interface.uMod.LogWarning($"Failed to cleanup file: {file}");
                     }
                 }
 

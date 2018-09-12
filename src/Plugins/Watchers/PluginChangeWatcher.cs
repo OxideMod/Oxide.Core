@@ -1,4 +1,4 @@
-﻿namespace Umod.Plugins.Watchers
+﻿namespace uMod.Plugins.Watchers
 {
     public delegate void PluginChangeEvent(string name);
 

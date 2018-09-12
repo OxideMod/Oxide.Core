@@ -3,7 +3,7 @@
 using References::Newtonsoft.Json;
 using System;
 
-namespace Umod.RemoteConsole
+namespace uMod.RemoteConsole
 {
     /// <summary>
     /// Message sent between the server and all connected clients
@@ -32,7 +32,7 @@ namespace Umod.RemoteConsole
             }
             catch (JsonReaderException)
             {
-                Interface.Umod.LogError("[Rcon] Failed to parse message, incorrect format");
+                Interface.uMod.LogError("[Rcon] Failed to parse message, incorrect format");
                 return null;
             }
         }

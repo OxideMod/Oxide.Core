@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Umod.Libraries.Covalence
+namespace uMod.Libraries.Covalence
 {
     /// <summary>
     /// Represents a generic player manager

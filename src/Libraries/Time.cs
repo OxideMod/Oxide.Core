@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     /// <summary>
     /// The time library

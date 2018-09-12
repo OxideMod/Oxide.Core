@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Umod.Libraries.Covalence
+namespace uMod.Libraries.Covalence
 {
     /// <summary>
     /// Represents a generic player within a game, either connected or not

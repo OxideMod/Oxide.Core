@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Umod.RemoteConsole;
+using uMod.RemoteConsole;
 
-namespace Umod.Logging
+namespace uMod.Logging
 {
     /// <summary>
     /// Types for logger
@@ -62,10 +62,10 @@ namespace Umod.Logging
             LogMessage msg = new LogMessage
             {
                 Type = type,
-                ConsoleMessage = $"[Umod] {DateTime.Now.ToShortTimeString()} [{type}] {format}",
+                ConsoleMessage = $"[uMod] {DateTime.Now.ToShortTimeString()} [{type}] {format}",
                 LogfileMessage = $"{DateTime.Now.ToShortTimeString()} [{type}] {format}"
             };
-            if (Interface.Umod.Config.Console.MinimalistMode)
+            if (Interface.uMod.Config.Console.MinimalistMode)
             {
                 msg.ConsoleMessage = format;
             }
@@ -116,8 +116,8 @@ namespace Umod.Logging
                     break;
             }
 
-            Interface.Umod.ServerConsole.AddMessage(message, consoleColor);
-            Interface.Umod.RemoteConsole.SendMessage(new RemoteMessage
+            Interface.uMod.ServerConsole.AddMessage(message, consoleColor);
+            Interface.uMod.RemoteConsole.SendMessage(new RemoteMessage
             {
                 Message = message,
                 Identifier = -1,

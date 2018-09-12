@@ -4,17 +4,17 @@ using References::Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Umod.Configuration
+namespace uMod.Configuration
 {
     /// <summary>
-    /// Represents all Umod config settings
+    /// Represents all uMod config settings
     /// </summary>
-    public class UmodConfig : ConfigFile
+    public class uModConfig : ConfigFile
     {
         /// <summary>
         /// Settings for the modded server
         /// </summary>
-        public class UmodOptions
+        public class uModOptions
         {
             public bool Modded;
             public bool PluginWatchers;
@@ -37,77 +37,77 @@ namespace Umod.Configuration
         }
 
         /// <summary>
-        /// Settings for the custom Umod console
+        /// Settings for the custom uMod console
         /// </summary>
-        public class UmodConsole
+        public class uModConsole
         {
             /// <summary>
-            /// Gets or sets if the Umod console should be setup
+            /// Gets or sets if the uMod console should be setup
             /// </summary>
             public bool Enabled { get; set; }
 
             /// <summary>
-            /// Gets or sets if the Umod console should run in minimalist mode (no tags in the console)
+            /// Gets or sets if the uMod console should run in minimalist mode (no tags in the console)
             /// </summary>
             public bool MinimalistMode { get; set; }
 
             /// <summary>
-            /// Gets or sets if the Umod console should show the toolbar on the bottom with server information
+            /// Gets or sets if the uMod console should show the toolbar on the bottom with server information
             /// </summary>
             public bool ShowStatusBar { get; set; }
         }
 
         /// <summary>
-        /// Settings for the custom Umod remote console
+        /// Settings for the custom uMod remote console
         /// </summary>
-        public class UmodRcon
+        public class uModRcon
         {
             /// <summary>
-            /// Gets or sets if the Umod remote console should be setup
+            /// Gets or sets if the uMod remote console should be setup
             /// </summary>
             public bool Enabled { get; set; }
 
             /// <summary>
-            /// Gets or sets the Umod remote console port
+            /// Gets or sets the uMod remote console port
             /// </summary>
             public int Port { get; set; }
 
             /// <summary>
-            /// Gets or sets the Umod remote console password
+            /// Gets or sets the uMod remote console password
             /// </summary>
             public string Password { get; set; }
 
             /// <summary>
-            /// Gets or sets the Umod remote console chat prefix
+            /// Gets or sets the uMod remote console chat prefix
             /// </summary>
             public string ChatPrefix { get; set; }
         }
 
         /// <summary>
-        /// Gets or sets information regarding the Umod mod
+        /// Gets or sets information regarding the uMod mod
         /// </summary>
-        public UmodOptions Options { get; set; }
+        public uModOptions Options { get; set; }
 
         /// <summary>
-        /// Gets or sets information regarding the Umod console
+        /// Gets or sets information regarding the uMod console
         /// </summary>
-        [JsonProperty(PropertyName = "UmodConsole")]
-        public UmodConsole Console { get; set; }
+        [JsonProperty(PropertyName = "uModConsole")]
+        public uModConsole Console { get; set; }
 
         /// <summary>
-        /// Gets or sets information regarding the Umod remote console
+        /// Gets or sets information regarding the uMod remote console
         /// </summary>
-        [JsonProperty(PropertyName = "UmodRcon")]
-        public UmodRcon Rcon { get; set; }
+        [JsonProperty(PropertyName = "uModRcon")]
+        public uModRcon Rcon { get; set; }
 
         /// <summary>
-        /// Sets defaults for Umod configuration
+        /// Sets defaults for uMod configuration
         /// </summary>
-        public UmodConfig(string filename) : base(filename)
+        public uModConfig(string filename) : base(filename)
         {
-            Options = new UmodOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
-            Console = new UmodConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
-            Rcon = new UmodRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
+            Options = new uModOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
+            Console = new uModConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
+            Rcon = new uModRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }
     }
 }

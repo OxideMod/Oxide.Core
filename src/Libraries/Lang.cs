@@ -5,9 +5,9 @@ using References::ProtoBuf;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Umod.Plugins;
+using uMod.Plugins;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     public class Lang : Library
     {
@@ -78,12 +78,12 @@ namespace Umod.Libraries
                 return;
             }
 
-            if (!Directory.Exists(Path.Combine(Interface.Umod.LangDirectory, lang)))
+            if (!Directory.Exists(Path.Combine(Interface.uMod.LangDirectory, lang)))
             {
-                Directory.CreateDirectory(Path.Combine(Interface.Umod.LangDirectory, lang));
+                Directory.CreateDirectory(Path.Combine(Interface.uMod.LangDirectory, lang));
             }
 
-            File.WriteAllText(Path.Combine(Interface.Umod.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
+            File.WriteAllText(Path.Combine(Interface.uMod.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Umod.Libraries
         public string[] GetLanguages(Plugin plugin = null)
         {
             List<string> languages = new List<string>();
-            foreach (string directory in Directory.GetDirectories(Interface.Umod.LangDirectory))
+            foreach (string directory in Directory.GetDirectories(Interface.uMod.LangDirectory))
             {
                 if (Directory.GetFiles(directory).Length == 0)
                 {
@@ -121,7 +121,7 @@ namespace Umod.Libraries
 
                 if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
                 {
-                    languages.Add(directory.Substring(Interface.Umod.LangDirectory.Length + 1));
+                    languages.Add(directory.Substring(Interface.uMod.LangDirectory.Length + 1));
                 }
             }
             return languages.ToArray();
@@ -254,7 +254,7 @@ namespace Umod.Libraries
                 }
 
                 string file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
-                string filename = Path.Combine(Interface.Umod.LangDirectory, file);
+                string filename = Path.Combine(Interface.uMod.LangDirectory, file);
                 return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
             }
 
@@ -278,14 +278,14 @@ namespace Umod.Libraries
                 langFile = GetMessageFile(plugin.Name, lang) ?? (GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name));
                 if (langFile == null)
                 {
-                    Interface.Umod.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");
+                    Interface.uMod.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");
                     return key;
                 }
 
                 Dictionary<string, string> defaultLangFile = GetMessageFile(plugin.Name);
-                if (defaultLangFile != null && MergeMessages(langFile, defaultLangFile) && File.Exists(Path.Combine(Interface.Umod.LangDirectory, file)))
+                if (defaultLangFile != null && MergeMessages(langFile, defaultLangFile) && File.Exists(Path.Combine(Interface.uMod.LangDirectory, file)))
                 {
-                    File.WriteAllText(Path.Combine(Interface.Umod.LangDirectory, file), JsonConvert.SerializeObject(langFile, Formatting.Indented));
+                    File.WriteAllText(Path.Combine(Interface.uMod.LangDirectory, file), JsonConvert.SerializeObject(langFile, Formatting.Indented));
                 }
 
                 AddLangFile(file, langFile, plugin);

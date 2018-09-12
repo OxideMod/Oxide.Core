@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 #endif
 
-namespace Umod
+namespace uMod
 {
     /// <summary>
     /// A partially thread-safe HashSet (iterating is not thread-safe)
@@ -108,16 +108,80 @@ namespace Umod
         void ICollection<T>.Add(T value) => Add(value);
     }
 
+    /// <summary>
+    /// A dictionary which returns null for non-existent keys and removes keys when setting an index to null.
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
+    public class Hash<TKey, TValue> : IDictionary<TKey, TValue>
+    {
+        private readonly IDictionary<TKey, TValue> dictionary;
+
+        public Hash()
+        {
+            dictionary = new Dictionary<TKey, TValue>();
+        }
+
+        public TValue this[TKey key]
+        {
+            get
+            {
+                TValue value;
+                if (TryGetValue(key, out value))
+                {
+                    return value;
+                }
+
+                if (typeof(TValue).IsValueType)
+                {
+                    return (TValue)Activator.CreateInstance(typeof(TValue));
+                }
+
+                return default(TValue);
+            }
+
+            set
+            {
+                if (value == null)
+                {
+                    dictionary.Remove(key);
+                }
+                else
+                {
+                    dictionary[key] = value;
+                }
+            }
+        }
+
+        public ICollection<TKey> Keys => dictionary.Keys;
+        public ICollection<TValue> Values => dictionary.Values;
+        public int Count => dictionary.Count;
+        public bool IsReadOnly => dictionary.IsReadOnly;
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => dictionary.GetEnumerator();
+        public bool ContainsKey(TKey key) => dictionary.ContainsKey(key);
+        public bool Contains(KeyValuePair<TKey, TValue> item) => dictionary.Contains(item);
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int index) => dictionary.CopyTo(array, index);
+        public bool TryGetValue(TKey key, out TValue value) => dictionary.TryGetValue(key, out value);
+        public void Add(TKey key, TValue value) => dictionary.Add(key, value);
+        public void Add(KeyValuePair<TKey, TValue> item) => dictionary.Add(item);
+        public bool Remove(TKey key) => dictionary.Remove(key);
+        public bool Remove(KeyValuePair<TKey, TValue> item) => dictionary.Remove(item);
+        public void Clear() => dictionary.Clear();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
     public class Utility
     {
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
-            DataFileSystem dfs = Interface.Umod.DataFileSystem;
+            DataFileSystem dfs = Interface.uMod.DataFileSystem;
             if (dfs.ExistsDatafile(name))
             {
                 if (ProtoStorage.Exists(name))
                 {
-                    Interface.Umod.LogWarning("Failed to import JSON file: {0} already exists.", name);
+                    Interface.uMod.LogWarning("Failed to import JSON file: {0} already exists.", name);
                     return;
                 }
 
@@ -132,12 +196,12 @@ namespace Umod
                 }
                 catch (Exception ex)
                 {
-                    Interface.Umod.LogException("Failed to convert datafile to proto storage: " + name, ex);
+                    Interface.uMod.LogException("Failed to convert datafile to proto storage: " + name, ex);
                 }
             }
         }
 
-        public static void PrintCallStack() => Interface.Umod.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
+        public static void PrintCallStack() => Interface.uMod.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
 
         public static string FormatBytes(double bytes)
         {
@@ -277,7 +341,7 @@ namespace Umod
 
 #if DEBUG
                         debugOutput.AppendLine($"Resulting IP address: {ip.Address}");
-                        Interface.Umod.LogDebug(debugOutput.ToString());
+                        Interface.uMod.LogDebug(debugOutput.ToString());
 #endif
 
                         return ip.Address;
@@ -286,7 +350,7 @@ namespace Umod
             }
 
 #if DEBUG
-            Interface.Umod.LogDebug($"Most suitable IP: {mostSuitableIp?.Address}");
+            Interface.uMod.LogDebug($"Most suitable IP: {mostSuitableIp?.Address}");
 #endif
 
             return mostSuitableIp?.Address;

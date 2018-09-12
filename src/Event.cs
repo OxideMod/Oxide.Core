@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Umod
+namespace uMod
 {
     public class Event
     {
@@ -84,7 +84,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }
@@ -155,7 +155,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }
@@ -226,7 +226,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }
@@ -297,7 +297,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }
@@ -368,7 +368,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }
@@ -439,7 +439,7 @@ namespace Umod
                     }
                     catch (Exception ex)
                     {
-                        Interface.Umod.LogException("Exception while invoking event handler", ex);
+                        Interface.uMod.LogException("Exception while invoking event handler", ex);
                     }
                 }
             }

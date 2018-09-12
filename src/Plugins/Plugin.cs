@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using Umod.Configuration;
-using Umod.Libraries;
-using Umod.Libraries.Covalence;
+using uMod.Configuration;
+using uMod.Libraries;
+using uMod.Libraries.Covalence;
 
-namespace Umod.Plugins
+namespace uMod.Plugins
 {
     public delegate void PluginError(Plugin sender, string message);
 
@@ -93,7 +93,7 @@ namespace Umod.Plugins
             get => isCorePlugin;
             set
             {
-                if (!Interface.Umod.HasLoadedCorePlugins)
+                if (!Interface.uMod.HasLoadedCorePlugins)
                 {
                     isCorePlugin = value;
                 }
@@ -168,7 +168,7 @@ namespace Umod.Plugins
 
         private IDictionary<string, CommandInfo> commandInfos;
 
-        private Permission permission = Interface.Umod.GetLibrary<Permission>();
+        private Permission permission = Interface.uMod.GetLibrary<Permission>();
 
         /// <summary>
         /// Initializes an empty version of the Plugin class
@@ -249,7 +249,7 @@ namespace Umod.Plugins
             if (!IsCorePlugin && nestcount == 0)
             {
                 preHookGcCount = GC.CollectionCount(0);
-                startedAt = Interface.Umod.Now;
+                startedAt = Interface.uMod.Now;
                 stopwatch.Start();
                 if (averageAt < 1)
                 {
@@ -264,7 +264,7 @@ namespace Umod.Plugins
             }
             catch (Exception ex)
             {
-                Interface.Umod.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex);
+                Interface.uMod.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex);
                 return null;
             }
             finally
@@ -278,7 +278,7 @@ namespace Umod.Plugins
                     if (duration > 0.1)
                     {
                         string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
-                        Interface.Umod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
+                        Interface.uMod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took {duration * 1000:0}ms{suffix}");
                     }
                     stopwatch.Reset();
                     double total = sum + duration;
@@ -289,7 +289,7 @@ namespace Umod.Plugins
                         if (total > 0.1)
                         {
                             string suffix = preHookGcCount == GC.CollectionCount(0) ? string.Empty : " [GARBAGE COLLECT]";
-                            Interface.Umod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
+                            Interface.uMod.LogWarning($"Calling '{hook}' on '{Name} v{Version}' took average {sum * 1000:0}ms{suffix}");
                         }
                         sum = 0;
                         averageAt = 0;
@@ -436,7 +436,7 @@ namespace Umod.Plugins
                 return true;
             });
 
-            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
+            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
             foreach (string command in commands)
             {
                 covalence.RegisterCommand(command, this, CovalenceCommandCallback);
@@ -449,7 +449,7 @@ namespace Umod.Plugins
             {
                 if (commandInfos.ContainsKey(cmdName.ToLowerInvariant()))
                 {
-                    Interface.Umod.LogWarning("Covalence command alias already exists: {0}", cmdName);
+                    Interface.uMod.LogWarning("Covalence command alias already exists: {0}", cmdName);
                     continue;
                 }
 
@@ -470,7 +470,7 @@ namespace Umod.Plugins
 
         private void RegisterWithCovalence()
         {
-            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
+            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.RegisterCommand(pair.Key, this, CovalenceCommandCallback);
@@ -484,7 +484,7 @@ namespace Umod.Plugins
             {
                 if (caller == null)
                 {
-                    Interface.Umod.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
+                    Interface.uMod.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
                     return false;
                 }
 
@@ -509,7 +509,7 @@ namespace Umod.Plugins
 
         private void UnregisterWithCovalence()
         {
-            Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
+            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.UnregisterCommand(pair.Key, this);

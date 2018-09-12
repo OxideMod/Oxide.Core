@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Umod.Plugins;
+using uMod.Plugins;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     /// <summary>
     /// The timer library
@@ -15,7 +15,7 @@ namespace Umod.Libraries
 
         internal static readonly object Lock = new object();
 
-        internal static readonly Umod Umod = Interface.Umod;
+        internal static readonly uMod uMod = Interface.uMod;
 
         public class TimeSlot
         {
@@ -177,7 +177,7 @@ namespace Umod.Libraries
                 Repetitions = repetitions;
                 Delay = delay;
                 Callback = callback;
-                ExpiresAt = Umod.Now + delay;
+                ExpiresAt = uMod.Now + delay;
                 Owner = owner;
                 Destroyed = false;
                 if (owner != null)
@@ -205,7 +205,7 @@ namespace Umod.Libraries
                     }
 
                     Repetitions = repetitions;
-                    ExpiresAt = Umod.Now + delay;
+                    ExpiresAt = uMod.Now + delay;
                     if (Destroyed)
                     {
                         Destroyed = false;
@@ -348,7 +348,7 @@ namespace Umod.Libraries
                         error_message += $" in '{Owner.Name} v{Owner.Version}'";
                     }
 
-                    Interface.Umod.LogException(error_message, ex);
+                    Interface.uMod.LogException(error_message, ex);
                     return;
                 }
                 finally
@@ -386,7 +386,7 @@ namespace Umod.Libraries
         /// </summary>
         public void Update(float delta)
         {
-            float now = Umod.Now;
+            float now = uMod.Now;
             TimeSlot[] time_slots = timeSlots;
             Queue<TimerInstance> expired_queue = expiredInstanceQueue;
             int checked_slots = 0;
@@ -444,7 +444,7 @@ namespace Umod.Libraries
                 {
                     timer = new TimerInstance(this, repetitions, delay, callback, owner);
                 }
-                InsertTimer(timer, timer.ExpiresAt < Umod.Now);
+                InsertTimer(timer, timer.ExpiresAt < uMod.Now);
                 return timer;
             }
         }

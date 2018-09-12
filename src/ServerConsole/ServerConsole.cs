@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Umod.ServerConsole
+namespace uMod.ServerConsole
 {
     public class ServerConsole
     {
@@ -79,7 +79,7 @@ namespace Umod.ServerConsole
         {
             Console.ForegroundColor = color;
             int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + (int)Math.Ceiling((double)line.Length / Console.BufferWidth));
-            input.ClearLine((Interface.Umod.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
+            input.ClearLine((Interface.uMod.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
             Console.WriteLine(message);
             input.RedrawInputLine();
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -117,18 +117,18 @@ namespace Umod.ServerConsole
             }
             catch (Exception e)
             {
-                Interface.Umod.LogException("OnInputText: ", e);
+                Interface.uMod.LogException("OnInputText: ", e);
             }
         }
 
         public static void PrintColored(params object[] objects)
         {
-            if (Interface.Umod.ServerConsole == null)
+            if (Interface.uMod.ServerConsole == null)
             {
                 return;
             }
 
-            Interface.Umod.ServerConsole.input.ClearLine(Interface.Umod.Config.Console.ShowStatusBar ? Interface.Umod.ServerConsole.input.StatusTextLeft.Length : 1);
+            Interface.uMod.ServerConsole.input.ClearLine(Interface.uMod.Config.Console.ShowStatusBar ? Interface.uMod.ServerConsole.input.StatusTextLeft.Length : 1);
             for (int i = 0; i < objects.Length; i++)
             {
                 if (i % 2 != 0)
@@ -145,34 +145,34 @@ namespace Umod.ServerConsole
                 Console.CursorTop = Console.CursorTop + 1;
             }
 
-            Interface.Umod.ServerConsole.input.RedrawInputLine();
+            Interface.uMod.ServerConsole.input.RedrawInputLine();
         }
 
         public void Update()
         {
             if (init)
             {
-                if (Interface.Umod.Config.Console.ShowStatusBar)
+                if (Interface.uMod.Config.Console.ShowStatusBar)
                 {
                     UpdateStatus();
                 }
 
                 input.Update();
-                if (nextTitleUpdate > Interface.Umod.Now)
+                if (nextTitleUpdate > Interface.uMod.Now)
                 {
                     return;
                 }
 
-                nextTitleUpdate = Interface.Umod.Now + 1f;
+                nextTitleUpdate = Interface.uMod.Now + 1f;
                 console.SetTitle(title);
             }
         }
 
         private void UpdateStatus()
         {
-            if (!(nextUpdate > Interface.Umod.Now))
+            if (!(nextUpdate > Interface.uMod.Now))
             {
-                nextUpdate = Interface.Umod.Now + 0.66f;
+                nextUpdate = Interface.uMod.Now + 0.66f;
                 if (input.Valid)
                 {
                     string left1 = status1Left, left2 = status2Left, left3 = status3Left;

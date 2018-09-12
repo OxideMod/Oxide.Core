@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using References::Newtonsoft.Json;
 using System;
@@ -10,29 +10,29 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Umod.Configuration;
-using Umod.Extensions;
-using Umod.Libraries;
-using Umod.Libraries.Covalence;
-using Umod.Logging;
-using Umod.Plugins;
-using Umod.Plugins.Watchers;
-using Umod.ServerConsole;
-using Timer = Umod.Libraries.Timer;
+using uMod.Configuration;
+using uMod.Extensions;
+using uMod.Libraries;
+using uMod.Libraries.Covalence;
+using uMod.Logging;
+using uMod.Plugins;
+using uMod.Plugins.Watchers;
+using uMod.ServerConsole;
+using Timer = uMod.Libraries.Timer;
 
-namespace Umod
+namespace uMod
 {
     public delegate void NativeDebugCallback(string message);
 
     /// <summary>
-    /// Responsible for core Umod logic
+    /// Responsible for core uMod logic
     /// </summary>
-    public sealed class Umod
+    public sealed class uMod
     {
         internal static readonly Version AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
         /// <summary>
-        /// The current Umod version
+        /// The current uMod version
         /// </summary>
         public static readonly VersionNumber Version = new VersionNumber(AssemblyVersion.Major, AssemblyVersion.Minor, AssemblyVersion.Build);
 
@@ -77,7 +77,7 @@ namespace Umod
         public CommandLine CommandLine;
 
         // Various configs
-        public UmodConfig Config { get; private set; }
+        public uModConfig Config { get; private set; }
 
         // Various libraries
         private Covalence covalence;
@@ -103,13 +103,13 @@ namespace Umod
         public RemoteConsole.RemoteConsole RemoteConsole;
         public ServerConsole.ServerConsole ServerConsole;
 
-        public Umod(NativeDebugCallback debugCallback)
+        public uMod(NativeDebugCallback debugCallback)
         {
             this.debugCallback = debugCallback;
         }
 
         /// <summary>
-        /// Initializes a new instance of the Umod class
+        /// Initializes a new instance of the uMod class
         /// </summary>
         public void Load()
         {
@@ -186,11 +186,11 @@ namespace Umod
             string config = Path.Combine(InstanceDirectory, "umod.config.json"); // TODO: Rename existing oxide.config.json if exists
             if (File.Exists(config))
             {
-                Config = ConfigFile.Load<UmodConfig>(config);
+                Config = ConfigFile.Load<uModConfig>(config);
             }
             else
             {
-                Config = new UmodConfig(config);
+                Config = new uModConfig(config);
                 Config.Save();
             }
 

@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Umod.Database
+namespace uMod.Database
 {
     // Simple helper class for building SQL statements
     public class Sql

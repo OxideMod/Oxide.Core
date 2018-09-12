@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Umod.Plugins;
+using uMod.Plugins;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     /// <summary>
     /// Contains all data for a specified user
@@ -110,7 +110,7 @@ namespace Umod.Libraries
             {
                 if (!string.IsNullOrEmpty(pair.Value.ParentGroup) && HasCircularParent(pair.Key, pair.Value.ParentGroup))
                 {
-                    Interface.Umod.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
+                    Interface.uMod.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
                     pair.Value.ParentGroup = null;
                 }
             }
@@ -125,8 +125,8 @@ namespace Umod.Libraries
         {
             if (IsLoaded)
             {
-                Interface.Umod.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
-                Interface.Umod.DataFileSystem.WriteObject(prefix + ".users", userdata);
+                Interface.uMod.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
+                Interface.uMod.DataFileSystem.WriteObject(prefix + ".users", userdata);
             }
         }
 
@@ -214,14 +214,14 @@ namespace Umod.Libraries
 
                 if (PermissionExists(name))
                 {
-                    Interface.Umod.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
+                    Interface.uMod.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
                     return;
                 }
 
                 string prefix = owner.Name.ToLower() + ".";
                 if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
                 {
-                    Interface.Umod.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
+                    Interface.uMod.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
                     return;
                 }
 

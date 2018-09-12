@@ -7,11 +7,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Umod.Extensions;
-using Umod.Libraries;
-using Umod.Plugins;
+using uMod.Extensions;
+using uMod.Libraries;
+using uMod.Plugins;
+using Timer = uMod.Libraries.Timer;
 
-namespace Umod
+namespace uMod
 {
     public static class RemoteLogger
     {
@@ -64,7 +65,7 @@ namespace Umod
             public string level;
             public string culprit;
             public string platform = "csharp";
-            public string release = Umod.Version.ToString();
+            public string release = uMod.Version.ToString();
             public Dictionary<string, string> tags = Tags;
             public Dictionary<string, string> modules;
             public Dictionary<string, string> extra;
@@ -78,7 +79,7 @@ namespace Umod
                 this.message = message.Length > 1000 ? message.Substring(0, 1000) : message;
                 this.culprit = culprit;
                 this.modules = new Dictionary<string, string>();
-                foreach (Extension extension in Interface.Umod.GetAllExtensions())
+                foreach (Extension extension in Interface.uMod.GetAllExtensions())
                 {
                     modules[extension.GetType().Assembly.GetName().Name] = extension.Version.ToString();
                 }
@@ -106,7 +107,7 @@ namespace Umod
                     Type pluginType = assembly.GetTypes().FirstOrDefault(t => IsTypeDerivedFrom(t, typeof(Plugin)));
                     if (pluginType != null)
                     {
-                        Plugin plugin = Interface.Umod.RootPluginManager.GetPlugin(pluginType.Name);
+                        Plugin plugin = Interface.uMod.RootPluginManager.GetPlugin(pluginType.Name);
                         if (plugin != null)
                         {
                             modules["Plugins." + plugin.Name] = plugin.Version.ToString();
@@ -119,10 +120,10 @@ namespace Umod
             {
                 foreach (string line in stackTrace)
                 {
-                    if (line.StartsWith("Umod.Plugins.PluginCompiler") && line.Contains("+"))
+                    if (line.StartsWith("uMod.Plugins.PluginCompiler") && line.Contains("+"))
                     {
                         string pluginName = line.Split('+')[0];
-                        Plugin plugin = Interface.Umod.RootPluginManager.GetPlugin(pluginName);
+                        Plugin plugin = Interface.uMod.RootPluginManager.GetPlugin(pluginName);
                         if (plugin != null)
                         {
                             modules["Plugins." + plugin.Name] = plugin.Version.ToString();
@@ -147,8 +148,8 @@ namespace Umod
             }
         }
 
-        private static readonly Timer Timers = Interface.Umod.GetLibrary<Timer>();
-        private static readonly WebRequests Webrequests = Interface.Umod.GetLibrary<WebRequests>();
+        private static readonly Timer Timers = Interface.uMod.GetLibrary<Timer>();
+        private static readonly WebRequests Webrequests = Interface.uMod.GetLibrary<WebRequests>();
         private static readonly List<QueuedReport> QueuedReports = new List<QueuedReport>();
         private static bool submittingReports;
 
@@ -175,9 +176,9 @@ namespace Umod
             "FileNotFoundException",
             "IOException",
             "KeyNotFoundException",
-            "Umod.Configuration",
-            "Umod.Ext.",
-            "Umod.Plugins.<",
+            "uMod.Configuration",
+            "uMod.Ext.",
+            "uMod.Plugins.<",
             "ReflectionTypeLoadException",
             "Sharing violation",
             "UnauthorizedAccessException",
@@ -186,7 +187,7 @@ namespace Umod
 
         public static void Exception(string message, Exception exception)
         {
-            if (exception.StackTrace.Contains("Umod") || exception.StackTrace.Contains("Umod.Plugins.Compiler"))
+            if (exception.StackTrace.Contains("uMod") || exception.StackTrace.Contains("uMod.Plugins.Compiler"))
             {
                 foreach (string filter in ExceptionFilter)
                 {
@@ -225,7 +226,7 @@ namespace Umod
         private static void EnqueueReport(Report report)
         {
             Dictionary<string, string>.ValueCollection stackTrace = report.extra.Values;
-            if (stackTrace.Contains("Umod") || stackTrace.Contains("Umod.Plugins.Compiler"))
+            if (stackTrace.Contains("uMod") || stackTrace.Contains("uMod.Plugins.Compiler"))
             {
                 foreach (string filter in ExceptionFilter)
                 {
