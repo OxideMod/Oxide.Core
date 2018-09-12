@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,7 +9,7 @@ namespace uMod.Plugins
 {
     public class CSharpPluginLoader : PluginLoader
     {
-        public static string[] DefaultReferences = { "mscorlib", "uMod", "System", "System.Core", "System.Data" };
+        public static string[] DefaultReferences = { "mscorlib", "System", "System.Core", "System.Data", "uMod" };
         public static HashSet<string> PluginReferences = new HashSet<string>(DefaultReferences);
         public static CSharpPluginLoader Instance;
 
@@ -47,25 +47,21 @@ namespace uMod.Plugins
             // Include references to all loaded game extensions and any assemblies they reference
             foreach (Extension extension in Interface.uMod.GetAllExtensions())
             {
-                if (extension == null || !extension.IsCoreExtension && !extension.IsGameExtension)
+                if (extension != null && (extension.IsCoreExtension || extension.IsGameExtension))
                 {
-                    continue;
-                }
+                    Assembly assembly = extension.GetType().Assembly;
+                    string assemblyName = assembly.GetName().Name;
 
-                Assembly assembly = extension.GetType().Assembly;
-                string assemblyName = assembly.GetName().Name;
-
-                if (AssemblyBlacklist.Contains(assemblyName))
-                {
-                    continue;
-                }
-
-                PluginReferences.Add(assemblyName);
-                foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
-                {
-                    if (reference != null)
+                    if (!AssemblyBlacklist.Contains(assemblyName))
                     {
-                        PluginReferences.Add(reference.Name);
+                        PluginReferences.Add(assemblyName);
+                        foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
+                        {
+                            if (reference != null)
+                            {
+                                PluginReferences.Add(reference.Name);
+                            }
+                        }
                     }
                 }
             }

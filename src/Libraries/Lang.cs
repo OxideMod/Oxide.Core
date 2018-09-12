@@ -270,12 +270,12 @@ namespace uMod.Libraries
         /// <returns></returns>
         private string GetMessageKey(string key, Plugin plugin, string lang = defaultLang)
         {
+            Dictionary<string, string> langFile;
             string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
 
-            Dictionary<string, string> langFile;
             if (!langFiles.TryGetValue(file, out langFile))
             {
-                langFile = GetMessageFile(plugin.Name, lang) ?? (GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name));
+                langFile = GetMessageFile(plugin.Name, lang) ?? GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name);
                 if (langFile == null)
                 {
                     Interface.uMod.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");

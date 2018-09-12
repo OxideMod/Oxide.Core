@@ -197,8 +197,7 @@ namespace uMod
                     }
                 }
 
-                EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message,
-                    exception.ToString());
+                EnqueueReport("fatal", Assembly.GetCallingAssembly(), GetCurrentMethod(), message, exception.ToString());
             }
         }
 

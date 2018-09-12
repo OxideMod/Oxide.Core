@@ -80,23 +80,19 @@ namespace uMod.Plugins
             {
                 object[] commandAttribute = method.GetCustomAttributes(typeof(CommandAttribute), true);
                 object[] permissionAttribute = method.GetCustomAttributes(typeof(PermissionAttribute), true);
-                if (commandAttribute.Length <= 0)
+                if (commandAttribute.Length > 0)
                 {
-                    continue;
+                    CommandAttribute cmd = commandAttribute[0] as CommandAttribute;
+                    PermissionAttribute perm = permissionAttribute.Length <= 0 ? null : permissionAttribute[0] as PermissionAttribute;
+                    if (cmd != null)
+                    {
+                        AddCovalenceCommand(cmd.Commands, perm?.Permission, (caller, command, args) =>
+                        {
+                            CallHook(method.Name, caller, command, args);
+                            return true;
+                        });
+                    }
                 }
-
-                CommandAttribute cmd = commandAttribute[0] as CommandAttribute;
-                PermissionAttribute perm = permissionAttribute.Length <= 0 ? null : permissionAttribute[0] as PermissionAttribute;
-                if (cmd == null)
-                {
-                    continue;
-                }
-
-                AddCovalenceCommand(cmd.Commands, perm?.Permission, (caller, command, args) =>
-                {
-                    CallHook(method.Name, caller, command, args);
-                    return true;
-                });
             }
 
             base.HandleAddedToManager(manager);

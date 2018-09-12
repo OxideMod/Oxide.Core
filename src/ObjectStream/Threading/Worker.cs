@@ -32,10 +32,7 @@ namespace ObjectStream.Threading
 
         private void Fail(Exception exception)
         {
-            if (Error != null)
-            {
-                Error(exception);
-            }
+            Error?.Invoke(exception);
         }
 
         private void Callback(Action action)

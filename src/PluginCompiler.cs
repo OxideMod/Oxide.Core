@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using ObjectStream;
 using ObjectStream.Data;
@@ -182,7 +182,7 @@ namespace uMod.Plugins
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://umod-01.nyc3.digitaloceanspaces.com/{FileName}");
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 HttpStatusCode statusCode = response.StatusCode;
-                if (statusCode == HttpStatusCode.OK)
+                if (statusCode != HttpStatusCode.OK)
                 {
                     Interface.uMod.LogWarning($"Status code from download location was not okay (code {statusCode})");
                 }
