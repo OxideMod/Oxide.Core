@@ -1,16 +1,16 @@
 ﻿using System;
 
-namespace Umod
+namespace uMod
 {
     /// <summary>
-    /// The interface class through which patched DLLs interact with Umod
+    /// The interface class through which patched DLLs interact with uMod
     /// </summary>
     public static class Interface
     {
         /// <summary>
-        /// Gets the main Umod instance
+        /// Gets the main uMod instance
         /// </summary>
-        public static Umod Umod { get; private set; }
+        public static uMod uMod { get; private set; }
 
         /// <summary>
         /// Gets or sets the debug callback to use
@@ -18,15 +18,15 @@ namespace Umod
         public static NativeDebugCallback DebugCallback { get; set; }
 
         /// <summary>
-        /// Initializes Umod
+        /// Initializes uMod
         /// </summary>
         public static void Initialize()
         {
             // Create if not already created
-            if (Umod == null)
+            if (uMod == null)
             {
-                Umod = new Umod(DebugCallback);
-                Umod.Load();
+                uMod = new uMod(DebugCallback);
+                uMod.Load();
             }
         }
 
@@ -40,7 +40,7 @@ namespace Umod
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
-            return Umod.CallDeprecatedHook(oldHook, newHook, expireDate, args);
+            return uMod.CallDeprecatedHook(oldHook, newHook, expireDate, args);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Umod
         /// <param name="hook"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object[] args) => Umod?.CallHook(hook, args);
+        public static object CallHook(string hook, object[] args) => uMod?.CallHook(hook, args);
 
         #region Hook Overloads
 
@@ -339,6 +339,6 @@ namespace Umod
         /// Gets the mod by the previous name, "Oxide"
         /// </summary>
         /// <returns></returns>
-        public static Umod Oxide => Umod; // TODO: This needs to be removed
+        public static uMod Oxide => uMod; // TODO: This needs to be removed
     }
 }

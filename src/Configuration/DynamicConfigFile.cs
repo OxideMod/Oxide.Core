@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Umod.Configuration
+namespace uMod.Configuration
 {
     /// <summary>
     /// Represents a config file with a dynamic layout
@@ -28,7 +28,7 @@ namespace Umod.Configuration
             _keyvalues = new Dictionary<string, object>();
             _settings = new JsonSerializerSettings();
             _settings.Converters.Add(new KeyValuesConverter());
-            _chroot = Interface.Umod.InstanceDirectory;
+            _chroot = Interface.uMod.InstanceDirectory;
         }
 
         /// <summary>

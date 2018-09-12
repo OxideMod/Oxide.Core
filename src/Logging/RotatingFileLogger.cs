@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Umod.Logging
+namespace uMod.Logging
 {
     /// <summary>
     /// A logger that writes to a set of files that rotate by day

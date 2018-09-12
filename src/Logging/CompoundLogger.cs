@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Umod.Logging
+namespace uMod.Logging
 {
     /// <summary>
     /// Represents a set of loggers that fall under a single logger

@@ -4,7 +4,7 @@ using References::Newtonsoft.Json;
 using System;
 using System.IO;
 
-namespace Umod.Configuration
+namespace uMod.Configuration
 {
     /// <summary>
     /// Represents a config file

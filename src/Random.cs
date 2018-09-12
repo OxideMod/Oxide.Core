@@ -1,4 +1,4 @@
-﻿namespace Umod
+﻿namespace uMod
 {
     public static class Random
     {

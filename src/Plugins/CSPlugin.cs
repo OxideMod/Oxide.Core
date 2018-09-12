@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Umod.Libraries;
+using uMod.Libraries;
 
-namespace Umod.Plugins
+namespace uMod.Plugins
 {
     /// <summary>
     /// Indicates that the specified method should be a handler for a hook
@@ -36,7 +36,7 @@ namespace Umod.Plugins
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static T GetLibrary<T>(string name = null) where T : Library => Interface.Umod.GetLibrary<T>(name);
+        public static T GetLibrary<T>(string name = null) where T : Library => Interface.uMod.GetLibrary<T>(name);
 
         // All hooked methods
         protected Dictionary<string, List<HookMethod>> Hooks = new Dictionary<string, List<HookMethod>>();
@@ -94,7 +94,7 @@ namespace Umod.Plugins
             }
             catch (Exception ex)
             {
-                Interface.Umod.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
+                Interface.uMod.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
                 if (Loader != null)
                 {
                     Loader.PluginErrors[Name] = ex.Message;

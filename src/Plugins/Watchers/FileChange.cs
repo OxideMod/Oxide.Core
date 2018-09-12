@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Umod.Plugins.Watchers
+namespace uMod.Plugins.Watchers
 {
     /// <summary>
     /// Represents a file change

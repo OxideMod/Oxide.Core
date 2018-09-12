@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
-namespace Umod.Plugins
+namespace uMod.Plugins
 {
     public class HookMethod
     {

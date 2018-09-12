@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Umod
+namespace uMod
 {
     public static class Localization
     {
@@ -26,7 +26,7 @@ namespace Umod
                 ["CommandUsageUnload"] = "Usage: umod.unload *|<pluginname>+",
                 ["CommandUsageUserGroup"] = "Usage: umod.usergroup <add|remove> <username> <groupname>",
                 ["ConnectionRejected"] = "Connection was rejected",
-                ["DataSaved"] = "Saving Umod data...",
+                ["DataSaved"] = "Saving uMod data...",
                 ["GroupAlreadyExists"] = "Group '{0}' already exists",
                 ["GroupAlreadyHasPermission"] = "Group '{0}' already has permission '{1}'",
                 ["GroupDoesNotHavePermission"] = "Group '{0}' does not have permission '{1}'",
@@ -73,7 +73,7 @@ namespace Umod
                 ["PlayerPermissionRevoked"] = "Player '{0}' revoked permission '{1}'",
                 ["PlayerRemovedFromGroup"] = "Player '{0}' removed from group '{1}'",
                 ["PlayersFound"] = "Multiple players were found, please specify: {0}",
-                ["Version"] = "Server is running [#ffb658]Umod {0}[/#] and [#ee715c]{1} {2} ({3})[/#]",
+                ["Version"] = "Server is running [#ffb658]uMod {0}[/#] and [#ee715c]{1} {2} ({3})[/#]",
                 ["YouAreNotAdmin"] = "You are not an admin"
             }
 

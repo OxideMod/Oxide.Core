@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Umod.Plugins;
+using uMod.Plugins;
 
-namespace Umod.Database
+namespace uMod.Database
 {
     public interface IDatabaseProvider
     {

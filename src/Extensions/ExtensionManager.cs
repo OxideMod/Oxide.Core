@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Umod.Libraries;
-using Umod.Logging;
-using Umod.Plugins;
-using Umod.Plugins.Watchers;
+using uMod.Libraries;
+using uMod.Logging;
+using uMod.Plugins;
+using uMod.Plugins.Watchers;
 
-namespace Umod.Extensions
+namespace uMod.Extensions
 {
     /// <summary>
     /// Responsible for managing all uMod extensions
@@ -19,7 +19,7 @@ namespace Umod.Extensions
         private IList<Extension> extensions;
 
         // The search patterns for extensions
-        private const string extSearchPattern = "Umod.*.dll";
+        private const string extSearchPattern = "uMod.*.dll";
 
         /// <summary>
         /// Gets the logger to which this extension manager writes
@@ -71,7 +71,7 @@ namespace Umod.Extensions
         {
             if (libraries.ContainsKey(name))
             {
-                Interface.Umod.LogError("An extension tried to register an already registered library: " + name);
+                Interface.uMod.LogError($"An extension tried to register an already registered library: {name}");
             }
             else
             {
@@ -161,7 +161,7 @@ namespace Umod.Extensions
 
                 if (extensionType == null)
                 {
-                    Logger.Write(LogType.Error, "Failed to load extension {0} ({1})", name, "Specified assembly does not implement an Extension class");
+                    Logger.Write(LogType.Error, $"Failed to load extension {name} (Specified assembly does not implement an Extension class)");
                     return;
                 }
 
@@ -190,7 +190,7 @@ namespace Umod.Extensions
                     extensions.Add(extension);
 
                     // Log extension loaded
-                    Logger.Write(LogType.Info, "Loaded extension {0} v{1} by {2}", extension.Name, extension.Version, extension.Author);
+                    Logger.Write(LogType.Info, $"Loaded extension {extension.Name} v{extension.Version} by {extension.Author}");
                 }
             }
             catch (Exception ex)
@@ -283,47 +283,8 @@ namespace Umod.Extensions
         /// <param name="directory"></param>
         public void LoadAllExtensions(string directory)
         {
-            List<string> foundCore = new List<string>();
-            List<string> foundGame = new List<string>();
-            List<string> foundOther = new List<string>();
-            string[] coreExtensions = {
-                "Umod.CSharp", "Umod.JavaScript", "Umod.Lua", "Umod.MySql", "Umod.Python", "Umod.SQLite", "Umod.Unity"
-            };
-            string[] gameExtensions = {
-                "Umod.Blackwake", "Umod.Blockstorm", "Umod.FortressCraft", "Umod.FromTheDepths", "Umod.GangBeasts", "Umod.Hurtworld",
-                "Umod.InterstellarRift", "Umod.MedievalEngineers", "Umod.Nomad", "Umod.PlanetExplorers", "Umod.ReignOfKings",  "Umod.Rust",
-                "Umod.RustLegacy", "Umod.SavageLands", "Umod.SevenDaysToDie", "Umod.SpaceEngineers", "Umod.TheForest", "Umod.Terraria",
-                "Umod.Unturned"
-            };
             string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
-
-            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Umod.dll") && !e.EndsWith("Umod.References.dll")))
-            {
-                if (coreExtensions.Contains(extPath.Basename()))
-                {
-                    foundCore.Add(extPath);
-                }
-                else if (gameExtensions.Contains(extPath.Basename()))
-                {
-                    foundGame.Add(extPath);
-                }
-                else
-                {
-                    foundOther.Add(extPath);
-                }
-            }
-
-            foreach (string extPath in foundCore)
-            {
-                LoadExtension(Path.Combine(directory, extPath), true);
-            }
-
-            foreach (string extPath in foundGame)
-            {
-                LoadExtension(Path.Combine(directory, extPath), true);
-            }
-
-            foreach (string extPath in foundOther)
+            foreach (string extPath in foundExtensions.Where(e => !e.Equals("uMod.dll") && !e.Equals("uMod.References.dll")))
             {
                 LoadExtension(Path.Combine(directory, extPath), true);
             }

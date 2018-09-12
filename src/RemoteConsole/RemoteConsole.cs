@@ -7,17 +7,17 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using Umod.Configuration;
-using Umod.Libraries.Covalence;
+using uMod.Configuration;
+using uMod.Libraries.Covalence;
 
-namespace Umod.RemoteConsole
+namespace uMod.RemoteConsole
 {
     public class RemoteConsole
     {
         #region Initialization
 
-        private readonly Covalence covalence = Interface.Umod.GetLibrary<Covalence>();
-        private readonly UmodConfig.UmodRcon config = Interface.Umod.Config.Rcon;
+        private readonly Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+        private readonly uModConfig.uModRcon config = Interface.uMod.Config.Rcon;
 
         private RconListener listener;
         private WebSocketServer server;
@@ -31,7 +31,7 @@ namespace Umod.RemoteConsole
             {
                 if (string.IsNullOrEmpty(config.Password))
                 {
-                    Interface.Umod.LogWarning("[Rcon] Remote console password is not set, disabling");
+                    Interface.uMod.LogWarning("[Rcon] Remote console password is not set, disabling");
                     return;
                 }
 
@@ -45,11 +45,11 @@ namespace Umod.RemoteConsole
                     server.AddWebSocketService($"/{config.Password}", () => listener = new RconListener(this));
                     server.Start();
 
-                    Interface.Umod.LogInfo($"[Rcon] Server started successfully on port {server.Port}");
+                    Interface.uMod.LogInfo($"[Rcon] Server started successfully on port {server.Port}");
                 }
                 catch (Exception ex)
                 {
-                    Interface.Umod.LogException($"[Rcon] Failed to start server on port {server?.Port}", ex);
+                    Interface.uMod.LogException($"[Rcon] Failed to start server on port {server?.Port}", ex);
                     RemoteLogger.Exception($"Failed to start RCON server on port {server?.Port}", ex);
                 }
             }
@@ -65,7 +65,7 @@ namespace Umod.RemoteConsole
                 server.Stop(code, reason);
                 server = null;
                 listener = null;
-                Interface.Umod.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
+                Interface.uMod.LogInfo($"[Rcon] Service has stopped: {reason} ({code})");
             }
         }
 
@@ -121,7 +121,7 @@ namespace Umod.RemoteConsole
         {
             if (covalence == null)
             {
-                Interface.Umod.LogError("[Rcon] Failed to process command, Covalence is null");
+                Interface.uMod.LogError("[Rcon] Failed to process command, Covalence is null");
                 return;
             }
 
@@ -129,13 +129,13 @@ namespace Umod.RemoteConsole
 
             if (message == null)
             {
-                Interface.Umod.LogError("[Rcon] Failed to process command, RemoteMessage is null");
+                Interface.uMod.LogError("[Rcon] Failed to process command, RemoteMessage is null");
                 return;
             }
 
             if (string.IsNullOrEmpty(message.Message))
             {
-                Interface.Umod.LogError("[Rcon] Failed to process command, RemoteMessage.Text is not set");
+                Interface.uMod.LogError("[Rcon] Failed to process command, RemoteMessage.Text is not set");
                 return;
             }
 
@@ -198,17 +198,17 @@ namespace Umod.RemoteConsole
             protected override void OnClose(CloseEventArgs e)
             {
                 string reason = string.IsNullOrEmpty(e.Reason) ? "Unknown" : e.Reason;
-                Interface.Umod.LogInfo($"[Rcon] Connection from {Address} closed: {reason} ({e.Code})");
+                Interface.uMod.LogInfo($"[Rcon] Connection from {Address} closed: {reason} ({e.Code})");
             }
 
-            protected override void OnError(ErrorEventArgs e) => Interface.Umod.LogException(e.Message, e.Exception);
+            protected override void OnError(ErrorEventArgs e) => Interface.uMod.LogException(e.Message, e.Exception);
 
             protected override void OnMessage(MessageEventArgs e) => Parent?.OnMessage(e, Context);
 
             protected override void OnOpen()
             {
                 Address = Context.UserEndPoint.Address;
-                Interface.Umod.LogInfo($"[Rcon] New connection from {Address}");
+                Interface.uMod.LogInfo($"[Rcon] New connection from {Address}");
             }
         }
 

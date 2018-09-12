@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Umod.ServerConsole
+namespace uMod.ServerConsole
 {
     public class ConsoleWindow
     {

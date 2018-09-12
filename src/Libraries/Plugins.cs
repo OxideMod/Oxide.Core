@@ -1,7 +1,7 @@
 ﻿using System.Linq;
-using Umod.Plugins;
+using uMod.Plugins;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     /// <summary>
     /// The plugins library

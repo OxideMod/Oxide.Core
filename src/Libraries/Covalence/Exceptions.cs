@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Umod.Libraries.Covalence
+namespace uMod.Libraries.Covalence
 {
     [Serializable]
     public class CommandAlreadyExistsException : Exception

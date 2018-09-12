@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Umod.Libraries
+namespace uMod.Libraries
 {
     /// <summary>
     /// A global library containing game-agnostic and language-agnostic utilities

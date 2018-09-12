@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Umod.Logging;
+using uMod.Logging;
 
-namespace Umod.Plugins
+namespace uMod.Plugins
 {
     public delegate void PluginEvent(Plugin plugin);
 
@@ -268,12 +268,12 @@ namespace Umod.Plugins
                 return null;
             }
 
-            float now = Interface.Umod.Now;
+            float now = Interface.uMod.Now;
             float lastWarningAt;
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
             {
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.Umod.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                Interface.uMod.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);

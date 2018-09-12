@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
-using Umod.Libraries;
 
-namespace Umod.Plugins.Watchers
+namespace uMod.Plugins.Watchers
 {
     /// <summary>
     /// Represents a file system watcher
@@ -15,7 +14,7 @@ namespace Umod.Plugins.Watchers
         private class QueuedChange
         {
             internal WatcherChangeTypes type;
-            internal Timer.TimerInstance timer;
+            internal Libraries.Timer.TimerInstance timer;
         }
 
         // The filesystem watcher
@@ -27,7 +26,7 @@ namespace Umod.Plugins.Watchers
         // Changes are buffered briefly to avoid duplicate events
         private Dictionary<string, QueuedChange> changeQueue;
 
-        private Timer timers;
+        private Libraries.Timer timers;
 
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
@@ -38,15 +37,15 @@ namespace Umod.Plugins.Watchers
         {
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
-            timers = Interface.Umod.GetLibrary<Timer>();
+            timers = Interface.uMod.GetLibrary<Libraries.Timer>();
 
-            if (Interface.Umod.Config.Options.PluginWatchers)
+            if (Interface.uMod.Config.Options.PluginWatchers)
             {
                 LoadWatcher(directory, filter);
             }
             else
             {
-                Interface.Umod.LogWarning("Automatic plugin reloading and unloading has been disabled");
+                Interface.uMod.LogWarning("Automatic plugin reloading and unloading has been disabled");
             }
         }
 
@@ -131,7 +130,7 @@ namespace Umod.Plugins.Watchers
                     change.type = WatcherChangeTypes.Deleted;
                     break;
             }
-            Interface.Umod.NextTick(() =>
+            Interface.uMod.NextTick(() =>
             {
                 change.timer?.Destroy();
                 change.timer = timers.Once(.2f, () =>
@@ -179,9 +178,9 @@ namespace Umod.Plugins.Watchers
 
         private void watcher_Error(object sender, ErrorEventArgs e)
         {
-            Interface.Umod.NextTick(() =>
+            Interface.uMod.NextTick(() =>
             {
-                Interface.Umod.LogError("FSWatcher error: {0}", e.GetException());
+                Interface.uMod.LogError("FSWatcher error: {0}", e.GetException());
                 RemoteLogger.Exception("FSWatcher error", e.GetException());
             });
         }
