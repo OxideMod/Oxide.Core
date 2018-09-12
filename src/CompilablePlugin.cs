@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 
 namespace uMod.Plugins
@@ -22,7 +22,7 @@ namespace uMod.Plugins
         {
             if (CompiledAssembly == null)
             {
-                Interface.uMod.LogError("Load called before a compiled assembly exists: {0}", Name);
+                Interface.uMod.LogError($"Load called before a compiled assembly exists: {Name}");
                 //RemoteLogger.Error($"Load called before a compiled assembly exists: {Name}");
                 return;
             }
@@ -63,7 +63,7 @@ namespace uMod.Plugins
                 catch (TargetInvocationException invocationException)
                 {
                     Exception ex = invocationException.InnerException;
-                    InitFailed($"Unable to load {ScriptName}. {ex.ToString()}");
+                    InitFailed($"Unable to load {ScriptName}. {ex?.ToString()}");
                     return;
                 }
                 catch (Exception ex)
@@ -110,19 +110,15 @@ namespace uMod.Plugins
             // Enqueue compilation of any plugins which depend on this plugin
             foreach (Plugin plugin in Interface.uMod.RootPluginManager.GetPlugins())
             {
-                if (!(plugin is CSharpPlugin))
+                if (plugin is CSharpPlugin)
                 {
-                    continue;
+                    CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Directory, plugin.Name);
+                    if (compilablePlugin.Requires.Contains(Name))
+                    {
+                        compilablePlugin.CompiledAssembly = null;
+                        Loader.Load(compilablePlugin);
+                    }
                 }
-
-                CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Directory, plugin.Name);
-                if (!compilablePlugin.Requires.Contains(Name))
-                {
-                    continue;
-                }
-
-                compilablePlugin.CompiledAssembly = null;
-                Loader.Load(compilablePlugin);
             }
         }
 
@@ -131,15 +127,17 @@ namespace uMod.Plugins
             base.InitFailed(message);
             if (LastGoodAssembly == null)
             {
-                Interface.uMod.LogInfo("No previous version to rollback plugin: {0}", ScriptName);
+                Interface.uMod.LogInfo($"No previous version to rollback plugin: {ScriptName}");
                 return;
             }
+
             if (CompiledAssembly == LastGoodAssembly)
             {
-                Interface.uMod.LogInfo("Previous version of plugin failed to load: {0}", ScriptName);
+                Interface.uMod.LogInfo($"Previous version of plugin failed to load: {ScriptName}");
                 return;
             }
-            Interface.uMod.LogInfo("Rolling back plugin to last good version: {0}", ScriptName);
+
+            Interface.uMod.LogInfo($"Rolling back plugin to last good version: {ScriptName}");
             CompiledAssembly = LastGoodAssembly;
             CompilerErrors = null;
             LoadPlugin();

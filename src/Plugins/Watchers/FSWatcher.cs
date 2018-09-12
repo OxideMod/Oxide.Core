@@ -92,6 +92,7 @@ namespace uMod.Plugins.Watchers
             int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
             string sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
             QueuedChange change;
+
             if (!changeQueue.TryGetValue(sub_path, out change))
             {
                 change = new QueuedChange();
@@ -99,6 +100,7 @@ namespace uMod.Plugins.Watchers
             }
             change.timer?.Destroy();
             change.timer = null;
+
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Changed:
@@ -127,9 +129,11 @@ namespace uMod.Plugins.Watchers
                         changeQueue.Remove(sub_path);
                         return;
                     }
+
                     change.type = WatcherChangeTypes.Deleted;
                     break;
             }
+
             Interface.uMod.NextTick(() =>
             {
                 change.timer?.Destroy();
@@ -146,6 +150,7 @@ namespace uMod.Plugins.Watchers
 
                         return;
                     }
+
                     switch (change.type)
                     {
                         case WatcherChangeTypes.Changed:

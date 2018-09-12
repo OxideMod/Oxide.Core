@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +12,8 @@ namespace uMod.Plugins
         private static Libraries.Timer timer = Interface.uMod.GetLibrary<Libraries.Timer>();
         private static object compileLock = new object();
 
-        public CSharpExtension Extension;
+        private Libraries.Timer.TimerInstance timeoutTimer;
+
         public CSharpPluginLoader Loader;
         public string Name;
         public string Directory;
@@ -33,8 +34,6 @@ namespace uMod.Plugins
         protected Action<CSharpPlugin> LoadCallback;
         protected Action<bool> CompileCallback;
         protected float CompilationQueuedAt;
-
-        private Libraries.Timer.TimerInstance timeoutTimer;
 
         public byte[] ScriptSource => ScriptEncoding.GetBytes(string.Join(Environment.NewLine, ScriptLines));
 
@@ -60,6 +59,7 @@ namespace uMod.Plugins
                     //RemoteLogger.Debug($"Plugin compilation is already queued: {ScriptName} ({ago:0.000} ago)");
                     return;
                 }
+
                 OnLoadingStarted();
                 if (CompiledAssembly != null && !HasBeenModified())
                 {
@@ -70,6 +70,7 @@ namespace uMod.Plugins
                         return;
                     }
                 }
+
                 IsCompilationNeeded = true;
                 CompileCallback = callback;
                 CompilationQueuedAt = Interface.uMod.Now;

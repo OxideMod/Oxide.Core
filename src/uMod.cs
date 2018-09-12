@@ -216,7 +216,7 @@ namespace uMod
                 RootLogger.AddLogger(new CallbackLogger(debugCallback));
             }
 
-            LogInfo("Loading uMod v{0}...", Version);
+            LogInfo($"Loading uMod v{Version}...");
 
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
             extensionManager = new ExtensionManager(RootLogger);
