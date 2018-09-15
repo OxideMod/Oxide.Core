@@ -2,6 +2,8 @@
 
 using ObjectStream;
 using ObjectStream.Data;
+using Rebex.Net;
+using Rebex.Security.Cryptography;
 using References::Mono.Unix;
 using References::Mono.Unix.Native;
 using System;
@@ -178,9 +180,30 @@ namespace uMod.Plugins
         {
             try
             {
+                Rebex.Licensing.Key = "==AalPQQNr+9/cVETMK9N0H6ivXNQRw4C/a6E8SXx7Z5Q0=="; // 8-22-18, TODO: Obfuscate production key
+
+                // Override the web request creator
+                HttpRequestCreator creator = new HttpRequestCreator();
+                creator.Register();
+
+                // Import NIST and Brainpool curves crypto
+                AsymmetricKeyAlgorithm.Register(EllipticCurveAlgorithm.Create);
+
+                // Import Curve25519 crypto
+                AsymmetricKeyAlgorithm.Register(Curve25519.Create);
+
+                // Import Ed25519 crypto
+                AsymmetricKeyAlgorithm.Register(Ed25519.Create);
+
+                // Override certificate validation (necessary for Mono)
+                //creator.ValidatingCertificate += ValidatingCertificate; // TODO: Use this when ECDSA issue is resolved in dep update
+                creator.ValidatingCertificate += (sender, args) => args.Accept();
+
+                // Create the web request
+                HttpRequest request = creator.Create($"https://github.com/theumod/compiler/releases/download/latest/{FileName}");
+
                 string filePath = Path.Combine(Interface.uMod.RootDirectory, FileName);
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://umod-01.nyc3.digitaloceanspaces.com/{FileName}");
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                HttpResponse response = (HttpResponse)request.GetResponse();
                 HttpStatusCode statusCode = response.StatusCode;
                 if (statusCode != HttpStatusCode.OK)
                 {
@@ -295,6 +318,7 @@ namespace uMod.Plugins
                 ReferenceFiles = compilation.references.Values.ToArray()
             };
             CompilerMessage message = new CompilerMessage { Id = compilation.id, Data = data, Type = CompilerMessageType.Compile };
+
             if (ready)
             {
                 client.PushMessage(message);
@@ -322,11 +346,13 @@ namespace uMod.Plugins
             {
                 case CompilerMessageType.Assembly:
                     Compilation compilation = compilations[message.Id];
+
                     if (compilation == null)
                     {
                         Interface.uMod.LogWarning("Compiler compiled an unknown assembly"); // TODO: Any way to clarify this?
                         return;
                     }
+
                     compilation.endedAt = Interface.uMod.Now;
                     string stdOutput = (string)message.ExtraData;
                     if (stdOutput != null)
@@ -337,6 +363,7 @@ namespace uMod.Plugins
                             for (int i = 1; i < match.Groups.Count; i++)
                             {
                                 string value = match.Groups[i].Value;
+
                                 if (value.Trim() == string.Empty)
                                 {
                                     continue;
@@ -345,11 +372,13 @@ namespace uMod.Plugins
                                 string fileName = value.Basename();
                                 string scriptName = fileName.Substring(0, fileName.Length - 3);
                                 CompilablePlugin compilablePlugin = compilation.plugins.SingleOrDefault(pl => pl.ScriptName == scriptName);
+
                                 if (compilablePlugin == null)
                                 {
                                     Interface.uMod.LogError($"Unable to resolve script error to plugin: {line}");
                                     continue;
                                 }
+
                                 IEnumerable<string> missingRequirements = compilablePlugin.Requires.Where(name => !compilation.IncludesRequiredPlugin(name));
                                 if (missingRequirements.Any())
                                 {
@@ -428,7 +457,7 @@ namespace uMod.Plugins
             PurgeOldLogs();
             Shutdown();
 
-            string[] args = new[] { "/service", "/logPath:" + EscapePath(Interface.uMod.LogDirectory) };
+            string[] args = { "/service", "/logPath:" + EscapePath(Interface.uMod.LogDirectory) }; // TODO: Handle exception if log path isn't accessible?
             try
             {
                 process = new Process
