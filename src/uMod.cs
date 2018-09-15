@@ -79,7 +79,7 @@ namespace uMod
         // The extension manager
         private ExtensionManager extensionManager;
 
-        // The core .cs plugin loader
+        // The .cs plugin loader
         private CSharpPluginLoader coreLoader;
 
         // Various libraries
@@ -116,76 +116,90 @@ namespace uMod
         /// </summary>
         public void Load()
         {
+            // Set the root directory, where the server is installed
             RootDirectory = Environment.CurrentDirectory;
             if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
             {
                 RootDirectory = AppDomain.CurrentDomain.BaseDirectory;
             }
-
             if (RootDirectory == null)
             {
                 throw new Exception("RootDirectory is null");
             }
 
-            // TODO: Move files from old "oxide" directory to "umod"
+            // Set the instance directory, where uMod content will be
             InstanceDirectory = Path.Combine(RootDirectory, "umod");
+
+            // Move files from "oxide" directory to "umod" directory
+            string oxideDirectory = Path.Combine(RootDirectory, "oxide");
+            if (Directory.Exists(oxideDirectory))
+            {
+                Directory.Move(oxideDirectory, InstanceDirectory); // TODO: Rename instead of moving?
+            }
+
+            // Set culture settings for thread and JSON handling
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
-            CommandLine = new CommandLine(Environment.GetCommandLineArgs());
 
+            // Parse command-line to set instance directory
+            CommandLine = new CommandLine(Environment.GetCommandLineArgs());
             if (CommandLine.HasVariable("umod.directory") || CommandLine.HasVariable("oxide.directory"))
             {
-                string var, format;
-                CommandLine.GetArgument("umod.directory", out var, out format); // TODO: Handle oxide.directory too
-                if (string.IsNullOrEmpty(var) || CommandLine.HasVariable(var))
+                string instanceDirectory, format;
+                CommandLine.GetArgument("umod.directory", out instanceDirectory, out format);
+
+                if (string.IsNullOrEmpty(instanceDirectory) && CommandLine.HasVariable("oxide.directory"))
                 {
-                    InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(var))));
+                    CommandLine.GetArgument("oxide.directory", out instanceDirectory, out format);
+                    LogWarning("oxide.directory in command-line is deprecated, please use umod.directory instead");
+                }
+
+                if (string.IsNullOrEmpty(instanceDirectory) || CommandLine.HasVariable(instanceDirectory))
+                {
+                    InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(instanceDirectory))));
                 }
             }
 
+            // Set and create core directories, if needed
             ExtensionDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (ExtensionDirectory == null || !Directory.Exists(ExtensionDirectory))
             {
                 throw new Exception("Could not identify extension directory");
             }
-
             if (!Directory.Exists(InstanceDirectory))
             {
                 Directory.CreateDirectory(InstanceDirectory);
             }
-
             ConfigDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("config"));
             if (!Directory.Exists(ConfigDirectory))
             {
                 Directory.CreateDirectory(ConfigDirectory);
             }
-
             DataDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("data"));
             if (!Directory.Exists(DataDirectory))
             {
                 Directory.CreateDirectory(DataDirectory);
             }
-
             LangDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("lang"));
             if (!Directory.Exists(LangDirectory))
             {
                 Directory.CreateDirectory(LangDirectory);
             }
-
             LogDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("logs"));
             if (!Directory.Exists(LogDirectory))
             {
                 Directory.CreateDirectory(LogDirectory);
             }
-
             PluginDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("plugins"));
             if (!Directory.Exists(PluginDirectory))
             {
                 Directory.CreateDirectory(PluginDirectory);
             }
 
+            // Register the library search path for dependencies
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
+            // Load core configuration file
             string config = Path.Combine(InstanceDirectory, "umod.config.json"); // TODO: Rename existing oxide.config.json if exists
             if (File.Exists(config))
             {
@@ -197,21 +211,21 @@ namespace uMod
                 Config.Save();
             }
 
+            // Check for and set configuration options from command-line
             if (CommandLine.HasVariable("nolog"))
             {
                 LogWarning("Usage of the 'nolog' variable will prevent logging");
             }
-
             if (CommandLine.HasVariable("rcon.port"))
             {
                 Config.Rcon.Port = Utility.GetNumbers(CommandLine.GetVariable("rcon.port"));
             }
-
             if (CommandLine.HasVariable("rcon.password"))
             {
                 Config.Rcon.Password = CommandLine.GetVariable("rcon.password");
             }
 
+            // Add core logger
             RootLogger = new CompoundLogger();
             RootLogger.AddLogger(new RotatingFileLogger { Directory = LogDirectory });
             if (debugCallback != null)
@@ -219,12 +233,25 @@ namespace uMod
                 RootLogger.AddLogger(new CallbackLogger(debugCallback));
             }
 
+            // Setup core managers and data file system
             LogInfo($"Loading uMod v{Version}...");
-
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
             extensionManager = new ExtensionManager(RootLogger);
             DataFileSystem = new DataFileSystem(DataDirectory);
 
+            // Setup configuration and DLL mapping for references
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                string configPath = Path.Combine(ExtensionDirectory, "Oxide.References.dll.config");
+                if (!File.Exists(configPath))
+                {
+                    File.WriteAllText(configPath,
+                        $"<configuration>\n<dllmap dll=\"MonoPosixHelper\" target=\"{ExtensionDirectory}/x86/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"32\" />\n" +
+                        $"<dllmap dll=\"MonoPosixHelper\" target=\"{ExtensionDirectory}/x64/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"64\" />\n</configuration>");
+                }
+            }
+
+            // Register libraries (these are going to get replaced soon�)
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
             extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
@@ -234,14 +261,19 @@ namespace uMod
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
             extensionManager.RegisterLibrary("WebRequests", new WebRequests());
 
+            // Load all extensions
             LogInfo("Loading extensions...");
             extensionManager.LoadAllExtensions(ExtensionDirectory);
 
+            // Run cleanup of old files and initialize universal API
             Cleanup.Run();
             covalence.Initialize();
+
+            // Initialize custom console
             RemoteConsole = new RemoteConsole.RemoteConsole();
             RemoteConsole?.Initalize();
 
+            // Check for a reliable clock, else set primitive timer
             if (getTimeSinceStartup == null)
             {
                 timer = new Stopwatch();
@@ -250,36 +282,26 @@ namespace uMod
                 LogWarning("A reliable clock is not available, falling back to a clock which may be unreliable on certain hardware");
             }
 
-            if (Environment.OSVersion.Platform == PlatformID.Unix)
-            {
-                string extDir = Interface.uMod.ExtensionDirectory;
-                string configPath = Path.Combine(extDir, "Oxide.References.dll.config");
-                if (File.Exists(configPath) && !new[] { "target=\"x64", "target=\"./x64" }.Any(File.ReadAllText(configPath).Contains))
-                {
-                    return;
-                }
-
-                File.WriteAllText(configPath, $"<configuration>\n<dllmap dll=\"MonoPosixHelper\" target=\"{extDir}/x86/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"32\" />\n" +
-                                              $"<dllmap dll=\"MonoPosixHelper\" target=\"{extDir}/x64/libMonoPosixHelper.so\" os=\"!windows,osx\" wordsize=\"64\" />\n</configuration>");
-            }
-
-            // Register core plugin watcher
+            // Register .cs plugin watcher
             FSWatcher coreWatcher = new FSWatcher(PluginDirectory, "*.cs");
             extensionManager.RegisterPluginChangeWatcher(coreWatcher);
 
-            // Register core plugin loader
+            // Register .cs plugin loader
             coreLoader = new CSharpPluginLoader(coreWatcher);
             extensionManager.RegisterPluginLoader(coreLoader);
             coreLoader.AddReferences();
 
+            // Load all plugin watchers for extensions
             foreach (Extension ext in extensionManager.GetAllExtensions())
             {
                 ext.LoadPluginWatchers(PluginDirectory);
             }
 
+            // Load all plugins
             LogInfo("Loading plugins...");
             LoadAllPlugins(true);
 
+            // Setup events for all plugin changes watchers
             foreach (PluginChangeWatcher watcher in extensionManager.GetPluginChangeWatchers())
             {
                 watcher.OnPluginSourceChanged += watcher_OnPluginSourceChanged;
@@ -497,7 +519,10 @@ namespace uMod
                 }
 
                 plugin.IsLoaded = true;
+
+                // Let plugins know
                 CallHook("OnPluginLoaded", plugin);
+
                 LogInfo("Loaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
                 return true;
             }
@@ -526,17 +551,16 @@ namespace uMod
                 PluginLoader loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
                 loader?.Unloading(plugin);
 
-                // Unload it
+                // Unload the plugin
                 RootPluginManager.RemovePlugin(plugin);
 
-                // Let other plugins know that this plugin has been unloaded
+                // Let plugins know
                 if (plugin.IsLoaded)
                 {
                     CallHook("OnPluginUnloaded", plugin);
                 }
 
                 plugin.IsLoaded = false;
-
                 LogInfo("Unloaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
                 return true;
             }
@@ -639,6 +663,8 @@ namespace uMod
 
         #endregion Extension Management
 
+        #region Hook Calling
+
         /// <summary>
         /// Calls a hook
         /// </summary>
@@ -659,6 +685,8 @@ namespace uMod
         {
             return RootPluginManager?.CallDeprecatedHook(oldHook, newHook, expireDate, args);
         }
+
+        #endregion Hook Calling
 
         /// <summary>
         /// Queues a callback to be called in the next server frame
