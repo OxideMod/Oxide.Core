@@ -23,7 +23,7 @@ namespace uMod.Plugins
     {
         public static bool AutoShutdown = true;
         public static bool TraceRan;
-        public static string FileName = "msc.exe";
+        public static string FileName = "mcs.exe";
         public static string BinaryPath;
         public static string CompilerVersion;
 
