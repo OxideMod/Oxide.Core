@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using uMod.Plugins;
 
@@ -9,13 +9,10 @@ namespace uMod.Libraries
     /// </summary>
     public class Timer : Library
     {
-        public override bool IsGlobal => false;
-
         public static int Count { get; private set; }
 
-        internal static readonly object Lock = new object();
-
         internal static readonly uMod uMod = Interface.uMod;
+        internal static readonly object Lock = new object();
 
         public class TimeSlot
         {

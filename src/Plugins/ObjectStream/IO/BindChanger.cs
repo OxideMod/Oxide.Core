@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace ObjectStream.IO
+namespace uMod.Plugins.ObjectStream.IO
 {
     public class BindChanger : SerializationBinder
     {

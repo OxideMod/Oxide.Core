@@ -11,7 +11,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-
 #if DEBUG
 using System.Text;
 #endif
@@ -174,6 +173,16 @@ namespace uMod
 
     public class Utility
     {
+        public static Utilities.Plugins Plugins = new Utilities.Plugins(Interface.uMod.RootPluginManager);
+        public static Utilities.Random Random = new Utilities.Random();
+        public static Utilities.Time Time = new Utilities.Time();
+
+        /// <summary>
+        /// Converts a data file to Protobuf format
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <param name="deleteAfter"></param>
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
             DataFileSystem dfs = Interface.uMod.DataFileSystem;
@@ -181,7 +190,7 @@ namespace uMod
             {
                 if (ProtoStorage.Exists(name))
                 {
-                    Interface.uMod.LogWarning("Failed to import JSON file: {0} already exists.", name);
+                    Interface.uMod.LogWarning($"Failed to import JSON file: {name} already exists");
                     return;
                 }
 
@@ -196,13 +205,21 @@ namespace uMod
                 }
                 catch (Exception ex)
                 {
-                    Interface.uMod.LogException("Failed to convert datafile to proto storage: " + name, ex);
+                    Interface.uMod.LogException($"Failed to convert datafile to proto storage: {name}", ex);
                 }
             }
         }
 
-        public static void PrintCallStack() => Interface.uMod.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
+        /// <summary>
+        /// Print the call stack to the log file
+        /// </summary>
+        public static void PrintCallStack() => Interface.uMod.LogDebug("CallStack: {0}{1}", Environment.NewLine, new StackTrace(1, true));
 
+        /// <summary>
+        /// Returns the formatted bytes from a double
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public static string FormatBytes(double bytes)
         {
             string type;
@@ -225,7 +242,7 @@ namespace uMod
         }
 
         /// <summary>
-        /// Gets the path only
+        /// Gets the path only for a directory
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
@@ -242,6 +259,11 @@ namespace uMod
             }
         }
 
+        /// <summary>
+        /// Gets the filename of a file without the extension
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string GetFileNameWithoutExtension(string value)
         {
             int lastIndex = value.Length - 1;
@@ -267,21 +289,42 @@ namespace uMod
                 }
             }
             End:
-            return value.Substring(firstIndex, (lastIndex - firstIndex + 1));
+            return value.Substring(firstIndex, lastIndex - firstIndex + 1);
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string CleanPath(string path)
         {
             return path?.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         }
 
+        /// <summary>
+        /// Converts a string of JSON to a JSON object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="jsonstr"></param>
+        /// <returns></returns>
         public static T ConvertFromJson<T>(string jsonstr) => JsonConvert.DeserializeObject<T>(jsonstr);
 
+        /// <summary>
+        /// Converts a JSON object to a string of JSON
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="indented"></param>
+        /// <returns></returns>
         public static string ConvertToJson(object obj, bool indented = false)
         {
             return JsonConvert.SerializeObject(obj, indented ? Formatting.Indented : Formatting.None);
         }
 
+        /// <summary>
+        /// Gets the local network IP of the machine
+        /// </summary>
+        /// <returns></returns>
         public static IPAddress GetLocalIP()
         {
             UnicastIPAddressInformation mostSuitableIp = null;
@@ -356,6 +399,11 @@ namespace uMod
             return mostSuitableIp?.Address;
         }
 
+        /// <summary>
+        /// Returns if the provided IP address is a local network IP
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
         public static bool IsLocalIP(string ipAddress)
         {
             string[] split = ipAddress.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
@@ -363,6 +411,11 @@ namespace uMod
             return ip[0] == 0 || ip[0] == 10 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
         }
 
+        /// <summary>
+        /// Returns if the provided IP address is a valid IPv4 address
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
         public static bool ValidateIPv4(string ipAddress)
         {
             if (!string.IsNullOrEmpty(ipAddress.Trim()))
@@ -374,6 +427,11 @@ namespace uMod
             return false;
         }
 
+        /// <summary>
+        /// Gets only the numbers from a string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public static int GetNumbers(string input)
         {
             int numbers;

@@ -63,11 +63,6 @@ namespace uMod.Libraries
     /// </summary>
     public class Permission : Library
     {
-        /// <summary>
-        /// Returns if this library should be loaded into the global namespace
-        /// </summary>
-        public override bool IsGlobal => false;
-
         // All registered permissions
         private readonly Dictionary<Plugin, HashSet<string>> permset;
 

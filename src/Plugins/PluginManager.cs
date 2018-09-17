@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using uMod.Logging;
+using uMod.Utilities;
 
 namespace uMod.Plugins
 {
@@ -60,15 +61,15 @@ namespace uMod.Plugins
         /// <param name="plugin"></param>
         public bool AddPlugin(Plugin plugin)
         {
-            if (loadedPlugins.ContainsKey(plugin.Name))
+            if (!loadedPlugins.ContainsKey(plugin.Name))
             {
-                return false;
+                loadedPlugins.Add(plugin.Name, plugin);
+                plugin.HandleAddedToManager(this);
+                OnPluginAdded?.Invoke(plugin);
+                return true;
             }
 
-            loadedPlugins.Add(plugin.Name, plugin);
-            plugin.HandleAddedToManager(this);
-            OnPluginAdded?.Invoke(plugin);
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -78,23 +79,23 @@ namespace uMod.Plugins
         /// <returns></returns>
         public bool RemovePlugin(Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name))
+            if (loadedPlugins.ContainsKey(plugin.Name))
             {
-                return false;
-            }
-
-            loadedPlugins.Remove(plugin.Name);
-            foreach (IList<Plugin> list in hookSubscriptions.Values)
-            {
-                if (list.Contains(plugin))
+                loadedPlugins.Remove(plugin.Name);
+                foreach (IList<Plugin> list in hookSubscriptions.Values)
                 {
-                    list.Remove(plugin);
+                    if (list.Contains(plugin))
+                    {
+                        list.Remove(plugin);
+                    }
                 }
+
+                plugin.HandleRemovedFromManager(this);
+                OnPluginRemoved?.Invoke(plugin);
+                return true;
             }
 
-            plugin.HandleRemovedFromManager(this);
-            OnPluginRemoved?.Invoke(plugin);
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -121,22 +122,21 @@ namespace uMod.Plugins
         /// <param name="plugin"></param>
         internal void SubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I"))
+            if (loadedPlugins.ContainsKey(plugin.Name) && (plugin.IsCorePlugin || !hook.StartsWith("I")))
             {
-                return;
-            }
+                IList<Plugin> sublist;
+                if (!hookSubscriptions.TryGetValue(hook, out sublist))
+                {
+                    sublist = new List<Plugin>();
+                    hookSubscriptions.Add(hook, sublist);
+                }
 
-            IList<Plugin> sublist;
-            if (!hookSubscriptions.TryGetValue(hook, out sublist))
-            {
-                sublist = new List<Plugin>();
-                hookSubscriptions.Add(hook, sublist);
+                if (!sublist.Contains(plugin))
+                {
+                    sublist.Add(plugin);
+                }
+                //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is subscribing to hook '{hook}'!");
             }
-            if (!sublist.Contains(plugin))
-            {
-                sublist.Add(plugin);
-            }
-            //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is subscribing to hook '{hook}'!");
         }
 
         /// <summary>
@@ -146,17 +146,15 @@ namespace uMod.Plugins
         /// <param name="plugin"></param>
         internal void UnsubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I"))
+            if (loadedPlugins.ContainsKey(plugin.Name) && (plugin.IsCorePlugin || !hook.StartsWith("I")))
             {
-                return;
+                IList<Plugin> sublist;
+                if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
+                {
+                    sublist.Remove(plugin);
+                }
+                //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is unsubscribing to hook '{hook}'!");
             }
-
-            IList<Plugin> sublist;
-            if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
-            {
-                sublist.Remove(plugin);
-            }
-            //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is unsubscribing to hook '{hook}'!");
         }
 
         /// <summary>
@@ -169,12 +167,7 @@ namespace uMod.Plugins
         {
             // Locate the sublist
             IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(hook, out plugins))
-            {
-                return null;
-            }
-
-            if (plugins.Count == 0)
+            if (!hookSubscriptions.TryGetValue(hook, out plugins) || plugins.Count == 0)
             {
                 return null;
             }
@@ -253,27 +246,19 @@ namespace uMod.Plugins
         public object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
             IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(oldHook, out plugins))
+            if (!hookSubscriptions.TryGetValue(oldHook, out plugins) || plugins.Count == 0 || expireDate < DateTime.Now)
             {
                 return null;
             }
 
-            if (plugins.Count == 0)
-            {
-                return null;
-            }
-
-            if (expireDate < DateTime.Now)
-            {
-                return null;
-            }
-
-            float now = Interface.uMod.Now;
             float lastWarningAt;
+            float now = Interface.uMod.Now;
+
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
             {
+                Plugin plugin = plugins[0];
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.uMod.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                Interface.uMod.LogWarning($"'{plugin.Name} v{plugin.Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate:D}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);

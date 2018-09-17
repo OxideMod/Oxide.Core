@@ -4,7 +4,7 @@ namespace uMod.Plugins
 {
     public class Timer
     {
-        private Libraries.Timer.TimerInstance instance;
+        private readonly Libraries.Timer.TimerInstance instance;
 
         public Timer(Libraries.Timer.TimerInstance instance)
         {
@@ -56,8 +56,8 @@ namespace uMod.Plugins
 
     public class PluginTimers
     {
-        private Libraries.Timer timer = Interface.uMod.GetLibrary<Libraries.Timer>("Timer");
-        private Plugin plugin;
+        private readonly Libraries.Timer timerLib = Interface.uMod.GetLibrary<Libraries.Timer>("Timer");
+        private readonly Plugin plugin;
 
         public PluginTimers(Plugin plugin)
         {
@@ -71,7 +71,7 @@ namespace uMod.Plugins
         /// <param name="callback"></param>
         public Timer Once(float seconds, Action callback)
         {
-            return new Timer(timer.Once(seconds, callback, plugin));
+            return new Timer(timerLib.Once(seconds, callback, plugin));
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace uMod.Plugins
         /// <param name="callback"></param>
         public Timer In(float seconds, Action callback)
         {
-            return new Timer(timer.Once(seconds, callback, plugin));
+            return new Timer(timerLib.Once(seconds, callback, plugin));
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace uMod.Plugins
         /// <param name="callback"></param>
         public Timer Every(float interval, Action callback)
         {
-            return new Timer(timer.Repeat(interval, -1, callback, plugin));
+            return new Timer(timerLib.Repeat(interval, -1, callback, plugin));
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace uMod.Plugins
         /// <param name="callback"></param>
         public Timer Repeat(float interval, int repeats, Action callback)
         {
-            return new Timer(timer.Repeat(interval, repeats, callback, plugin));
+            return new Timer(timerLib.Repeat(interval, repeats, callback, plugin));
         }
 
         /// <summary>

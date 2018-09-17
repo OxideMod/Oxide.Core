@@ -1,4 +1,3 @@
-using ObjectStream.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Extensions;
+using uMod.Plugins.ObjectStream.Data;
 
 namespace uMod.Plugins
 {
@@ -184,6 +184,7 @@ namespace uMod.Plugins
             plugin.Requires.Clear();
             plugin.IncludePaths.Clear();
 
+            // Try to provide at least some deprecation for the rename
             if (plugin.ScriptLines.Any(line => line.Contains("Oxide")))
             {
                 plugin.ScriptLines = plugin.ScriptLines.Select(s => s.Replace("Oxide.Core", "uMod").Replace("Oxide", "uMod")).ToArray();

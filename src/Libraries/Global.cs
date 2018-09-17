@@ -8,11 +8,6 @@ namespace uMod.Libraries
     public class Global : Library
     {
         /// <summary>
-        /// Returns if this library should be loaded into the global namespace
-        /// </summary>
-        public override bool IsGlobal => true;
-
-        /// <summary>
         /// Returns a version structure
         /// </summary>
         /// <param name="major"></param>

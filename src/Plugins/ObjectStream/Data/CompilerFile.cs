@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace ObjectStream.Data
+namespace uMod.Plugins.ObjectStream.Data
 {
     [Serializable]
     class CompilerFile

@@ -1,4 +1,5 @@
 ﻿using System;
+using uMod.Utilities;
 
 namespace uMod
 {
@@ -41,19 +42,6 @@ namespace uMod
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
             return uMod.CallDeprecatedHook(oldHook, newHook, expireDate, args);
-        }
-
-        /// <summary>
-        /// Calls the specified deprecated hook
-        /// </summary>
-        /// <param name="oldHook"></param>
-        /// <param name="newHook"></param>
-        /// <param name="expireDate"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object CallDeprecated(string oldHook, string newHook, DateTime expireDate, params object[] args)
-        {
-            return CallDeprecatedHook(oldHook, newHook, expireDate, args);
         }
 
         /// <summary>
@@ -339,6 +327,6 @@ namespace uMod
         /// Gets the mod by the previous name, "Oxide"
         /// </summary>
         /// <returns></returns>
-        public static uMod Oxide => uMod; // TODO: This needs to be removed
+        public static uMod Oxide => uMod; // TODO: This needs to be removed eventually
     }
 }

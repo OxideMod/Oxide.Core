@@ -13,8 +13,6 @@ namespace uMod.Libraries
     {
         #region Initialization
 
-        public override bool IsGlobal => false;
-
         private const string defaultLang = "en";
         private readonly LangData langData;
         private readonly Dictionary<string, Dictionary<string, string>> langFiles;
@@ -276,7 +274,7 @@ namespace uMod.Libraries
             if (!langFiles.TryGetValue(file, out langFile))
             {
                 langFile = GetMessageFile(plugin.Name, lang) ?? GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name);
-                if (langFile == null)
+                if (langFile == null || langFile.Count == 0)
                 {
                     Interface.uMod.LogWarning($"Plugin '{plugin.Name}' is using the Lang API but has no messages registered");
                     return key;

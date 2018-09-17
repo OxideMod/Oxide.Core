@@ -1,9 +1,9 @@
-﻿using ObjectStream.IO;
-using ObjectStream.Threading;
-using System;
+﻿using System;
 using System.IO;
+using uMod.Plugins.ObjectStream.IO;
+using uMod.Plugins.ObjectStream.Threading;
 
-namespace ObjectStream
+namespace uMod.Plugins.ObjectStream
 {
     public class ObjectStreamClient<TReadWrite> : ObjectStreamClient<TReadWrite, TReadWrite> where TReadWrite : class
     {

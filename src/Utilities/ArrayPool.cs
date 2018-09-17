@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace uMod
+namespace uMod.Utilities
 {
     public static class ArrayPool
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ObjectStream.Data
+namespace uMod.Plugins.ObjectStream.Data
 {
     [Serializable]
     internal enum CompilerMessageType
