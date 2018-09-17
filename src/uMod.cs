@@ -51,9 +51,7 @@ namespace uMod
         /// </summary>
         public DataFileSystem DataFileSystem { get; private set; }
 
-        // Various directories
         public string RootDirectory { get; private set; }
-
         public string ExtensionDirectory { get; private set; }
         public string InstanceDirectory { get; private set; }
         public string PluginDirectory { get; private set; }
@@ -62,7 +60,9 @@ namespace uMod
         public string LangDirectory { get; private set; }
         public string LogDirectory { get; private set; }
 
-        // Gets the number of seconds since the server started
+        /// <summary>
+        /// Gets the number of seconds since the server started
+        /// </summary>
         public float Now => getTimeSinceStartup();
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace uMod
         // Allow extensions to register a method to be called every frame
         private Action<float> onFrame;
 
-        private NativeDebugCallback debugCallback;
+        private readonly NativeDebugCallback debugCallback;
         private Stopwatch timer;
         private bool isInitialized;
 
@@ -124,7 +124,7 @@ namespace uMod
             }
             if (RootDirectory == null)
             {
-                throw new Exception("RootDirectory is null");
+                throw new Exception("Could not identify root directory");
             }
 
             // Set the instance directory, where uMod content will be
@@ -134,7 +134,7 @@ namespace uMod
             string oxideDirectory = Path.Combine(RootDirectory, "oxide");
             if (Directory.Exists(oxideDirectory))
             {
-                Directory.Move(oxideDirectory, InstanceDirectory); // TODO: Rename instead of moving?
+                Directory.Move(oxideDirectory, InstanceDirectory);
             }
 
             // Set culture settings for thread and JSON handling
@@ -251,13 +251,11 @@ namespace uMod
                 }
             }
 
-            // Register libraries (these are going to get replaced soon�)
+            // Register libraries (these are going to get replaced soon)
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
             extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
             extensionManager.RegisterLibrary("Permission", libperm = new Permission());
-            extensionManager.RegisterLibrary("Plugins", new Libraries.Plugins(RootPluginManager));
-            extensionManager.RegisterLibrary("Time", new Time());
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
             extensionManager.RegisterLibrary("WebRequests", new WebRequests());
 
@@ -519,11 +517,10 @@ namespace uMod
                 }
 
                 plugin.IsLoaded = true;
+                LogInfo("Loaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
 
                 // Let plugins know
                 CallHook("OnPluginLoaded", plugin);
-
-                LogInfo("Loaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
                 return true;
             }
             catch (Exception ex)
