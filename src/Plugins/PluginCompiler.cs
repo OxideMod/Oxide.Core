@@ -1,7 +1,5 @@
 ﻿extern alias References;
 
-using ObjectStream;
-using ObjectStream.Data;
 using Rebex.Net;
 using Rebex.Security.Cryptography;
 using References::Mono.Unix;
@@ -16,6 +14,9 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
+using uMod.Logging;
+using uMod.Plugins.ObjectStream;
+using uMod.Plugins.ObjectStream.Data;
 
 namespace uMod.Plugins
 {

@@ -42,7 +42,7 @@ namespace uMod
         public CompoundLogger RootLogger { get; private set; }
 
         /// <summary>
-        /// Gets the main pluginmanager
+        /// Gets the main plugin manager
         /// </summary>
         public PluginManager RootPluginManager { get; private set; }
 

@@ -77,11 +77,6 @@ namespace uMod.Libraries
         private IDictionary<string, PropertyInfo> properties;
 
         /// <summary>
-        /// Returns if this library should be loaded into the global namespace
-        /// </summary>
-        public virtual bool IsGlobal { get; }
-
-        /// <summary>
         /// Stores the last exception
         /// </summary>
         public Exception LastException { get; protected set; }
@@ -114,7 +109,7 @@ namespace uMod.Libraries
                 string name = attribute.Name ?? method.Name;
                 if (functions.ContainsKey(name))
                 {
-                    Interface.uMod.LogError(type.FullName + " library tried to register an already registered function: " + name);
+                    Interface.uMod.LogError($"{type.FullName} library tried to register an already registered function: {name}");
                 }
                 else
                 {
@@ -140,7 +135,7 @@ namespace uMod.Libraries
                 string name = attribute.Name ?? property.Name;
                 if (properties.ContainsKey(name))
                 {
-                    Interface.uMod.LogError("{0} library tried to register an already registered property: {1}", type.FullName, name);
+                    Interface.uMod.LogError($"{type.FullName} library tried to register an already registered property: {name}");
                 }
                 else
                 {

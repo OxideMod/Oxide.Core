@@ -1,11 +1,11 @@
-﻿using ObjectStream.IO;
-using ObjectStream.Threading;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using uMod.Plugins.ObjectStream.IO;
+using uMod.Plugins.ObjectStream.Threading;
 
-namespace ObjectStream
+namespace uMod.Plugins.ObjectStream
 {
     public class ObjectStreamConnection<TRead, TWrite>
         where TRead : class

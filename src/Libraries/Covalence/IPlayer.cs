@@ -265,13 +265,13 @@ namespace uMod.Libraries.Covalence
 
         public override bool Equals(object obj)
         {
-            if (!(obj is GenericPosition))
+            if (obj is GenericPosition)
             {
-                return false;
+                GenericPosition pos = (GenericPosition)obj;
+                return X.Equals(pos.X) && Y.Equals(pos.Y) && Z.Equals(pos.Z);
             }
 
-            GenericPosition pos = (GenericPosition)obj;
-            return X.Equals(pos.X) && Y.Equals(pos.Y) && Z.Equals(pos.Z);
+            return false;
         }
 
         public static bool operator ==(GenericPosition a, GenericPosition b)

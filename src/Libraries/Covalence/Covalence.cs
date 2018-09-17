@@ -18,11 +18,6 @@ namespace uMod.Libraries.Covalence
         private readonly Logger logger;
 
         /// <summary>
-        /// Returns if this library should be loaded into the global namespace
-        /// </summary>
-        public override bool IsGlobal => false;
-
-        /// <summary>
         /// Gets the server mediator
         /// </summary>
         [LibraryProperty("Server")]

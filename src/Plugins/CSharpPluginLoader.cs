@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,17 +15,17 @@ namespace uMod.Plugins
         public static string[] DefaultReferences = { "mscorlib", "System", "System.Core", "System.Data", "uMod" };
         public static HashSet<string> PluginReferences = new HashSet<string>(DefaultReferences);
 
-        private static Dictionary<string, CompilablePlugin> plugins = new Dictionary<string, CompilablePlugin>();
+        private static Dictionary<string, CompilablePlugin> compatiblePlugins = new Dictionary<string, CompilablePlugin>();
         private static readonly string[] AssemblyBlacklist = { "Newtonsoft.Json", "protobuf-net", "websocket-sharp" };
 
         public static CompilablePlugin GetCompilablePlugin(string directory, string name)
         {
             string className = Regex.Replace(name, "_", "");
             CompilablePlugin plugin;
-            if (!plugins.TryGetValue(className, out plugin))
+            if (!compatiblePlugins.TryGetValue(className, out plugin))
             {
                 plugin = new CompilablePlugin(Instance, Watcher, directory, name);
-                plugins[className] = plugin;
+                compatiblePlugins[className] = plugin;
             }
             return plugin;
         }
@@ -113,7 +113,7 @@ namespace uMod.Plugins
             if (Regex.Match(directory, @"\\include\b", RegexOptions.IgnoreCase).Success)
             {
                 name = $"uMod.{name}";
-                foreach (CompilablePlugin plugin in plugins.Values)
+                foreach (CompilablePlugin plugin in compatiblePlugins.Values)
                 {
                     if (plugin.References.Contains(name))
                     {
@@ -148,7 +148,7 @@ namespace uMod.Plugins
                 LoadedPlugins.Remove(plugin.Name);
 
                 // Unload plugins which require this plugin first
-                foreach (CompilablePlugin compilablePlugin in plugins.Values)
+                foreach (CompilablePlugin compilablePlugin in compatiblePlugins.Values)
                 {
                     if (compilablePlugin.Requires.Contains(plugin.Name))
                     {
@@ -174,10 +174,10 @@ namespace uMod.Plugins
                     Interface.uMod.UnloadPlugin(loadedPlugin);
                 }
 
-                IEnumerable<string> missingRequirements = plugin.Requires.Where(r => !LoadedPlugins.ContainsKey(r));
+                string[] missingRequirements = plugin.Requires.Where(r => !LoadedPlugins.ContainsKey(r)).ToArray();
                 if (missingRequirements.Any())
                 {
-                    IEnumerable<string> loadingRequirements = plugin.Requires.Where(r => LoadingPlugins.Contains(r));
+                    string[] loadingRequirements = plugin.Requires.Where(r => LoadingPlugins.Contains(r)).ToArray();
                     if (loadingRequirements.Any())
                     {
                         Interface.uMod.LogDebug($"{plugin.Name} plugin is waiting for requirements to be loaded: {loadingRequirements.ToSentence()}");

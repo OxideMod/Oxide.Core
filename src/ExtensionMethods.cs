@@ -35,7 +35,6 @@ namespace uMod
                     {
                         extension = extension.Substring(1);
                     }
-
                     return Regex.Match(text, @"([^\\/]+)\" + extension + "+$").Groups[1].Value;
                 }
             }
@@ -107,7 +106,7 @@ namespace uMod
         /// <summary>
         /// Returns a random value from an array
         /// </summary>
-        public static T Sample<T>(this T[] array) => array[Random.Range(0, array.Length)];
+        public static T Sample<T>(this T[] array) => array[Utility.Random.Range(0, array.Length)];
 
         /// <summary>
         /// Converts a string into a sanitized string for string.Format
@@ -148,12 +147,14 @@ namespace uMod
             IEnumerator<T> enumerator = items.GetEnumerator();
             if (!enumerator.MoveNext())
             {
+                enumerator.Dispose();
                 return string.Empty;
             }
 
             T firstItem = enumerator.Current;
             if (!enumerator.MoveNext())
             {
+                enumerator.Dispose();
                 return firstItem?.ToString();
             }
 
@@ -166,6 +167,8 @@ namespace uMod
                 builder.Append(moreItems ? ", " : " and ");
                 builder.Append(item);
             }
+
+            enumerator.Dispose();
             return builder.ToString();
         }
 

@@ -5,7 +5,6 @@ namespace uMod.Libraries.Covalence
 {
     public class SaveInfo
     {
-        private readonly Time time = Interface.uMod.GetLibrary<Time>();
         private readonly string FullPath;
 
         /// <summary>
@@ -14,46 +13,42 @@ namespace uMod.Libraries.Covalence
         public string SaveName { get; private set; }
 
         /// <summary>
-        /// Get the save creation time in server local time
+        /// Get the save creation time local to the server
         /// </summary>
         public DateTime CreationTime { get; private set; }
 
         /// <summary>
-        /// Get the save creation time in unix format
+        /// Get the save creation time in Unix format
         /// </summary>
         public uint CreationTimeUnix { get; private set; }
 
+        /// <summary>
+        /// Refresh the save creation time
+        /// </summary>
         public void Refresh()
         {
-            if (!File.Exists(FullPath))
+            if (File.Exists(FullPath))
             {
-                return;
+                CreationTime = File.GetCreationTime(FullPath);
+                CreationTimeUnix = Utility.Time.ToTimestamp(CreationTime);
             }
-
-            CreationTime = File.GetCreationTime(FullPath);
-            CreationTimeUnix = time.GetUnixFromDateTime(CreationTime);
         }
 
-        private SaveInfo(string filepath)
+        private SaveInfo(string filePath)
         {
-            FullPath = filepath;
-            SaveName = Utility.GetFileNameWithoutExtension(filepath);
+            FullPath = filePath;
+            SaveName = Utility.GetFileNameWithoutExtension(filePath);
             Refresh();
         }
 
         /// <summary>
         /// Creates a new SaveInfo for a specifed file
         /// </summary>
-        /// <param name="filepath">FullPath to the save file</param>
+        /// <param name="filePath">Full path to the save file</param>
         /// <returns></returns>
-        public static SaveInfo Create(string filepath)
+        public static SaveInfo Create(string filePath)
         {
-            if (!File.Exists(filepath))
-            {
-                return null;
-            }
-
-            return new SaveInfo(filepath);
+            return !File.Exists(filePath) ? null : new SaveInfo(filePath);
         }
     }
 }

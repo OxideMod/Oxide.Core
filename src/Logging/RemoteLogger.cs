@@ -12,7 +12,7 @@ using uMod.Libraries;
 using uMod.Plugins;
 using Timer = uMod.Libraries.Timer;
 
-namespace uMod
+namespace uMod.Logging
 {
     public static class RemoteLogger
     {

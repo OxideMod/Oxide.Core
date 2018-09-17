@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
+using uMod.Logging;
 
 namespace uMod.Plugins.Watchers
 {

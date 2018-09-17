@@ -52,6 +52,7 @@ namespace uMod.Plugins
 
                 return number;
             }).ToList();
+
             while (versionParts.Count < 3)
             {
                 versionParts.Add(0);
@@ -199,7 +200,6 @@ namespace uMod.Plugins
 
         protected Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
         protected Libraries.Lang lang = Interface.uMod.GetLibrary<Libraries.Lang>();
-        protected Libraries.Plugins plugins = Interface.uMod.GetLibrary<Libraries.Plugins>();
         protected Libraries.Permission permission = Interface.uMod.GetLibrary<Libraries.Permission>();
         protected Libraries.WebRequests webrequest = Interface.uMod.GetLibrary<Libraries.WebRequests>();
         protected PluginTimers timer;
@@ -222,6 +222,7 @@ namespace uMod.Plugins
             foreach (FieldInfo field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 object[] referenceAttributes = field.GetCustomAttributes(typeof(PluginReferenceAttribute), true);
+
                 if (referenceAttributes.Length > 0)
                 {
                     PluginReferenceAttribute pluginReference = referenceAttributes[0] as PluginReferenceAttribute;
@@ -231,6 +232,7 @@ namespace uMod.Plugins
             foreach (MethodInfo method in type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 object[] infoAttributes = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
+
                 if (infoAttributes.Length <= 0)
                 {
                     if (method.Name.Equals("OnFrame"))
@@ -251,11 +253,12 @@ namespace uMod.Plugins
         {
             Name = name;
             Filename = path;
-
             object[] infoAttributes = GetType().GetCustomAttributes(typeof(InfoAttribute), true);
+
             if (infoAttributes.Length > 0)
             {
                 InfoAttribute info = infoAttributes[0] as InfoAttribute;
+
                 if (info != null)
                 {
                     Title = info.Title;
@@ -270,10 +273,11 @@ namespace uMod.Plugins
             }
 
             object[] descriptionAttributes = GetType().GetCustomAttributes(typeof(DescriptionAttribute), true);
+
             if (descriptionAttributes.Length > 0)
             {
                 DescriptionAttribute info = descriptionAttributes[0] as DescriptionAttribute;
-                Description = info.Description;
+                Description = info?.Description;
             }
             else
             {
@@ -282,10 +286,10 @@ namespace uMod.Plugins
             }
 
             MethodInfo config = GetType().GetMethod("LoadDefaultConfig", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            HasConfig = config.DeclaringType != typeof(Plugin);
+            HasConfig = config?.DeclaringType != typeof(Plugin);
 
             MethodInfo messages = GetType().GetMethod("LoadDefaultMessages", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            HasMessages = messages.DeclaringType != typeof(Plugin);
+            HasMessages = messages?.DeclaringType != typeof(Plugin);
 
             return true;
         }
@@ -326,7 +330,7 @@ namespace uMod.Plugins
         {
             if (IsLoaded)
             {
-                CallHook("Unload", null);
+                CallHook("Unload");
             }
 
             Watcher.RemoveMapping(Name);
@@ -358,13 +362,13 @@ namespace uMod.Plugins
                         object value = args[i];
                         if (value != null)
                         {
-                            Type parameter_type = parameters[i].ParameterType;
-                            if (parameter_type.IsValueType)
+                            Type parameterType = parameters[i].ParameterType;
+                            if (parameterType.IsValueType)
                             {
                                 Type argument_type = value.GetType();
-                                if (parameter_type != typeof(object) && argument_type != parameter_type)
+                                if (parameterType != typeof(object) && argument_type != parameterType)
                                 {
-                                    args[i] = Convert.ChangeType(value, parameter_type);
+                                    args[i] = Convert.ChangeType(value, parameterType);
                                 }
                             }
                         }
@@ -384,11 +388,13 @@ namespace uMod.Plugins
                 {
                     Interface.uMod.LogError("Hook dispatch failure detected, falling back to reflection based dispatch. " + ex);
                     CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Interface.uMod.PluginDirectory, Name);
+
                     if (compilablePlugin?.CompiledAssembly != null)
                     {
                         File.WriteAllBytes(Interface.uMod.PluginDirectory + "\\" + Name + ".dump", compilablePlugin.CompiledAssembly.PatchedAssembly);
                         Interface.uMod.LogWarning($"The invalid raw assembly has been dumped to Plugins/{Name}.dump");
                     }
+
                     hookDispatchFallback = true;
                 }
             }
@@ -473,7 +479,7 @@ namespace uMod.Plugins
             filename = $"{plugin.Name.ToLower()}_{filename.ToLower()}{(timeStamp ? $"-{DateTime.Now:yyyy-MM-dd}" : "")}.txt";
             using (StreamWriter writer = new StreamWriter(Path.Combine(path, Utility.CleanPath(filename)), true))
             {
-                writer.WriteLine(text);
+                writer.WriteLine(text); // TODO: Cache/queue and write at internals instead of instantly
             }
         }
 
