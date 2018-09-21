@@ -78,6 +78,11 @@ namespace uMod
         }
 
         /// <summary>
+        /// Checks if an object is a valid 64-bit Steam ID
+        /// </summary>
+        public static bool IsSteamId(this object id) => (ulong)id > 76561197960265728ul;
+
+        /// <summary>
         /// Checks if a ulong is a valid 64-bit Steam ID
         /// </summary>
         public static bool IsSteamId(this ulong id) => id > 76561197960265728ul;
