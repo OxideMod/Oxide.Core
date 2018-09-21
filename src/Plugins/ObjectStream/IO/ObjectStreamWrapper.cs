@@ -6,7 +6,7 @@ using System.Runtime.Serialization.Formatters;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
-namespace uMod.Plugins.ObjectStream.IO
+namespace ObjectStream.IO
 {
     public class ObjectStreamWrapper<TReadWrite> : ObjectStreamWrapper<TReadWrite, TReadWrite>
         where TReadWrite : class

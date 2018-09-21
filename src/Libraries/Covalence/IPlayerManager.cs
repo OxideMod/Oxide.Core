@@ -25,7 +25,7 @@ namespace uMod.Libraries.Covalence
         /// Gets all sleeping players
         /// </summary>
         /// <returns></returns>
-        //IEnumerable<IPlayer> Sleeping { get; }
+        IEnumerable<IPlayer> Sleeping { get; }
 
         /// <summary>
         /// Finds a single player given unique ID

@@ -1,3 +1,4 @@
+using ObjectStream.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +7,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Extensions;
-using uMod.Plugins.ObjectStream.Data;
 
 namespace uMod.Plugins
 {
@@ -187,7 +187,7 @@ namespace uMod.Plugins
             // Try to provide at least some deprecation for the rename
             if (plugin.ScriptLines.Any(line => line.Contains("Oxide")))
             {
-                plugin.ScriptLines = plugin.ScriptLines.Select(s => s.Replace("Oxide.Core", "uMod").Replace("Oxide", "uMod")).ToArray();
+                plugin.ScriptLines = plugin.ScriptLines.Select(s => s.Replace("Oxide.Core", "uMod").Replace("OxideMod", "uMod").Replace("Oxide", "uMod")).ToArray();
                 Interface.Oxide.LogWarning($"Plugin {plugin.ScriptName} is using Oxide naming, please update to uMod naming");
             }
 

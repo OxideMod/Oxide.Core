@@ -346,7 +346,6 @@ namespace uMod.Libraries
                     }
 
                     Interface.uMod.LogException(error_message, ex);
-                    return;
                 }
                 finally
                 {
