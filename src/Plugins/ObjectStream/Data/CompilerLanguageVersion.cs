@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace uMod.Plugins.ObjectStream.Data
+namespace ObjectStream.Data
 {
     [Serializable]
     enum CompilerLanguageVersion

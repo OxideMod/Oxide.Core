@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace uMod.Plugins.ObjectStream.Data
+namespace ObjectStream.Data
 {
     [Serializable]
-    internal enum CompilerMessageType
+    enum CompilerMessageType
     {
         Assembly,
         Compile,

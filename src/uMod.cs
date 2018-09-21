@@ -132,7 +132,7 @@ namespace uMod
 
             // Move files from "oxide" directory to "umod" directory
             string oxideDirectory = Path.Combine(RootDirectory, "oxide");
-            if (Directory.Exists(oxideDirectory))
+            if (Directory.Exists(oxideDirectory) && !Directory.Exists(InstanceDirectory))
             {
                 Directory.Move(oxideDirectory, InstanceDirectory);
             }

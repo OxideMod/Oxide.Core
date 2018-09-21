@@ -1,5 +1,7 @@
 ﻿extern alias References;
 
+using ObjectStream;
+using ObjectStream.Data;
 using Rebex.Net;
 using Rebex.Security.Cryptography;
 using References::Mono.Unix;
@@ -15,8 +17,6 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Logging;
-using uMod.Plugins.ObjectStream;
-using uMod.Plugins.ObjectStream.Data;
 
 namespace uMod.Plugins
 {
@@ -181,7 +181,7 @@ namespace uMod.Plugins
         {
             try
             {
-                Rebex.Licensing.Key = "==AalPQQNr+9/cVETMK9N0H6ivXNQRw4C/a6E8SXx7Z5Q0=="; // 8-22-18, TODO: Obfuscate production key
+                Rebex.Licensing.Key = "==AUDFS5WGNOizZMpGU2ZWY6vWj1u5c7RTpcqiNw3B2DnY=="; // 9-21-18, TODO: Obfuscate production key
 
                 // Override the web request creator
                 HttpRequestCreator creator = new HttpRequestCreator();

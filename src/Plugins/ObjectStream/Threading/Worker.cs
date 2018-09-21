@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace uMod.Plugins.ObjectStream.Threading
+namespace ObjectStream.Threading
 {
     class Worker
     {
