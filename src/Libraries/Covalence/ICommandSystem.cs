@@ -33,6 +33,7 @@ namespace uMod.Libraries.Covalence
         /// Unregisters the specified command
         /// </summary>
         /// <param name="command"></param>
+        /// <param name="plugin"></param>
         void UnregisterCommand(string command, Plugin plugin);
     }
 }

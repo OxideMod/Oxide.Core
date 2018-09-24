@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Oxide.Core.Libraries.Covalence;
-using Oxide.Core.Libraries;
-using Oxide.Core.Plugins;
+using uMod.Libraries;
+using uMod.Libraries.Covalence;
+using uMod.Plugins;
 
-namespace Oxide.Core
+namespace uMod
 {
+    /// <summary>
+    /// Universal commands for all supported games
+    /// </summary>
     public class Commands
     {
-        // Libraries
+        // Libraries and references
+        internal static readonly Covalence Covalence = Interface.Oxide.GetLibrary<Covalence>();
         internal readonly Lang lang = Interface.Oxide.GetLibrary<Lang>();
         internal readonly Permission permission = Interface.Oxide.GetLibrary<Permission>();
-
-        // References
-        internal static readonly CovalenceProvider Covalence = ICovalenceProvider.Instance;
         internal readonly PluginManager pluginManager = Interface.Oxide.RootPluginManager;
 
         #region Grant Command
@@ -24,9 +25,12 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void GrantCommand(IPlayer player, string command, string[] args)
+        public void GrantCommand(IPlayer player, string command, string[] args)
         {
-            //if (!PermissionsLoaded(player)) return;
+            /*if (!PermissionsLoaded(player))
+            {
+                return;
+            }*/
 
             if (args.Length < 3)
             {
@@ -34,13 +38,13 @@ namespace Oxide.Core
                 return;
             }
 
-            var mode = args[0];
-            var name = args[1];
-            var perm = args[2];
+            string mode = args[0];
+            string name = args[1].Sanitize();
+            string perm = args[2];
 
             if (!permission.PermissionExists(perm))
             {
-                player.Reply(lang.GetMessage("PermissionNotFound", null, player.Id), perm);
+                player.Reply(string.Format(lang.GetMessage("PermissionNotFound", null, player.Id), perm));
                 return;
             }
 
@@ -48,29 +52,36 @@ namespace Oxide.Core
             {
                 if (!permission.GroupExists(name))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), name));
                     return;
                 }
 
                 if (permission.GroupHasPermission(name, perm))
                 {
-                    player.Reply(lang.GetMessage("GroupAlreadyHasPermission", null, player.Id), name, perm);
+                    player.Reply(string.Format(lang.GetMessage("GroupAlreadyHasPermission", null, player.Id), name, perm));
                     return;
                 }
 
                 permission.GrantGroupPermission(name, perm, null);
-                player.Reply(lang.GetMessage("GroupPermissionGranted", null, player.Id), name, perm);
+                player.Reply(string.Format(lang.GetMessage("GroupPermissionGranted", null, player.Id), name, perm));
             }
             else if (mode.Equals("user"))
             {
-                var target = Covalence.PlayerManager.FindPlayer(name);
-                if (target == null && !permission.UserIdValid(name))
+                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                if (foundPlayers.Length > 1)
                 {
-                    player.Reply(lang.GetMessage("UserNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
                     return;
                 }
 
-                var userId = name;
+                IPlayer target = foundPlayers.Length == 1 ? foundPlayers[0] : null;
+                if (target == null && !permission.UserIdValid(name))
+                {
+                    player.Reply(string.Format(lang.GetMessage("PlayerNotFound", null, player.Id), name));
+                    return;
+                }
+
+                string userId = name;
                 if (target != null)
                 {
                     userId = target.Id;
@@ -80,20 +91,23 @@ namespace Oxide.Core
 
                 if (permission.UserHasPermission(name, perm))
                 {
-                    player.Reply(lang.GetMessage("UserAlreadyHasPermission", null, player.Id), userId, perm);
+                    player.Reply(string.Format(lang.GetMessage("PlayerAlreadyHasPermission", null, player.Id), userId, perm));
                     return;
                 }
 
                 permission.GrantUserPermission(userId, perm, null);
-                player.Reply(lang.GetMessage("UserPermissionGranted", null, player.Id), $"{name} ({userId})", perm);
+                player.Reply(string.Format(lang.GetMessage("PlayerPermissionGranted", null, player.Id), $"{name} ({userId})", perm));
             }
-            else player.Reply(lang.GetMessage("CommandUsageGrant", null, player.Id));
+            else
+            {
+                player.Reply(lang.GetMessage("CommandUsageGrant", null, player.Id));
+            }
         }
 
-        #endregion
+        #endregion Grant Command
 
         // TODO: GrantAllCommand (grant all permissions from user(s)/group(s))
- 
+
         #region Group Command
 
         /// <summary>
@@ -102,9 +116,12 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void GroupCommand(IPlayer player, string command, string[] args)
+        public void GroupCommand(IPlayer player, string command, string[] args)
         {
-            //if (!PermissionsLoaded(player)) return;
+            /*if (!PermissionsLoaded(player))
+            {
+                return;
+            }*/
 
             if (args.Length < 2)
             {
@@ -114,44 +131,44 @@ namespace Oxide.Core
                 return;
             }
 
-            var mode = args[0];
-            var group = args[1];
-            var title = args.Length >= 3 ? args[2] : "";
-            var rank = args.Length == 4 ? int.Parse(args[3]) : 0;
+            string mode = args[0];
+            string group = args[1];
+            string title = args.Length >= 3 ? args[2] : "";
+            int rank = args.Length == 4 ? int.Parse(args[3]) : 0;
 
             if (mode.Equals("add"))
             {
                 if (permission.GroupExists(group))
                 {
-                    player.Reply(lang.GetMessage("GroupAlreadyExists", null, player.Id), group);
+                    player.Reply(string.Format(lang.GetMessage("GroupAlreadyExists", null, player.Id), group));
                     return;
                 }
 
                 permission.CreateGroup(group, title, rank);
-                player.Reply(lang.GetMessage("GroupCreated", null, player.Id), group);
+                player.Reply(string.Format(lang.GetMessage("GroupCreated", null, player.Id), group));
             }
             else if (mode.Equals("remove"))
             {
                 if (!permission.GroupExists(group))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), group);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), group));
                     return;
                 }
 
                 permission.RemoveGroup(group);
-                player.Reply(lang.GetMessage("GroupDeleted", null, player.Id), group);
+                player.Reply(string.Format(lang.GetMessage("GroupDeleted", null, player.Id), group));
             }
             else if (mode.Equals("set"))
             {
                 if (!permission.GroupExists(group))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), group);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), group));
                     return;
                 }
 
                 permission.SetGroupTitle(group, title);
                 permission.SetGroupRank(group, rank);
-                player.Reply(lang.GetMessage("GroupChanged", null, player.Id), group);
+                player.Reply(string.Format(lang.GetMessage("GroupChanged", null, player.Id), group));
             }
             else if (mode.Equals("parent"))
             {
@@ -163,21 +180,25 @@ namespace Oxide.Core
 
                 if (!permission.GroupExists(group))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), group);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), group));
                     return;
                 }
 
-                var parent = args[2];
+                string parent = args[2];
                 if (!string.IsNullOrEmpty(parent) && !permission.GroupExists(parent))
                 {
-                    player.Reply(lang.GetMessage("GroupParentNotFound", null, player.Id), parent);
+                    player.Reply(string.Format(lang.GetMessage("GroupParentNotFound", null, player.Id), parent));
                     return;
                 }
 
                 if (permission.SetGroupParent(group, parent))
-                    player.Reply(lang.GetMessage("GroupParentChanged", null, player.Id), group, parent);
+                {
+                    player.Reply(string.Format(lang.GetMessage("GroupParentChanged", null, player.Id), group, parent));
+                }
                 else
-                    player.Reply(lang.GetMessage("GroupParentNotChanged", null, player.Id), group);
+                {
+                    player.Reply(string.Format(lang.GetMessage("GroupParentNotChanged", null, player.Id), group));
+                }
             }
             else
             {
@@ -187,7 +208,7 @@ namespace Oxide.Core
             }
         }
 
-        #endregion
+        #endregion Group Command
 
         #region Lang Command
 
@@ -197,7 +218,7 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void LangCommand(IPlayer player, string command, string[] args)
+        public void LangCommand(IPlayer player, string command, string[] args)
         {
             if (args.Length < 1)
             {
@@ -207,20 +228,24 @@ namespace Oxide.Core
 
             if (player.IsServer)
             {
-                // TODO: Check if langauge exists before setting, warn if not
+                // TODO: Check if language exists before setting, warn if not
                 lang.SetServerLanguage(args[0]);
-                player.Reply(lang.GetMessage("ServerLanguage", null, player.Id), lang.GetServerLanguage());
+                player.Reply(string.Format(lang.GetMessage("ServerLanguage", null, player.Id), lang.GetServerLanguage()));
             }
             else
             {
-                // TODO: Check if langauge exists before setting, warn if not
-                var languages = lang.GetLanguages(null);
-                if (languages.Contains(args[0])) lang.SetLanguage(args[0], player.Id);
-                player.Reply(lang.GetMessage("PlayerLanguage", null, player.Id), args[0]);
+                // TODO: Check if language exists before setting, warn if not
+                string[] languages = lang.GetLanguages();
+                if (languages.Contains(args[0]))
+                {
+                    lang.SetLanguage(args[0], player.Id);
+                }
+
+                player.Reply(string.Format(lang.GetMessage("PlayerLanguage", null, player.Id), args[0]));
             }
         }
 
-        #endregion
+        #endregion Lang Command
 
         #region Load Command
 
@@ -230,7 +255,7 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void LoadCommand(IPlayer player, string command, string[] args)
+        public void LoadCommand(IPlayer player, string command, string[] args)
         {
             if (args.Length < 1)
             {
@@ -240,19 +265,21 @@ namespace Oxide.Core
 
             if (args[0].Equals("*") || args[0].Equals("all"))
             {
-                Interface.Oxide.LoadAllPlugins();
+                Interface.uMod.LoadAllPlugins();
                 return;
             }
 
-            foreach (var name in args)
+            foreach (string name in args)
             {
-                if (string.IsNullOrEmpty(name)) continue;
-                Interface.Oxide.LoadPlugin(name);
-                pluginManager.GetPlugin(name);
+                if (!string.IsNullOrEmpty(name))
+                {
+                    Interface.uMod.LoadPlugin(name);
+                    pluginManager.GetPlugin(name);
+                }
             }
         }
 
-        #endregion
+        #endregion Load Command
 
         #region Plugins Command
 
@@ -262,37 +289,43 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void PluginsCommand(IPlayer player, string command, string[] args)
+        public void PluginsCommand(IPlayer player, string command, string[] args)
         {
-            var loadedPlugins = pluginManager.GetPlugins().Where(pl => !pl.IsCorePlugin).ToArray();
-            var loadedPluginNames = new HashSet<string>(loadedPlugins.Select(pl => pl.Name));
-            var unloadedPluginErrors = new Dictionary<string, string>();
-            foreach (var loader in Interface.Oxide.GetPluginLoaders())
+            Plugin[] loadedPlugins = pluginManager.GetPlugins().Where(pl => !pl.IsCorePlugin).ToArray();
+            HashSet<string> loadedPluginNames = new HashSet<string>(loadedPlugins.Select(pl => pl.Name));
+            Dictionary<string, string> unloadedPluginErrors = new Dictionary<string, string>();
+            foreach (PluginLoader loader in Interface.uMod.GetPluginLoaders())
             {
-                foreach (var name in loader.ScanDirectory(Interface.Oxide.PluginDirectory).Except(loadedPluginNames))
+                foreach (string name in loader.ScanDirectory(Interface.uMod.PluginDirectory).Except(loadedPluginNames))
                 {
                     string msg;
-                    unloadedPluginErrors[name] = (loader.PluginErrors.TryGetValue(name, out msg)) ? msg : "Unloaded"; // TODO: Localization
+                    unloadedPluginErrors[name] = loader.PluginErrors.TryGetValue(name, out msg) ? msg : "Unloaded"; // TODO: Localization
                 }
             }
 
-            var totalPluginCount = loadedPlugins.Length + unloadedPluginErrors.Count;
+            int totalPluginCount = loadedPlugins.Length + unloadedPluginErrors.Count;
             if (totalPluginCount < 1)
             {
                 player.Reply(lang.GetMessage("NoPluginsFound", null, player.Id));
                 return;
             }
 
-            var output = $"Listing {loadedPlugins.Length + unloadedPluginErrors.Count} plugins:"; // TODO: Localization
-            var number = 1;
-            foreach (var plugin in loadedPlugins.Where(p => p.Filename != null))
+            string output = $"Listing {loadedPlugins.Length + unloadedPluginErrors.Count} plugins:"; // TODO: Localization
+            int number = 1;
+            foreach (Plugin plugin in loadedPlugins.Where(p => p.Filename != null))
+            {
                 output += $"\n  {number++:00} \"{plugin.Title}\" ({plugin.Version}) by {plugin.Author} ({plugin.TotalHookTime:0.00}s) - {plugin.Filename.Basename()}";
-            foreach (var pluginName in unloadedPluginErrors.Keys)
+            }
+
+            foreach (string pluginName in unloadedPluginErrors.Keys)
+            {
                 output += $"\n  {number++:00} {pluginName} - {unloadedPluginErrors[pluginName]}";
+            }
+
             player.Reply(output);
         }
 
-        #endregion
+        #endregion Plugins Command
 
         #region Reload Command
 
@@ -302,7 +335,7 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void ReloadCommand(IPlayer player, string command, string[] args)
+        public void ReloadCommand(IPlayer player, string command, string[] args)
         {
             if (args.Length < 1)
             {
@@ -312,23 +345,20 @@ namespace Oxide.Core
 
             if (args[0].Equals("*") || args[0].Equals("all"))
             {
-                var reloaded = Interface.Oxide.ReloadAllPlugins();
-                if ((bool)reloaded) player.Reply(lang.GetMessage("PluginsReloaded", null, player.Id));
-                else player.Reply(lang.GetMessage("PluginsNotReloaded", null, player.Id));
+                Interface.uMod.ReloadAllPlugins();
                 return;
             }
 
-            foreach (var name in args)
+            foreach (string name in args)
             {
-                if (string.IsNullOrEmpty(name)) continue;
-
-                var reloaded = Interface.Oxide.ReloadPlugin(name);
-                if ((bool)reloaded) player.Reply(lang.GetMessage("PluginReloaded", null, player.Id));
-                else player.Reply(lang.GetMessage("PluginNotReloaded", null, player.Id));
+                if (!string.IsNullOrEmpty(name))
+                {
+                    Interface.uMod.ReloadPlugin(name);
+                }
             }
         }
 
-        #endregion
+        #endregion Reload Command
 
         #region Revoke Command
 
@@ -338,9 +368,12 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void RevokeCommand(IPlayer player, string command, string[] args)
+        public void RevokeCommand(IPlayer player, string command, string[] args)
         {
-            //if (!PermissionsLoaded(player)) return;
+            /*if (!PermissionsLoaded(player))
+            {
+                return;
+            }*/
 
             if (args.Length < 3)
             {
@@ -348,38 +381,45 @@ namespace Oxide.Core
                 return;
             }
 
-            var mode = args[0];
-            var name = args[1];
-            var perm = args[2];
+            string mode = args[0];
+            string name = args[1].Sanitize();
+            string perm = args[2];
 
             if (mode.Equals("group"))
             {
                 if (!permission.GroupExists(name))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), name));
                     return;
                 }
 
                 if (!permission.GroupHasPermission(name, perm))
                 {
                     // TODO: Check if group is inheriting permission, mention
-                    player.Reply(lang.GetMessage("GroupDoesNotHavePermission", null, player.Id), name, perm);
+                    player.Reply(string.Format(lang.GetMessage("GroupDoesNotHavePermission", null, player.Id), name, perm));
                     return;
                 }
 
                 permission.RevokeGroupPermission(name, perm);
-                player.Reply(lang.GetMessage("GroupPermissionRevoked", null, player.Id), name, perm);
+                player.Reply(string.Format(lang.GetMessage("GroupPermissionRevoked", null, player.Id), name, perm));
             }
             else if (mode.Equals("user"))
             {
-                var target = Covalence.PlayerManager.FindPlayer(name);
-                if (target == null && !permission.UserIdValid(name))
+                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                if (foundPlayers.Length > 1)
                 {
-                    player.Reply(lang.GetMessage("UserNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
                     return;
                 }
 
-                var userId = name;
+                IPlayer target = foundPlayers.Length == 1 ? foundPlayers[0] : null;
+                if (target == null && !permission.UserIdValid(name))
+                {
+                    player.Reply(string.Format(lang.GetMessage("PlayerNotFound", null, player.Id), name));
+                    return;
+                }
+
+                string userId = name;
                 if (target != null)
                 {
                     userId = target.Id;
@@ -390,17 +430,20 @@ namespace Oxide.Core
                 if (!permission.UserHasPermission(userId, perm))
                 {
                     // TODO: Check if user is inheriting permission, mention
-                    player.Reply(lang.GetMessage("UserDoesNotHavePermission", null, player.Id), name, perm);
+                    player.Reply(string.Format(lang.GetMessage("PlayerDoesNotHavePermission", null, player.Id), name, perm));
                     return;
                 }
 
                 permission.RevokeUserPermission(userId, perm);
-                player.Reply(lang.GetMessage("UserPermissionRevoked", null, player.Id), $"{name} ({userId})", perm);
+                player.Reply(string.Format(lang.GetMessage("PlayerPermissionRevoked", null, player.Id), $"{name} ({userId})", perm));
             }
-            else player.Reply(lang.GetMessage("CommandUsageRevoke", null, player.Id));
+            else
+            {
+                player.Reply(lang.GetMessage("CommandUsageRevoke", null, player.Id));
+            }
         }
 
-        #endregion
+        #endregion Revoke Command
 
         // TODO: RevokeAllCommand (revoke all permissions from user(s)/group(s))
 
@@ -412,66 +455,68 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void ShowCommand(IPlayer player, string command, string[] args)
+        public void ShowCommand(IPlayer player, string command, string[] args)
         {
-            //if (!PermissionsLoaded(player)) return;
+            /*if (!PermissionsLoaded(player))
+            {
+                return;
+            }*/
 
             if (args.Length < 1)
             {
                 player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                player.Reply(lang.GetMessage("CommandUsageShowName", null, player.Id));
                 return;
             }
 
-            var mode = args[0];
-            var name = args.Length == 2 ? args[1] : string.Empty;
+            string mode = args[0];
+            string name = args.Length == 2 ? args[1].Sanitize() : string.Empty;
 
             if (mode.Equals("perms"))
             {
-                player.Reply(lang.GetMessage("Permissions", null, player.Id) + ":\n" + string.Join(", ", permission.GetPermissions()));
+                player.Reply(string.Format(lang.GetMessage("Permissions", null, player.Id) + ":\n" + string.Join(", ", permission.GetPermissions())));
             }
             else if (mode.Equals("perm"))
             {
-                if (args.Length < 2)
+                if (args.Length < 2 || string.IsNullOrEmpty(name))
                 {
                     player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                    player.Reply(lang.GetMessage("CommandUsageShowName", null, player.Id));
                     return;
                 }
 
-                if (string.IsNullOrEmpty(name))
-                {
-                    player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
-                    return;
-                }
-
-                var users = permission.GetPermissionUsers(name);
-                var groups = permission.GetPermissionGroups(name);
-                var result = $"{string.Format(lang.GetMessage("PermissionUsers", null, player.Id), name)}:\n";
-                result += users.Length > 0 ? string.Join(", ", users) : lang.GetMessage("NoPermissionUsers", null, player.Id);
+                string[] users = permission.GetPermissionUsers(name);
+                string[] groups = permission.GetPermissionGroups(name);
+                string result = $"{string.Format(lang.GetMessage("PermissionPlayers", null, player.Id), name)}:\n";
+                result += users.Length > 0 ? string.Join(", ", users) : lang.GetMessage("NoPermissionPlayers", null, player.Id);
                 result += $"\n\n{string.Format(lang.GetMessage("PermissionGroups", null, player.Id), name)}:\n";
                 result += groups.Length > 0 ? string.Join(", ", groups) : lang.GetMessage("NoPermissionGroups", null, player.Id);
                 player.Reply(result);
             }
             else if (mode.Equals("user"))
             {
-                if (args.Length < 2)
+                if (args.Length < 2 || string.IsNullOrEmpty(name))
                 {
                     player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                    player.Reply(lang.GetMessage("CommandUsageShowName", null, player.Id));
                     return;
                 }
 
-                if (string.IsNullOrEmpty(name))
+                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                if (foundPlayers.Length > 1)
                 {
-                    player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                    player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
                     return;
                 }
 
-                var target = Covalence.PlayerManager.FindPlayer(name);
+                IPlayer target = foundPlayers.Length == 1 ? foundPlayers[0] : null;
                 if (target == null && !permission.UserIdValid(name))
                 {
-                    player.Reply(lang.GetMessage("UserNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("PlayerNotFound", null, player.Id), name));
                     return;
                 }
-                var userId = name;
+
+                string userId = name;
                 if (target != null)
                 {
                     userId = target.Id;
@@ -480,41 +525,36 @@ namespace Oxide.Core
                     name += $" ({userId})";
                 }
 
-                var perms = permission.GetUserPermissions(userId);
-                var groups = permission.GetUserGroups(userId);
-                var result = $"{string.Format(lang.GetMessage("UserPermissions", null, player.Id), name)}:\n";
-                result += perms.Length > 0 ? string.Join(", ", perms) : lang.GetMessage("NoUserPermissions", null, player.Id);
-                result += $"\n\n{string.Format(lang.GetMessage("UserGroups", null, player.Id), name)}:\n";
-                result += groups.Length > 0 ? string.Join(", ", groups) : lang.GetMessage("NoUserGroups", null, player.Id);
+                string[] perms = permission.GetUserPermissions(userId);
+                string[] groups = permission.GetUserGroups(userId);
+                string result = $"{string.Format(lang.GetMessage("PlayerPermissions", null, player.Id), name)}:\n";
+                result += perms.Length > 0 ? string.Join(", ", perms) : lang.GetMessage("NoPlayerPermissions", null, player.Id);
+                result += $"\n\n{string.Format(lang.GetMessage("PlayerGroups", null, player.Id), name)}:\n";
+                result += groups.Length > 0 ? string.Join(", ", groups) : lang.GetMessage("NoPlayerGroups", null, player.Id);
                 player.Reply(result);
             }
             else if (mode.Equals("group"))
             {
-                if (args.Length < 2)
+                if (args.Length < 2 || string.IsNullOrEmpty(name))
                 {
                     player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                    player.Reply(lang.GetMessage("CommandUsageShowName", null, player.Id));
                     return;
                 }
 
                 if (!permission.GroupExists(name))
                 {
-                    player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), name);
+                    player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), name));
                     return;
                 }
 
-                var users = permission.GetUsersInGroup(name);
-                var perms = permission.GetGroupPermissions(name);
-                var result = $"{string.Format(lang.GetMessage("GroupUsers", null, player.Id), name)}:\n";
-                result += users.Length > 0 ? string.Join(", ", users) : lang.GetMessage("NoUsersInGroup", null, player.Id);
+                string[] users = permission.GetUsersInGroup(name);
+                string[] perms = permission.GetGroupPermissions(name);
+                string result = $"{string.Format(lang.GetMessage("GroupPlayers", null, player.Id), name)}:\n";
+                result += users.Length > 0 ? string.Join(", ", users) : lang.GetMessage("NoPlayersInGroup", null, player.Id);
                 result += $"\n\n{string.Format(lang.GetMessage("GroupPermissions", null, player.Id), name)}:\n";
                 result += perms.Length > 0 ? string.Join(", ", perms) : lang.GetMessage("NoGroupPermissions", null, player.Id);
-                var parent = permission.GetGroupParent(name);
+                string parent = permission.GetGroupParent(name);
                 while (permission.GroupExists(parent))
                 {
                     result += $"\n{string.Format(lang.GetMessage("ParentGroupPermissions", null, player.Id), parent)}:\n";
@@ -525,12 +565,16 @@ namespace Oxide.Core
             }
             else if (mode.Equals("groups"))
             {
-                player.Reply(lang.GetMessage("Groups", null, player.Id) + ":\n" + string.Join(", ", permission.GetGroups()));
+                player.Reply(string.Format(lang.GetMessage("Groups", null, player.Id) + ":\n" + string.Join(", ", permission.GetGroups())));
             }
-            else player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+            else
+            {
+                player.Reply(lang.GetMessage("CommandUsageShow", null, player.Id));
+                player.Reply(lang.GetMessage("CommandUsageShowName", null, player.Id));
+            }
         }
 
-        #endregion
+        #endregion Show Command
 
         #region Unload Command
 
@@ -540,7 +584,7 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void UnloadCommand(IPlayer player, string command, string[] args)
+        public void UnloadCommand(IPlayer player, string command, string[] args)
         {
             if (args.Length < 1)
             {
@@ -550,24 +594,21 @@ namespace Oxide.Core
 
             if (args[0].Equals("*") || args[0].Equals("all"))
             {
-                var unloaded = Interface.Oxide.UnloadAllPlugins();
-                if ((bool)unloaded) player.Reply(lang.GetMessage("PluginsUnloaded", null, player.Id));
-                else player.Reply(lang.GetMessage("PluginsNotUnloaded", null, player.Id));
+                Interface.uMod.UnloadAllPlugins();
                 return;
             }
 
-            foreach (var name in args)
+            foreach (string name in args)
             {
-                if (string.IsNullOrEmpty(name)) continue;
-
-                var unloaded = Interface.Oxide.UnloadPlugin(name);
-                if ((bool)unloaded) player.Reply(lang.GetMessage("PluginUnloaded", null, player.Id));
-                else player.Reply(lang.GetMessage("PluginNotUnloaded", null, player.Id));
+                if (!string.IsNullOrEmpty(name))
+                {
+                    Interface.uMod.UnloadPlugin(name);
+                }
             }
         }
 
-        #endregion
- 
+        #endregion Unload Command
+
         #region User Group Command
 
         /// <summary>
@@ -576,9 +617,12 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void UserGroupCommand(IPlayer player, string command, string[] args)
+        public void UserGroupCommand(IPlayer player, string command, string[] args)
         {
-            //if (!PermissionsLoaded(player)) return;
+            /*if (!PermissionsLoaded(player))
+            {
+                return;
+            }*/
 
             if (args.Length < 3)
             {
@@ -586,17 +630,25 @@ namespace Oxide.Core
                 return;
             }
 
-            var mode = args[0];
-            var name = args[1];
-            var group = args[2];
+            string mode = args[0];
+            string name = args[1].Sanitize();
+            string group = args[2];
 
-            var target = Covalence.PlayerManager.FindPlayer(name);
-            if (target == null && !permission.UserIdValid(name))
+            IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+            if (foundPlayers.Length > 1)
             {
-                player.Reply(lang.GetMessage("UserNotFound", null, player.Id), name);
+                player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
                 return;
             }
-            var userId = name;
+
+            IPlayer target = foundPlayers.Length == 1 ? foundPlayers[0] : null;
+            if (target == null && !permission.UserIdValid(name))
+            {
+                player.Reply(string.Format(lang.GetMessage("PlayerNotFound", null, player.Id), name));
+                return;
+            }
+
+            string userId = name;
             if (target != null)
             {
                 userId = target.Id;
@@ -607,24 +659,27 @@ namespace Oxide.Core
 
             if (!permission.GroupExists(group))
             {
-                player.Reply(lang.GetMessage("GroupNotFound", null, player.Id), group);
+                player.Reply(string.Format(lang.GetMessage("GroupNotFound", null, player.Id), group));
                 return;
             }
 
             if (mode.Equals("add"))
             {
                 permission.AddUserGroup(userId, group);
-                player.Reply(lang.GetMessage("UserAddedToGroup", null, player.Id), name, group);
+                player.Reply(string.Format(lang.GetMessage("PlayerAddedToGroup", null, player.Id), name, group));
             }
             else if (mode.Equals("remove"))
             {
                 permission.RemoveUserGroup(userId, group);
-                player.Reply(lang.GetMessage("UserRemovedFromGroup", null, player.Id), name, group);
+                player.Reply(string.Format(lang.GetMessage("PlayerRemovedFromGroup", null, player.Id), name, group));
             }
-            else player.Reply(lang.GetMessage("CommandUsageUserGroup", null, player.Id));
+            else
+            {
+                player.Reply(lang.GetMessage("CommandUsageUserGroup", null, player.Id));
+            }
         }
 
-        #endregion
+        #endregion User Group Command
 
         // TODO: UserGroupAllCommand (add/remove all users to/from group)
 
@@ -636,19 +691,35 @@ namespace Oxide.Core
         /// <param name="player"></param>
         /// <param name="command"></param>
         /// <param name="args"></param>
-        private void VersionCommand(IPlayer player, string command, string[] args)
+        public void VersionCommand(IPlayer player, string command, string[] args)
         {
             if (player.IsServer)
             {
-               // TODO: Server version reply
+                /*player.Reply($"Protocol: {Server.Protocol}\nBuild Date: {BuildInfo.Current.BuildDate}\n" +
+                $"Unity Version: {UnityEngine.Application.unityVersion}\nChangeset: {BuildInfo.Current.Scm.ChangeId}\n" +
+                $"Branch: {BuildInfo.Current.Scm.Branch}\nuMod.Rust Version: {RustExtension.AssemblyVersion}");*/
             }
             else
             {
-                var format = Covalence.FormatText("Server is running [#ffb658]Oxide {0}[/#] and [#ee715c]{1} {2}[/#]"); // TODO: Localization
-                player.Reply(format, OxideMod.Version, Covalence.GameName, Server.Version);
+                string format = Covalence.FormatText(lang.GetMessage("Version", null, player.Id));
+                player.Reply(string.Format(format, uMod.Version, Covalence.Game, Covalence.Server.Version, Covalence.Server.Protocol));
             }
         }
 
-        #endregion
+        #endregion Version Command
+
+        #region Save Command
+
+        public void SaveCommand(IPlayer player, string command, string[] args)
+        {
+            //if (PermissionsLoaded(player) && player.IsAdmin)
+            {
+                Interface.uMod.OnSave();
+                //Covalence.Players.SavePlayerData();
+                player.Reply(lang.GetMessage("DataSaved", null, player.Id));
+            }
+        }
+
+        #endregion Save Command
     }
 }
