@@ -44,7 +44,6 @@
     <Reference Include="Rebex.Networking">
       <HintPath>Dependencies\net35\Rebex.Common.dll</HintPath>
     </Reference>
-    <Compile Remove="Commands.cs" /> <!-- Remove when ready -->
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
