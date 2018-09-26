@@ -308,13 +308,6 @@ namespace uMod.Plugins
                 pluginReferenceFields[name].SetValue(this, manager.GetPlugin(name));
             }
 
-            /*CompilablePlugin compatiblePlugin = CSharpPluginLoader.GetCompilablePlugin(Interface.uMod.PluginDirectory, Name);
-            if (compatiblePlugin != null && compatiblePlugin.CompiledAssembly != null)
-            {
-                File.WriteAllBytes(Interface.uMod.PluginDirectory + "\\" + Name + ".dump", compatiblePlugin.CompiledAssembly.PatchedAssembly);
-                Interface.uMod.LogWarning($"The raw assembly has been dumped to Plugins/{Name}.dump");
-            }*/
-
             try
             {
                 OnCallHook("Loaded", null);
@@ -387,14 +380,6 @@ namespace uMod.Plugins
                 catch (InvalidProgramException ex)
                 {
                     Interface.uMod.LogError("Hook dispatch failure detected, falling back to reflection based dispatch. " + ex);
-                    CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Interface.uMod.PluginDirectory, Name);
-
-                    if (compilablePlugin?.CompiledAssembly != null)
-                    {
-                        File.WriteAllBytes(Interface.uMod.PluginDirectory + "\\" + Name + ".dump", compilablePlugin.CompiledAssembly.PatchedAssembly);
-                        Interface.uMod.LogWarning($"The invalid raw assembly has been dumped to Plugins/{Name}.dump");
-                    }
-
                     hookDispatchFallback = true;
                 }
             }

@@ -58,7 +58,6 @@ namespace uMod.Plugins
                 {
                     float ago = Interface.uMod.Now - CompilationQueuedAt;
                     Interface.uMod.LogDebug($"Plugin compilation is already queued: {ScriptName} ({ago:0.000} ago)");
-                    //RemoteLogger.Debug($"Plugin compilation is already queued: {ScriptName} ({ago:0.000} ago)");
                     return;
                 }
 
@@ -67,7 +66,6 @@ namespace uMod.Plugins
                 {
                     if (CompiledAssembly.IsLoading || !CompiledAssembly.IsBatch || CompiledAssembly.CompilablePlugins.All(pl => pl.IsLoading))
                     {
-                        //Interface.uMod.LogDebug("Plugin is already compiled: {0}", Name);
                         callback(true);
                         return;
                     }
@@ -82,7 +80,6 @@ namespace uMod.Plugins
 
         internal virtual void OnCompilationStarted()
         {
-            //Interface.uMod.LogDebug("Compiling plugin: {0}", Name);
             LastCompiledAt = LastModifiedAt;
             timeoutTimer?.Destroy();
             timeoutTimer = null;

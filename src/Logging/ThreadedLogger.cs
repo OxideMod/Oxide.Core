@@ -8,26 +8,26 @@ namespace uMod.Logging
     public abstract class ThreadedLogger : Logger
     {
         // Sync mechanisms
-        private AutoResetEvent waitevent;
+        private readonly AutoResetEvent waitEvent;
+        private readonly object syncRoot;
         private bool exit;
-        private object syncroot;
 
         // The worker thread
-        private Thread workerthread;
+        private readonly Thread workerThread;
 
         /// <summary>
         /// Initializes a new instance of the ThreadedLogger class
         /// </summary>
-        public ThreadedLogger() : base(false)
+        protected ThreadedLogger() : base(false)
         {
             // Initialize
-            waitevent = new AutoResetEvent(false);
+            waitEvent = new AutoResetEvent(false);
             exit = false;
-            syncroot = new object();
+            syncRoot = new object();
 
             // Create the thread
-            workerthread = new Thread(Worker) { IsBackground = true };
-            workerthread.Start();
+            workerThread = new Thread(Worker) { IsBackground = true };
+            workerThread.Start();
         }
 
         ~ThreadedLogger()
@@ -37,14 +37,12 @@ namespace uMod.Logging
 
         public override void OnRemoved()
         {
-            if (exit)
+            if (!exit)
             {
-                return;
+                exit = true;
+                waitEvent.Set();
+                workerThread.Join();
             }
-
-            exit = true;
-            waitevent.Set();
-            workerthread.Join();
         }
 
         /// <summary>
@@ -53,12 +51,12 @@ namespace uMod.Logging
         /// <param name="msg"></param>
         internal override void Write(LogMessage msg)
         {
-            lock (syncroot)
+            lock (syncRoot)
             {
                 base.Write(msg);
             }
 
-            waitevent.Set();
+            waitEvent.Set();
         }
 
         /// <summary>
@@ -80,31 +78,29 @@ namespace uMod.Logging
             while (!exit)
             {
                 // Wait for signal
-                waitevent.WaitOne();
+                waitEvent.WaitOne();
 
                 // Iterate each item in the queue
-                lock (syncroot)
+                lock (syncRoot)
                 {
-                    if (MessageQueue.Count <= 0)
+                    if (MessageQueue.Count > 0)
                     {
-                        continue;
-                    }
-
-                    BeginBatchProcess();
-                    try
-                    {
-                        while (MessageQueue.Count > 0)
+                        BeginBatchProcess();
+                        try
                         {
-                            // Dequeue
-                            LogMessage message = MessageQueue.Dequeue();
+                            while (MessageQueue.Count > 0)
+                            {
+                                // Dequeue
+                                LogMessage message = MessageQueue.Dequeue();
 
-                            // Process
-                            ProcessMessage(message);
+                                // Process
+                                ProcessMessage(message);
+                            }
                         }
-                    }
-                    finally
-                    {
-                        FinishBatchProcess();
+                        finally
+                        {
+                            FinishBatchProcess();
+                        }
                     }
                 }
             }

@@ -79,6 +79,7 @@ namespace uMod.ServerConsole
                 FreeConsole();
                 return false;
             }
+
             oldOutput = Console.Out;
             oldEncoding = Console.OutputEncoding;
             UTF8Encoding encoding = new UTF8Encoding(false);
@@ -110,6 +111,7 @@ namespace uMod.ServerConsole
                 SetConsoleOutputCP((uint)oldEncoding.CodePage);
                 Console.OutputEncoding = oldEncoding;
             }
+
             FreeConsole();
         }
     }

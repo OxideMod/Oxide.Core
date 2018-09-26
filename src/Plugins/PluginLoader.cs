@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,7 +65,7 @@ namespace uMod.Plugins
         {
             if (LoadingPlugins.Contains(name))
             {
-                Interface.uMod.LogDebug("Load requested for plugin which is already loading: {0}", name);
+                Interface.uMod.LogDebug($"Load requested for plugin which is already loading: {name}");
                 return null;
             }
 
@@ -94,7 +94,7 @@ namespace uMod.Plugins
             if (!File.Exists(plugin.Filename))
             {
                 LoadingPlugins.Remove(plugin.Name);
-                Interface.uMod.LogWarning("Script no longer exists: {0}", plugin.Name);
+                Interface.uMod.LogWarning($"Script no longer exists: {plugin.Name}");
                 return;
             }
 
@@ -109,7 +109,7 @@ namespace uMod.Plugins
             {
                 if (!waitingForAccess)
                 {
-                    Interface.uMod.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                    Interface.uMod.LogWarning($"Waiting for another application to stop using script: {plugin.Name}");
                 }
 
                 Interface.uMod.GetLibrary<Libraries.Timer>().Once(.5f, () => LoadPlugin(plugin, true));

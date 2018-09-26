@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using References::Newtonsoft.Json;
 using System.Collections;
@@ -84,7 +84,7 @@ namespace uMod.Configuration
         }
 
         /// <summary>
-        /// Gets or sets information regarding the uMod mod
+        /// Gets or sets information regarding the uMod options
         /// </summary>
         public uModOptions Options { get; set; }
 

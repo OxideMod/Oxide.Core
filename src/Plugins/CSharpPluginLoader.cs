@@ -180,11 +180,11 @@ namespace uMod.Plugins
                     string[] loadingRequirements = plugin.Requires.Where(r => LoadingPlugins.Contains(r)).ToArray();
                     if (loadingRequirements.Any())
                     {
-                        Interface.uMod.LogDebug($"{plugin.Name} plugin is waiting for requirements to be loaded: {loadingRequirements.ToSentence()}");
+                        Interface.uMod.LogDebug($"Plugin '{plugin.Name}' is waiting for requirements to be loaded: {loadingRequirements.ToSentence()}");
                     }
                     else
                     {
-                        Interface.uMod.LogError($"{plugin.Name} plugin requires missing dependencies: {missingRequirements.ToSentence()}");
+                        Interface.uMod.LogError($"Plugin '{plugin.Name}' requires missing dependencies: {missingRequirements.ToSentence()}");
                         PluginErrors[plugin.Name] = $"Missing dependencies: {missingRequirements.ToSentence()}";
                         PluginLoadingCompleted(plugin);
                     }
