@@ -1,4 +1,4 @@
-extern alias References;
+﻿extern alias References;
 
 using References::Newtonsoft.Json;
 using System.Collections;
@@ -18,6 +18,7 @@ namespace uMod.Configuration
         {
             public bool Modded;
             public bool PluginWatchers;
+            public string[] PluginDirectories;
             public DefaultGroups DefaultGroups;
         }
 
@@ -105,7 +106,13 @@ namespace uMod.Configuration
         /// </summary>
         public uModConfig(string filename) : base(filename)
         {
-            Options = new uModOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" } };
+            Options = new uModOptions
+            {
+                Modded = true,
+                PluginWatchers = true,
+                PluginDirectories = new[] { "universal" },
+                DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" }
+            };
             Console = new uModConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new uModRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }

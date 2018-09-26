@@ -111,7 +111,7 @@ namespace uMod.Plugins
             {
                 if (plugin is CSharpPlugin)
                 {
-                    CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Directory, plugin.Name);
+                    CompilablePlugin compilablePlugin = CSharpPluginLoader.GetCompilablePlugin(Directory, plugin.Filename);
                     if (compilablePlugin.Requires.Contains(Name))
                     {
                         compilablePlugin.CompiledAssembly = null;
