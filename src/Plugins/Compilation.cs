@@ -84,7 +84,7 @@ namespace uMod.Plugins
 
                 foreach (Plugin pl in Interface.uMod.RootPluginManager.GetPlugins().Where(pl => pl is CSharpPlugin))
                 {
-                    CompilablePlugin loadedPlugin = CSharpPluginLoader.GetCompilablePlugin(plugin.Directory, pl.Name);
+                    CompilablePlugin loadedPlugin = CSharpPluginLoader.GetCompilablePlugin(plugin.Directory, pl.Filename);
                     if (loadedPlugin.Requires.Contains(plugin.Name))
                     {
                         AddDependency(loadedPlugin);
@@ -250,7 +250,7 @@ namespace uMod.Plugins
                     }
 
                     //Interface.uMod.LogDebug(plugin.Name + " plugin requires dependency: " + dependency_name);
-                    CompilablePlugin dependencyPlugin = CSharpPluginLoader.GetCompilablePlugin(plugin.Directory, dependencyName);
+                    CompilablePlugin dependencyPlugin = CSharpPluginLoader.GetCompilablePlugin(plugin.Directory, dependencyName); // TODO: Likely needs the dependency.Directory
                     AddDependency(dependencyPlugin);
                     continue;
                 }

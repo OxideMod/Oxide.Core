@@ -405,9 +405,9 @@ namespace uMod
             // Scan the plugin directory and load all reported plugins
             foreach (PluginLoader loader in loaders)
             {
-                foreach (string name in loader.ScanDirectory(PluginDirectory))
+                foreach (FileInfo file in loader.ScanDirectory(PluginDirectory))
                 {
-                    LoadPlugin(name);
+                    LoadPlugin(Utility.GetFileNameWithoutExtension(file.Name));
                 }
             }
 
@@ -464,7 +464,7 @@ namespace uMod
             }
 
             // Find all plugin loaders that lay claim to the name
-            HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Contains(name)));
+            HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Any(f => f.Name.StartsWith(name))));
             if (loaders.Count == 0)
             {
                 // TODO: Fix symlinked plugins unloaded still triggering this
@@ -480,9 +480,14 @@ namespace uMod
 
             // Load it and watch for errors
             PluginLoader loader = loaders.First();
+
+            // Get all plugin file info to load
+            FileInfo pluginFileInfo = loader.ScanDirectory(PluginDirectory).First(f => f.Name.StartsWith(name));
+
+            // Try to load plugin file
             try
             {
-                Plugin plugin = loader.Load(PluginDirectory, name);
+                Plugin plugin = loader.Load(pluginFileInfo.DirectoryName, name);
                 if (plugin != null)
                 {
                     plugin.Loader = loader;
@@ -584,7 +589,7 @@ namespace uMod
                 }
             }
 
-            PluginLoader loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Contains(name));
+            PluginLoader loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Any(f => f.Name.StartsWith(name)));
             if (loader != null)
             {
                 loader.Reload(directory, name);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using uMod.Libraries;
 using uMod.Libraries.Covalence;
@@ -296,10 +297,11 @@ namespace uMod
             Dictionary<string, string> unloadedPluginErrors = new Dictionary<string, string>();
             foreach (PluginLoader loader in Interface.uMod.GetPluginLoaders())
             {
-                foreach (string name in loader.ScanDirectory(Interface.uMod.PluginDirectory).Except(loadedPluginNames))
+                foreach (FileInfo file in loader.ScanDirectory(Interface.uMod.PluginDirectory).Where(f => !loadedPluginNames.Contains(f.Name)))
                 {
                     string msg;
-                    unloadedPluginErrors[name] = loader.PluginErrors.TryGetValue(name, out msg) ? msg : "Unloaded"; // TODO: Localization
+                    string pluginName = Utility.GetFileNameWithoutExtension(file.Name);
+                    unloadedPluginErrors[pluginName] = loader.PluginErrors.TryGetValue(file.Name, out msg) ? msg : "Unloaded"; // TODO: Localization
                 }
             }
 

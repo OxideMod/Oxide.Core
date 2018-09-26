@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -68,15 +69,15 @@ namespace uMod.Plugins
             }
         }
 
-        public override IEnumerable<string> ScanDirectory(string directory)
+        public override IEnumerable<FileInfo> ScanDirectory(string directory)
         {
             if (PluginCompiler.BinaryPath == null)
             {
                 yield break;
             }
 
-            IEnumerable<string> enumerable = base.ScanDirectory(directory);
-            foreach (string file in enumerable)
+            IEnumerable<FileInfo> enumerable = base.ScanDirectory(directory);
+            foreach (FileInfo file in enumerable)
             {
                 yield return file;
             }

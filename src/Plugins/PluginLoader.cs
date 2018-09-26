@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -36,22 +36,59 @@ namespace uMod.Plugins
         public virtual string FileExtension { get; }
 
         /// <summary>
+        /// Returns all files based on directory filter and file name pattern
+        /// </summary>
+        /// <param name="rootDirectory"></param>
+        /// <param name="directoryFilter"></param>
+        /// <param name="filePattern"></param>
+        /// <returns></returns>
+        public static IEnumerable<FileInfo> GetFiles(DirectoryInfo rootDirectory, string filePattern, Func<DirectoryInfo, bool> directoryFilter)
+        {
+            foreach (FileInfo matchedFile in rootDirectory.GetFiles(filePattern, SearchOption.TopDirectoryOnly))
+            {
+                if ((matchedFile.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                {
+                    continue;
+                }
+
+                yield return matchedFile;
+            }
+
+            IEnumerable<DirectoryInfo> matchedDirectories = rootDirectory.GetDirectories("*.*", SearchOption.TopDirectoryOnly).Where(directoryFilter);
+            foreach (DirectoryInfo directory in matchedDirectories)
+            {
+                if ((directory.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                {
+                    continue;
+                }
+
+                foreach (FileInfo matchedFile in GetFiles(directory, filePattern, directoryFilter))
+                {
+                    yield return matchedFile;
+                }
+            }
+        }
+
+        /// <summary>
         /// Scans the specified directory and returns a set of plugin names for plugins that this loader can load
         /// </summary>
         /// <param name="directory"></param>
         /// <returns></returns>
-        public virtual IEnumerable<string> ScanDirectory(string directory)
+        public virtual IEnumerable<FileInfo> ScanDirectory(string directory)
         {
             if (FileExtension == null || !Directory.Exists(directory))
             {
                 yield break;
             }
 
-            FileInfo[] files = new DirectoryInfo(directory).GetFiles("*" + FileExtension);
-            IEnumerable<FileInfo> filtered = files.Where(f => (f.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden);
-            foreach (FileInfo file in filtered)
+            DirectoryInfo rootDirectory = new DirectoryInfo(directory);
+            string[] config = Interface.uMod.Config.Options.PluginDirectories;
+            string[] ignoredDirectories = { ".git", "bin", "obj", "packages" };
+            bool Filter(DirectoryInfo d) => !ignoredDirectories.Contains(d.Name.ToLower()) && config.Contains(d.Name.ToLower()) || config.Contains(d.Parent?.Name.ToLower());
+            FileInfo[] files = GetFiles(rootDirectory, "*" + FileExtension, Filter).ToArray();
+            foreach (FileInfo file in files)
             {
-                yield return Utility.GetFileNameWithoutExtension(file.FullName);
+                yield return file;
             }
         }
 
