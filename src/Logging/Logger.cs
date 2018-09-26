@@ -34,7 +34,7 @@ namespace uMod.Logging
         protected Queue<LogMessage> MessageQueue;
 
         // Should messages be processed immediately and on the same thread?
-        private bool processImediately;
+        private readonly bool processImediately;
 
         /// <summary>
         /// Initializes a new instance of the Logger class

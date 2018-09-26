@@ -94,14 +94,15 @@ namespace uMod.Libraries.Covalence
                 logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
-            List<Type> candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
 
+            List<Type> candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
             Type selectedCandidate;
             if (candidates.Count == 0)
             {
                 logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
+
             if (candidates.Count > 1)
             {
                 selectedCandidate = candidates[0];
@@ -148,19 +149,17 @@ namespace uMod.Libraries.Covalence
         /// <param name="callback"></param>
         public void RegisterCommand(string command, Plugin plugin, CommandCallback callback)
         {
-            if (cmdSystem == null)
+            if (cmdSystem != null)
             {
-                return;
-            }
-
-            try
-            {
-                cmdSystem.RegisterCommand(command, plugin, callback);
-            }
-            catch (CommandAlreadyExistsException)
-            {
-                string pluginName = plugin?.Name ?? "An unknown plugin";
-                logger.Write(LogType.Error, "{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
+                try
+                {
+                    cmdSystem.RegisterCommand(command, plugin, callback);
+                }
+                catch (CommandAlreadyExistsException)
+                {
+                    string pluginName = plugin?.Name ?? "An unknown plugin";
+                    logger.Write(LogType.Error, "{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
+                }
             }
         }
 

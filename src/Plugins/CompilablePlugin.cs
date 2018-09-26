@@ -24,7 +24,6 @@ namespace uMod.Plugins
             if (CompiledAssembly == null)
             {
                 Interface.uMod.LogError($"Load called before a compiled assembly exists: {Name}");
-                //RemoteLogger.Error($"Load called before a compiled assembly exists: {Name}");
                 return;
             }
 
@@ -75,7 +74,6 @@ namespace uMod.Plugins
 
                 if (plugin == null)
                 {
-                    //RemoteLogger.Error($"Plugin assembly failed to load: {ScriptName}");
                     InitFailed($"Plugin assembly failed to load: {ScriptName}");
                     return;
                 }

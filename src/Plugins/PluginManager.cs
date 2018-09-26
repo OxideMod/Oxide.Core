@@ -135,7 +135,6 @@ namespace uMod.Plugins
                 {
                     sublist.Add(plugin);
                 }
-                //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is subscribing to hook '{hook}'!");
             }
         }
 
@@ -153,7 +152,6 @@ namespace uMod.Plugins
                 {
                     sublist.Remove(plugin);
                 }
-                //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is unsubscribing to hook '{hook}'!");
             }
         }
 

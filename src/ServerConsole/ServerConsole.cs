@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace uMod.ServerConsole
@@ -7,11 +7,10 @@ namespace uMod.ServerConsole
     {
         private readonly ConsoleWindow console = new ConsoleWindow();
         private readonly ConsoleInput input = new ConsoleInput();
-        private bool init;
+
+        private bool consoleInitialized;
         private float nextUpdate;
         private float nextTitleUpdate;
-
-        public event Action<string> Input;
 
         public Func<string> Title;
         public Func<string> Status1Left;
@@ -20,6 +19,8 @@ namespace uMod.ServerConsole
         public Func<string> Status2Right;
         public Func<string> Status3Left;
         public Func<string> Status3Right;
+
+        public event Action<string> Input;
 
         public Func<string, string[]> Completion
         {
@@ -87,7 +88,7 @@ namespace uMod.ServerConsole
 
         public void OnDisable()
         {
-            if (init)
+            if (consoleInitialized)
             {
                 input.OnInputText -= OnInputText;
                 console.Shutdown();
@@ -98,7 +99,7 @@ namespace uMod.ServerConsole
         {
             if (console.Initialize())
             {
-                init = true;
+                consoleInitialized = true;
                 input.OnInputText += OnInputText;
                 input.ClearLine(1);
                 input.ClearLine(Console.WindowHeight);
@@ -150,7 +151,7 @@ namespace uMod.ServerConsole
 
         public void Update()
         {
-            if (init)
+            if (consoleInitialized)
             {
                 if (Interface.uMod.Config.Console.ShowStatusBar)
                 {
@@ -158,13 +159,11 @@ namespace uMod.ServerConsole
                 }
 
                 input.Update();
-                if (nextTitleUpdate > Interface.uMod.Now)
+                if (!(nextTitleUpdate > Interface.uMod.Now))
                 {
-                    return;
+                    nextTitleUpdate = Interface.uMod.Now + 1f;
+                    console.SetTitle(title);
                 }
-
-                nextTitleUpdate = Interface.uMod.Now + 1f;
-                console.SetTitle(title);
             }
         }
 

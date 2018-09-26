@@ -8,11 +8,11 @@ namespace uMod.Logging
     public sealed class CompoundLogger : Logger
     {
         // Loggers under this compound logger
-        private readonly HashSet<Logger> subloggers;
+        private readonly HashSet<Logger> subLoggers;
 
         // Any cached messages for new loggers
-        private readonly List<LogMessage> messagecache;
-        private bool usecache;
+        private readonly List<LogMessage> messageCache;
+        private bool useCache;
 
         /// <summary>
         /// Initializes a new instance of the CompoundLogger class
@@ -20,9 +20,9 @@ namespace uMod.Logging
         public CompoundLogger() : base(true)
         {
             // Initialize
-            subloggers = new HashSet<Logger>();
-            messagecache = new List<LogMessage>();
-            usecache = true;
+            subLoggers = new HashSet<Logger>();
+            messageCache = new List<LogMessage>();
+            useCache = true;
         }
 
         /// <summary>
@@ -32,12 +32,12 @@ namespace uMod.Logging
         public void AddLogger(Logger logger)
         {
             // Register it
-            subloggers.Add(logger);
+            subLoggers.Add(logger);
 
             // Write the message cache to it
-            foreach (LogMessage t in messagecache)
+            foreach (LogMessage message in messageCache)
             {
-                logger.Write(t);
+                logger.Write(message);
             }
         }
 
@@ -49,7 +49,7 @@ namespace uMod.Logging
         {
             // Unregister it
             logger.OnRemoved();
-            subloggers.Remove(logger);
+            subLoggers.Remove(logger);
         }
 
         /// <summary>
@@ -57,32 +57,31 @@ namespace uMod.Logging
         /// </summary>
         public void Shutdown()
         {
-            foreach (Logger sublogger in subloggers)
+            foreach (Logger subLogger in subLoggers)
             {
-                sublogger.OnRemoved();
+                subLogger.OnRemoved();
             }
-
-            subloggers.Clear();
+            subLoggers.Clear();
         }
 
         /// <summary>
-        /// Writes a message to all subloggers of this logger
+        /// Writes a message to all sub-loggers of this logger
         /// </summary>
         /// <param name="type"></param>
         /// <param name="format"></param>
         /// <param name="args"></param>
         public override void Write(LogType type, string format, params object[] args)
         {
-            // Write to all current subloggers
-            foreach (Logger logger in subloggers)
+            // Write to all current sub-loggers
+            foreach (Logger logger in subLoggers)
             {
                 logger.Write(type, format, args);
             }
 
             // Cache it for any loggers added late
-            if (usecache)
+            if (useCache)
             {
-                messagecache.Add(CreateLogMessage(type, format, args));
+                messageCache.Add(CreateLogMessage(type, format, args));
             }
         }
 
@@ -91,8 +90,8 @@ namespace uMod.Logging
         /// </summary>
         public void DisableCache()
         {
-            usecache = false;
-            messagecache.Clear();
+            useCache = false;
+            messageCache.Clear();
         }
     }
 }

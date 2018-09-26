@@ -2,7 +2,7 @@
 {
     public class CallbackLogger : Logger
     {
-        private NativeDebugCallback callback;
+        private readonly NativeDebugCallback callback;
 
         /// <summary>
         /// Initialises a new instance of the CallbackLogger class

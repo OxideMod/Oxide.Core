@@ -465,17 +465,16 @@ namespace uMod
 
             // Find all plugin loaders that lay claim to the name
             HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Contains(name)));
-
             if (loaders.Count == 0)
             {
                 // TODO: Fix symlinked plugins unloaded still triggering this
-                LogError("Could not load plugin '{0}' (no plugin found with that file name)", name);
+                LogError($"Could not load plugin '{name}' (no plugin found with that file name)");
                 return false;
             }
 
             if (loaders.Count > 1)
             {
-                LogError("Could not load plugin '{0}' (multiple plugin with that name)", name);
+                LogError($"Could not load plugin '{name}' (multiple plugin with that name)");
                 return false;
             }
 
