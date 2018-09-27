@@ -121,9 +121,9 @@ namespace uMod.Plugins
                             references[filename + ".dll"] = new CompilerFile(Interface.uMod.ExtensionDirectory, filename + ".dll");
                         }
 
-                        if (File.Exists(Path.Combine(Interface.uMod.ExtensionDirectory, filename + ".exe")))
+                        if (File.Exists(Path.Combine(Interface.uMod.RootDirectory, filename + ".exe")))
                         {
-                            references[filename + ".exe"] = new CompilerFile(Interface.uMod.ExtensionDirectory, filename + ".exe");
+                            references[filename + ".exe"] = new CompilerFile(Interface.uMod.RootDirectory, filename + ".exe");
                         }
                     }
 
