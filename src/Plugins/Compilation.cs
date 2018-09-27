@@ -283,7 +283,7 @@ namespace uMod.Plugins
                     {
                         if (Directory.Exists(includePath))
                         {
-                            string includeFilePath = Path.Combine(includePath, $"Ext.{name}.cs");
+                            string includeFilePath = Path.Combine(includePath, $"{name}.cs");
                             if (File.Exists(includeFilePath))
                             {
                                 plugin.IncludePaths.Add(includeFilePath);
