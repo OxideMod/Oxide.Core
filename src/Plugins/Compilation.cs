@@ -249,8 +249,8 @@ namespace uMod.Plugins
                         return;
                     }
 
-                    //Interface.uMod.LogDebug(plugin.Name + " plugin requires dependency: " + dependency_name);
-                    CompilablePlugin dependencyPlugin = CSharpPluginLoader.GetCompilablePlugin(plugin.Directory, dependencyName); // TODO: Likely needs the dependency.Directory
+                    FileInfo dependency = plugin.Loader.ScanDirectory(Interface.uMod.PluginDirectory).First(f => f.Name.StartsWith(dependencyName));
+                    CompilablePlugin dependencyPlugin = CSharpPluginLoader.GetCompilablePlugin(dependency.DirectoryName, dependencyName);
                     AddDependency(dependencyPlugin);
                     continue;
                 }
