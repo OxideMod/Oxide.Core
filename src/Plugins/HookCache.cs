@@ -4,16 +4,15 @@ namespace uMod.Plugins
 {
     public class HookCache
     {
-        private string NullKey = "null";
+        private const string nullKey = "null";
 
         public Dictionary<string, HookCache> _cache = new Dictionary<string, HookCache>();
 
-        public List<HookMethod> _methods = null;
+        public List<HookMethod> _methods;
 
         public List<HookMethod> GetHookMethod(string hookName, object[] args, out HookCache cache)
         {
             HookCache nextCache;
-            //Interface.uMod.ServerConsole.AddMessage($"GetHookMethod {hookName}");
             if (!_cache.TryGetValue(hookName, out nextCache))
             {
                 nextCache = new HookCache();
@@ -30,24 +29,25 @@ namespace uMod.Plugins
                 return _methods;
             }
 
-            HookCache nextCache;
+            HookCache nextCache = null;
             if (args[index] == null)
             {
-                if (!_cache.TryGetValue(NullKey, out nextCache))
+                if (!_cache.TryGetValue(nullKey, out nextCache))
                 {
                     nextCache = new HookCache();
-                    _cache.Add(NullKey, nextCache);
+                    _cache.Add(nullKey, nextCache);
                 }
             }
             else
             {
-                if (!_cache.TryGetValue(args[index].GetType().FullName, out nextCache))
+                string typeName = args[index].GetType().FullName;
+                if (!_cache.TryGetValue(typeName, out nextCache))
                 {
                     nextCache = new HookCache();
-                    _cache.Add(args[index].GetType().FullName, nextCache);
+                    _cache.Add(typeName, nextCache);
                 }
             }
-            //Interface.uMod.ServerConsole.AddMessage($"GetHookMethod {key} {index}");
+
             return nextCache.GetHookMethod(args, index + 1, out cache);
         }
 

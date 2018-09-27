@@ -26,9 +26,8 @@ namespace uMod.Plugins
         internal CompiledAssembly compiledAssembly;
         internal float duration => endedAt - startedAt;
 
-        private string includePath;
-        private string[] extensionNames;
-        private string gameExtensionNamespace;
+        private readonly string[] extensionNames;
+        private readonly string includePath;
         private readonly string gameExtensionName;
         private readonly string gameExtensionBranch;
 
@@ -53,7 +52,6 @@ namespace uMod.Plugins
             extensionNames = Interface.uMod.GetAllExtensions().Select(ext => ext.Name).ToArray();
             Extension gameExtension = Interface.uMod.GetAllExtensions().SingleOrDefault(ext => ext.IsGameExtension);
             gameExtensionName = gameExtension?.Name.ToUpper();
-            gameExtensionNamespace = gameExtension?.GetType().Namespace;
             gameExtensionBranch = gameExtension?.Branch?.ToUpper();
         }
 
@@ -70,7 +68,6 @@ namespace uMod.Plugins
             {
                 compiledAssembly = new CompiledAssembly(name, plugins.ToArray(), rawAssembly, duration);
             }
-
             Interface.uMod.NextTick(() => callback(this));
         }
 
@@ -127,8 +124,6 @@ namespace uMod.Plugins
                         }
                     }
 
-                    //Interface.uMod.LogDebug("Preparing compilation");
-
                     CompilablePlugin plugin;
                     while (queuedPlugins.TryDequeue(out plugin))
                     {
@@ -140,20 +135,15 @@ namespace uMod.Plugins
                         if (!CacheScriptLines(plugin) || plugin.ScriptLines.Length < 1)
                         {
                             plugin.References.Clear();
-                            plugin.IncludePaths.Clear();
                             plugin.Requires.Clear();
+                            plugin.IncludePaths.Clear();
                             Interface.uMod.LogWarning("Plugin script is empty: " + plugin.Name);
                             RemovePlugin(plugin);
                         }
                         else if (plugins.Add(plugin))
                         {
-                            //Interface.uMod.LogDebug("Adding plugin to compilation: " + plugin.Name);
                             PreparseScript(plugin);
                             ResolveReferences(plugin);
-                        }
-                        else
-                        {
-                            //Interface.uMod.LogDebug("Plugin is already part of compilation: " + plugin.Name);
                         }
 
                         CacheModifiedScripts();
@@ -162,18 +152,14 @@ namespace uMod.Plugins
                         if (queuedPlugins.Count == 0 && Current == this)
                         {
                             Current = null;
-                            //Interface.uMod.LogDebug("Probably done preparing compilation: " + plugins.Select(p => p.Name).ToSentence());
                         }
                     }
-
-                    //Interface.uMod.LogDebug("Done preparing compilation: " + plugins.Select(p => p.Name).ToSentence());
 
                     callback();
                 }
                 catch (Exception ex)
                 {
                     Interface.uMod.LogException("Exception while resolving plugin references", ex);
-                    //RemoteLogger.Exception("Exception while resolving plugin references", ex);
                 }
             });
         }
@@ -194,6 +180,7 @@ namespace uMod.Plugins
             bool parsingNamespace = false;
             for (int i = 0; i < plugin.ScriptLines.Length; i++)
             {
+                // Skip empty files, they aren't plugins
                 string line = plugin.ScriptLines[i].Trim();
                 if (line.Length < 1)
                 {
@@ -241,6 +228,7 @@ namespace uMod.Plugins
                 {
                     string dependencyName = match.Groups[1].Value;
                     plugin.Requires.Add(dependencyName);
+
                     if (!File.Exists(Path.Combine(plugin.Directory, dependencyName + ".cs")))
                     {
                         Interface.uMod.LogError($"Plugin '{plugin.Name}' requires missing dependency: {dependencyName}");
@@ -395,7 +383,6 @@ namespace uMod.Plugins
             {
                 references[filename] = new CompilerFile(Interface.uMod.ExtensionDirectory, filename);
             }
-
             plugin.References.Add(reference.Name);
         }
 
@@ -408,7 +395,7 @@ namespace uMod.Plugins
                 {
                     if (!File.Exists(plugin.ScriptPath))
                     {
-                        Interface.uMod.LogWarning("Script no longer exists: {0}", plugin.Name);
+                        Interface.uMod.LogWarning($"Script no longer exists: {plugin.Name}");
                         plugin.CompilerErrors = "Plugin file was deleted";
                         RemovePlugin(plugin);
                         return false;
@@ -423,11 +410,6 @@ namespace uMod.Plugins
                             while (!reader.EndOfStream)
                             {
                                 lines.Add(reader.ReadLine());
-                            }
-
-                            if (!string.IsNullOrEmpty(gameExtensionName))
-                            {
-                                lines.Insert(0, $"#define {gameExtensionName}");
                             }
 
                             if (!string.IsNullOrEmpty(gameExtensionName))
@@ -456,7 +438,7 @@ namespace uMod.Plugins
                     if (!waitingForAccess)
                     {
                         waitingForAccess = true;
-                        Interface.uMod.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
+                        Interface.uMod.LogWarning($"Waiting for another application to stop using script: {plugin.Name}");
                     }
                     Thread.Sleep(50);
                 }
