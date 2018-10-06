@@ -224,7 +224,7 @@ namespace uMod.Libraries
             {
                 try
                 {
-                    Rebex.Licensing.Key = "==AUDFS5WGNOizZMpGU2ZWY6vWj1u5c7RTpcqiNw3B2DnY=="; // 9-21-18, TODO: Obfuscate production key
+                    Rebex.Licensing.Key = "==AK4ZQM9XIXrOxx1g0w8/wp3N8IPaSSnVpzBb+hKjYrIk=="; // Expires: 11-5-18, TODO: Obfuscate production key
 
                     // Override the web request creator
                     HttpRequestCreator creator = new HttpRequestCreator();
