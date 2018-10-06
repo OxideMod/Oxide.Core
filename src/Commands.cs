@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using uMod.Libraries;
@@ -13,10 +13,11 @@ namespace uMod
     public class Commands
     {
         // Libraries and references
-        internal static readonly Covalence Covalence = Interface.Oxide.GetLibrary<Covalence>();
-        internal readonly Lang lang = Interface.Oxide.GetLibrary<Lang>();
-        internal readonly Permission permission = Interface.Oxide.GetLibrary<Permission>();
-        internal readonly PluginManager pluginManager = Interface.Oxide.RootPluginManager;
+        internal static readonly Covalence Covalence = Interface.uMod.GetLibrary<Covalence>();
+
+        internal readonly Lang lang = Interface.uMod.GetLibrary<Lang>();
+        internal readonly Permission permission = Interface.uMod.GetLibrary<Permission>();
+        internal readonly PluginManager pluginManager = Interface.uMod.RootPluginManager;
 
         #region Grant Command
 
