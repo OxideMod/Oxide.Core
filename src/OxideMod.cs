@@ -81,6 +81,7 @@ namespace Oxide.Core
 
         // Various libraries
         private Covalence covalence;
+
         private Permission libperm;
         private Timer libtimer;
 
@@ -89,11 +90,13 @@ namespace Oxide.Core
 
         // Thread safe NextTick callback queue
         private List<Action> nextTickQueue = new List<Action>();
+
         private List<Action> lastTickQueue = new List<Action>();
         private readonly object nextTickLock = new object();
 
         // Allow extensions to register a method to be called every frame
         private Action<float> onFrame;
+
         private bool isInitialized;
         public bool HasLoadedCorePlugins { get; private set; }
 
@@ -194,11 +197,6 @@ namespace Oxide.Core
                 Config.Save();
             }
 
-            if (CommandLine.HasVariable("nolog"))
-            {
-                LogWarning("Usage of the 'nolog' variable will prevent logging");
-            }
-
             if (CommandLine.HasVariable("rcon.port"))
             {
                 Config.Rcon.Port = Utility.GetNumbers(CommandLine.GetVariable("rcon.port"));
@@ -214,6 +212,11 @@ namespace Oxide.Core
             if (debugCallback != null)
             {
                 RootLogger.AddLogger(new CallbackLogger(debugCallback));
+            }
+
+            if (CommandLine.HasVariable("nolog"))
+            {
+                LogWarning("Usage of the 'nolog' variable will prevent logging");
             }
 
             LogInfo("Loading Oxide Core v{0}...", Version);
