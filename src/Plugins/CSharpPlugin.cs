@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -358,8 +358,8 @@ namespace uMod.Plugins
                             Type parameterType = parameters[i].ParameterType;
                             if (parameterType.IsValueType)
                             {
-                                Type argument_type = value.GetType();
-                                if (parameterType != typeof(object) && argument_type != parameterType)
+                                Type argumentType = value.GetType();
+                                if (parameterType != typeof(object) && argumentType != parameterType)
                                 {
                                     args[i] = Convert.ChangeType(value, parameterType);
                                 }

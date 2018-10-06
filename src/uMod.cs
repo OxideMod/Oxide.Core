@@ -96,9 +96,8 @@ namespace uMod
         private readonly object nextTickLock = new object();
 
         // Allow extensions to register a method to be called every frame
-        private Action<float> onFrame;
-
         private readonly NativeDebugCallback debugCallback;
+        private Action<float> onFrame;
         private Stopwatch timer;
         private bool isInitialized;
 

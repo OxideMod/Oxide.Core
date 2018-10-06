@@ -174,7 +174,7 @@ namespace uMod.Plugins
             if (plugin.ScriptLines.Any(line => line.Contains("Oxide")))
             {
                 plugin.ScriptLines = plugin.ScriptLines.Select(s => s.Replace("Oxide.Core", "uMod").Replace("OxideMod", "uMod").Replace("Oxide", "uMod")).ToArray();
-                Interface.Oxide.LogWarning($"Plugin {plugin.ScriptName} is using Oxide naming, please update to uMod naming");
+                Interface.uMod.LogWarning($"Plugin {plugin.ScriptName} is using Oxide naming, please update to uMod naming");
             }
 
             bool parsingNamespace = false;
