@@ -10,7 +10,7 @@
     <PackageLicenseUrl>https://github.com/theumod/umod/blob/develop/LICENSE.md</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/theumod/umod</PackageProjectUrl>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/14957982?s=64</PackageIconUrl>
-    <Copyright>Copyright (c) 2014-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
+    <Copyright>Copyright (c) 2013-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
     <PackageTags>api framework gaming modding plugins</PackageTags>
     <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
