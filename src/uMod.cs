@@ -211,10 +211,6 @@ namespace uMod
             }
 
             // Check for and set configuration options from command-line
-            if (CommandLine.HasVariable("nolog"))
-            {
-                LogWarning("Usage of the 'nolog' variable will prevent logging");
-            }
             if (CommandLine.HasVariable("rcon.port"))
             {
                 Config.Rcon.Port = Utility.GetNumbers(CommandLine.GetVariable("rcon.port"));
@@ -230,6 +226,13 @@ namespace uMod
             if (debugCallback != null)
             {
                 RootLogger.AddLogger(new CallbackLogger(debugCallback));
+            }
+
+            // Check for and warn if logging is disabled
+            if (CommandLine.HasVariable("nolog"))
+            {
+                Config.Options.Logging = false;
+                LogWarning("Usage of the 'nolog' variable will prevent logging");
             }
 
             // Setup core managers and data file system

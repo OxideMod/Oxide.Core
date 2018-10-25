@@ -28,15 +28,24 @@ namespace uMod.Logging
         /// </summary>
         protected override void BeginBatchProcess()
         {
-            // Open the writer
-            writer = new StreamWriter(new FileStream(GetLogFilename(DateTime.Now), FileMode.Append, FileAccess.Write));
+            if (Interface.uMod.Config.Options.Logging)
+            {
+                // Open the writer
+                writer = new StreamWriter(new FileStream(GetLogFilename(DateTime.Now), FileMode.Append, FileAccess.Write));
+            }
         }
 
         /// <summary>
         /// Processes the specified message
         /// </summary>
         /// <param name="message"></param>
-        protected override void ProcessMessage(LogMessage message) => writer.WriteLine(message.LogfileMessage);
+        protected override void ProcessMessage(LogMessage message)
+        {
+            if (Interface.uMod.Config.Options.Logging)
+            {
+                writer.WriteLine(message.LogfileMessage);
+            }
+        }
 
         /// <summary>
         /// Finishes a batch process operation
