@@ -89,7 +89,6 @@ namespace uMod.Plugins
                         list.Remove(plugin);
                     }
                 }
-
                 plugin.HandleRemovedFromManager(this);
                 OnPluginRemoved?.Invoke(plugin);
                 return true;
@@ -188,37 +187,36 @@ namespace uMod.Plugins
                 }
             }
 
-            // Is there a return value?
+            // Return null if no return value
             if (returnCount == 0)
             {
                 ArrayPool.Free(values);
                 return null;
             }
 
-            if (returnCount > 1 && finalValue != null)
+            // Only show conflict warnings if return has value and is a "Can" hook
+            if (returnCount > 1 && finalValue != null && hook.StartsWith("Can"))
             {
                 // Notify log of hook conflict
                 hookConflicts.Clear();
                 for (int i = 0; i < plugins.Count; i++)
                 {
                     object value = values[i];
-                    if (value == null)
+                    if (value != null)
                     {
-                        continue;
-                    }
-
-                    if (value.GetType().IsValueType)
-                    {
-                        if (!values[i].Equals(finalValue))
+                        if (value.GetType().IsValueType)
                         {
-                            hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            if (!values[i].Equals(finalValue))
+                            {
+                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (values[i] != finalValue)
+                        else
                         {
-                            hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            if (values[i] != finalValue)
+                            {
+                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            }
                         }
                     }
                 }
@@ -251,7 +249,6 @@ namespace uMod.Plugins
 
             float lastWarningAt;
             float now = Interface.uMod.Now;
-
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
             {
                 Plugin plugin = plugins[0];

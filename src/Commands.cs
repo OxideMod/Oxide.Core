@@ -14,7 +14,6 @@ namespace uMod
     {
         // Libraries and references
         internal static readonly Covalence Covalence = Interface.uMod.GetLibrary<Covalence>();
-
         internal readonly Lang lang = Interface.uMod.GetLibrary<Lang>();
         internal readonly Permission permission = Interface.uMod.GetLibrary<Permission>();
         internal readonly PluginManager pluginManager = Interface.uMod.RootPluginManager;
