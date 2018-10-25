@@ -455,16 +455,19 @@ namespace uMod.Plugins
         /// <param name="timeStamp"></param>
         protected void LogToFile(string filename, string text, Plugin plugin, bool timeStamp = true)
         {
-            string path = Path.Combine(Interface.uMod.LogDirectory, plugin.Name);
-            if (!Directory.Exists(path))
+            if (Interface.uMod.Config.Options.Logging)
             {
-                Directory.CreateDirectory(path);
-            }
+                string path = Path.Combine(Interface.uMod.LogDirectory, plugin.Name);
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
 
-            filename = $"{plugin.Name.ToLower()}_{filename.ToLower()}{(timeStamp ? $"-{DateTime.Now:yyyy-MM-dd}" : "")}.txt";
-            using (StreamWriter writer = new StreamWriter(Path.Combine(path, Utility.CleanPath(filename)), true))
-            {
-                writer.WriteLine(text); // TODO: Cache/queue and write at internals instead of instantly
+                filename = $"{plugin.Name.ToLower()}_{filename.ToLower()}{(timeStamp ? $"-{DateTime.Now:yyyy-MM-dd}" : "")}.txt";
+                using (StreamWriter writer = new StreamWriter(Path.Combine(path, Utility.CleanPath(filename)), true))
+                {
+                    writer.WriteLine(text); // TODO: Cache/queue and write at internals instead of instantly
+                }
             }
         }
 

@@ -16,6 +16,7 @@ namespace uMod.Configuration
         /// </summary>
         public class uModOptions
         {
+            public bool Logging;
             public bool Modded;
             public bool PluginWatchers;
             public string[] PluginDirectories;
@@ -108,6 +109,7 @@ namespace uMod.Configuration
         {
             Options = new uModOptions
             {
+                Logging = true,
                 Modded = true,
                 PluginWatchers = true,
                 PluginDirectories = new[] { "universal" },
