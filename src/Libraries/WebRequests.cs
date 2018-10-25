@@ -203,6 +203,14 @@ namespace uMod.Libraries
                     chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(cert.GetRawCertData()));
                 }
 
+                // Blindly accept ECDSA as they aren't able to be validated yet
+                if (primaryCert.KeyAlgorithm == KeyAlgorithm.ECDsa || args.CertificateChain.Skip(1).Any(c => c.KeyAlgorithm == KeyAlgorithm.ECDsa))
+                {
+                    //Interface.uMod.LogWarning("Web request could not be completed as remote server certficiate only supports ECDSA");
+                    args.Accept(); // TODO: We really should be validating ALL... hopefully we can fix this soon
+                    return;
+                }
+
                 bool isValid = chain.Build(new X509Certificate2(primaryCert.GetRawCertData()));
                 if (isValid)
                 {
@@ -224,7 +232,7 @@ namespace uMod.Libraries
             {
                 try
                 {
-                    Rebex.Licensing.Key = "==AK4ZQM9XIXrOxx1g0w8/wp3N8IPaSSnVpzBb+hKjYrIk=="; // Expires: 11-5-18, TODO: Obfuscate production key
+                    Rebex.Licensing.Key = "==Afeyns36vcis9o4KOHrZ0ZnCmXanJ7AoMz8O6rpvR3oc=="; // Expires: 11-25-18, TODO: Obfuscate production key
 
                     // Override the web request creator
                     HttpRequestCreator creator = new HttpRequestCreator();
@@ -240,8 +248,8 @@ namespace uMod.Libraries
                     AsymmetricKeyAlgorithm.Register(Ed25519.Create);
 
                     // Override certificate validation (necessary for Mono)
-                    //creator.ValidatingCertificate += ValidatingCertificate; // TODO: Use this when ECDSA issue is resolved in dep update
-                    creator.ValidatingCertificate += (sender, args) => args.Accept();
+                    creator.ValidatingCertificate += ValidatingCertificate;
+                    //creator.ValidatingCertificate += (sender, args) => args.Accept();
 
                     // Create the web request
                     request = creator.Create(Url);

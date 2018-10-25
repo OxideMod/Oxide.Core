@@ -181,7 +181,7 @@ namespace uMod.Plugins
         {
             try
             {
-                Rebex.Licensing.Key = "==AK4ZQM9XIXrOxx1g0w8/wp3N8IPaSSnVpzBb+hKjYrIk=="; // Expires: 11-5-18, TODO: Obfuscate production key
+                Rebex.Licensing.Key = "==Afeyns36vcis9o4KOHrZ0ZnCmXanJ7AoMz8O6rpvR3oc=="; // Expires: 11-25-18, TODO: Obfuscate production key
 
                 // Override the web request creator
                 HttpRequestCreator creator = new HttpRequestCreator();
