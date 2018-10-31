@@ -523,10 +523,12 @@ namespace uMod
                 }
 
                 plugin.IsLoaded = true;
-                LogInfo("Loaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
+                if (!plugin.IsCorePlugin)
+                {
+                    LogInfo($"Loaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}");
+                    CallHook("OnPluginLoaded", plugin); // Let plugins know
+                }
 
-                // Let plugins know
-                CallHook("OnPluginLoaded", plugin);
                 return true;
             }
             catch (Exception ex)
@@ -557,14 +559,13 @@ namespace uMod
                 // Unload the plugin
                 RootPluginManager.RemovePlugin(plugin);
 
-                // Let plugins know
-                if (plugin.IsLoaded)
+                if (plugin.IsLoaded && !plugin.IsCorePlugin)
                 {
-                    CallHook("OnPluginUnloaded", plugin);
+                    LogInfo($"Unloaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}");
+                    CallHook("OnPluginUnloaded", plugin); // Let plugins know
                 }
-
                 plugin.IsLoaded = false;
-                LogInfo("Unloaded plugin {0} v{1} by {2}", plugin.Title, plugin.Version, plugin.Author);
+
                 return true;
             }
 
