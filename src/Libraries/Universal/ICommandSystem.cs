@@ -1,6 +1,6 @@
 ﻿using uMod.Plugins;
 
-namespace uMod.Libraries
+namespace uMod.Libraries.Universal
 {
     /// <summary>
     /// Represents a source of commands

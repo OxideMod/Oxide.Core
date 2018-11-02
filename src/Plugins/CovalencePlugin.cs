@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Reflection;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 
 namespace uMod.Plugins
 {
     /// <summary>
-    /// Indicates that the specified method should be a handler for a covalence command
+    /// Indicates that the specified method should be a handler for a universal command
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
     public class CommandAttribute : Attribute
@@ -32,13 +33,13 @@ namespace uMod.Plugins
         }
     }
 
-    public class CovalencePlugin : CSharpPlugin
+    public class UniversalPlugin : CSharpPlugin
     {
-        private new static readonly Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+        private new static readonly Universal universal = Interface.uMod.GetLibrary<Universal>();
 
-        protected string game = covalence.Game;
-        protected IPlayerManager players = covalence.Players;
-        protected IServer server = covalence.Server;
+        protected string game = universal.Game;
+        protected IPlayerManager players = universal.Players;
+        protected IServer server = universal.Server;
 
         /// <summary>
         /// Print an info message using the uMod root logger
@@ -86,7 +87,7 @@ namespace uMod.Plugins
                     PermissionAttribute perm = permissionAttribute.Length <= 0 ? null : permissionAttribute[0] as PermissionAttribute;
                     if (cmd != null)
                     {
-                        AddCovalenceCommand(cmd.Commands, perm?.Permission, (caller, command, args) =>
+                        AddUniversalCommand(cmd.Commands, perm?.Permission, (caller, command, args) =>
                         {
                             CallHook(method.Name, caller, command, args);
                             return true;

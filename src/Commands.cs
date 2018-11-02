@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 using uMod.Plugins;
 
 namespace uMod
@@ -12,7 +13,7 @@ namespace uMod
     public class Commands
     {
         // Libraries and references
-        internal static readonly Covalence Covalence = Interface.uMod.GetLibrary<Covalence>();
+        internal static readonly Universal universal = Interface.uMod.GetLibrary<Universal>();
         internal readonly Lang lang = Interface.uMod.GetLibrary<Lang>();
         internal readonly Permission permission = Interface.uMod.GetLibrary<Permission>();
         internal readonly PluginManager pluginManager = Interface.uMod.RootPluginManager;
@@ -67,7 +68,7 @@ namespace uMod
             }
             else if (mode.Equals("user"))
             {
-                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                IPlayer[] foundPlayers = universal.Players.FindPlayers(name).ToArray();
                 if (foundPlayers.Length > 1)
                 {
                     player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
@@ -406,7 +407,7 @@ namespace uMod
             }
             else if (mode.Equals("user"))
             {
-                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                IPlayer[] foundPlayers = universal.Players.FindPlayers(name).ToArray();
                 if (foundPlayers.Length > 1)
                 {
                     player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
@@ -503,7 +504,7 @@ namespace uMod
                     return;
                 }
 
-                IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+                IPlayer[] foundPlayers = universal.Players.FindPlayers(name).ToArray();
                 if (foundPlayers.Length > 1)
                 {
                     player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
@@ -635,7 +636,7 @@ namespace uMod
             string name = args[1].Sanitize();
             string group = args[2];
 
-            IPlayer[] foundPlayers = Covalence.Players.FindPlayers(name).ToArray();
+            IPlayer[] foundPlayers = universal.Players.FindPlayers(name).ToArray();
             if (foundPlayers.Length > 1)
             {
                 player.Reply(string.Format(lang.GetMessage("PlayersFound", null, player.Id), string.Join(", ", foundPlayers.Select(p => p.Name).ToArray())));
@@ -702,8 +703,8 @@ namespace uMod
             }
             else
             {
-                string format = Covalence.FormatText(lang.GetMessage("Version", null, player.Id));
-                player.Reply(string.Format(format, uMod.Version, Covalence.Game, Covalence.Server.Version, Covalence.Server.Protocol));
+                string format = universal.FormatText(lang.GetMessage("Version", null, player.Id));
+                player.Reply(string.Format(format, uMod.Version, universal.Game, universal.Server.Version, universal.Server.Protocol));
             }
         }
 
@@ -716,7 +717,7 @@ namespace uMod
             //if (PermissionsLoaded(player) && player.IsAdmin)
             {
                 Interface.uMod.OnSave();
-                //Covalence.Players.SavePlayerData();
+                //Universal.Players.SavePlayerData();
                 player.Reply(lang.GetMessage("DataSaved", null, player.Id));
             }
         }
