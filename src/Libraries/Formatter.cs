@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace uMod.Libraries.Covalence
+namespace uMod.Libraries
 {
     public class Element
     {

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using uMod.Libraries;
-using uMod.Libraries.Covalence;
 using uMod.Plugins;
 
 namespace uMod

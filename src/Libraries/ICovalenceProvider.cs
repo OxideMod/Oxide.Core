@@ -1,4 +1,4 @@
-﻿namespace uMod.Libraries.Covalence
+﻿namespace uMod.Libraries
 {
     /// <summary>
     /// Specifies a provider for core game-specific covalence functionality

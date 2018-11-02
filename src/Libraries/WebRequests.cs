@@ -56,7 +56,7 @@ namespace uMod.Libraries
     /// </summary>
     public class WebRequests : Library
     {
-        private static readonly Covalence.Covalence covalence = Interface.uMod.GetLibrary<Covalence.Covalence>();
+        private static readonly Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
 
         private readonly AutoResetEvent workevent = new AutoResetEvent(false);
         private readonly Queue<WebRequest> queue = new Queue<WebRequest>();

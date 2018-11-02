@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace uMod.Libraries.Covalence
+namespace uMod.Libraries
 {
     /// <summary>
     /// Represents a generic chat command handler

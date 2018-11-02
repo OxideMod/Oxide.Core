@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using uMod.Libraries;
-using uMod.Libraries.Covalence;
 using uMod.Plugins;
 
 namespace uMod

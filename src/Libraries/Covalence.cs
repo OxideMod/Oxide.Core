@@ -6,7 +6,7 @@ using System.Text;
 using uMod.Logging;
 using uMod.Plugins;
 
-namespace uMod.Libraries.Covalence
+namespace uMod.Libraries
 {
     /// <summary>
     /// The Covalence library
