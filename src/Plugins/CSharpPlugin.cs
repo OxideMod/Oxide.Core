@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins
@@ -198,10 +199,10 @@ namespace uMod.Plugins
 
         public FSWatcher Watcher;
 
-        protected Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
-        protected Libraries.Lang lang = Interface.uMod.GetLibrary<Libraries.Lang>();
-        protected Libraries.Permission permission = Interface.uMod.GetLibrary<Libraries.Permission>();
-        protected Libraries.WebRequests webrequest = Interface.uMod.GetLibrary<Libraries.WebRequests>();
+        protected Universal universal = Interface.uMod.GetLibrary<Universal>();
+        protected Lang lang = Interface.uMod.GetLibrary<Lang>();
+        protected Permission permission = Interface.uMod.GetLibrary<Permission>();
+        protected WebRequests webrequest = Interface.uMod.GetLibrary<WebRequests>();
         protected PluginTimers timer;
 
         protected HashSet<PluginFieldInfo> onlinePlayerFields = new HashSet<PluginFieldInfo>();

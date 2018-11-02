@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using uMod.Libraries;
+using uMod.Libraries.Universal;
 
 namespace uMod
 {

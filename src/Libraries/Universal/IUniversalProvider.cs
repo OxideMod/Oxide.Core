@@ -1,9 +1,9 @@
-﻿namespace uMod.Libraries
+﻿namespace uMod.Libraries.Universal
 {
     /// <summary>
-    /// Specifies a provider for core game-specific covalence functionality
+    /// Specifies a provider for core game-specific universal functionality
     /// </summary>
-    public interface ICovalenceProvider
+    public interface IUniversalProvider
     {
         /// <summary>
         /// Gets the name of the game

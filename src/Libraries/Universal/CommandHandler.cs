@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using uMod.Libraries.Universal;
 
 namespace uMod.Libraries
 {
@@ -9,7 +10,7 @@ namespace uMod.Libraries
     /// </summary>
     public sealed class CommandHandler
     {
-        // The Covalence command callback
+        // The universal command callback
         private CommandCallback callback;
 
         // The command filter

@@ -6,15 +6,15 @@ using System.Text;
 using uMod.Logging;
 using uMod.Plugins;
 
-namespace uMod.Libraries
+namespace uMod.Libraries.Universal
 {
     /// <summary>
-    /// The Covalence library
+    /// The Universal library
     /// </summary>
-    public class Covalence : Library
+    public class Universal : Library
     {
         private ICommandSystem cmdSystem;
-        private ICovalenceProvider provider;
+        private IUniversalProvider provider;
         private readonly Logger logger;
 
         /// <summary>
@@ -55,19 +55,19 @@ namespace uMod.Libraries
         public string FormatText(string text) => provider.FormatText(text);
 
         /// <summary>
-        /// Initializes a new instance of the Covalence class
+        /// Initializes a new instance of the Universal class
         /// </summary>
-        public Covalence()
+        public Universal()
         {
             logger = Interface.uMod.RootLogger;
         }
 
         /// <summary>
-        /// Initializes the Covalence library
+        /// Initializes the Universal library
         /// </summary>
         internal void Initialize()
         {
-            Type baseType = typeof(ICovalenceProvider);
+            Type baseType = typeof(IUniversalProvider);
             IEnumerable<Type> candidateSet = null;
             foreach (Assembly ass in AppDomain.CurrentDomain.GetAssemblies())
             {
@@ -82,7 +82,7 @@ namespace uMod.Libraries
                 }
                 catch (TypeLoadException tlEx)
                 {
-                    logger.Write(LogType.Warning, "Covalence: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
+                    logger.Write(LogType.Warning, "Universal: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
                 }
                 if (assTypes != null)
                 {
@@ -91,7 +91,7 @@ namespace uMod.Libraries
             }
             if (candidateSet == null)
             {
-                logger.Write(LogType.Warning, "Covalence not available yet for this game");
+                logger.Write(LogType.Warning, "Universal not available yet for this game");
                 return;
             }
 
@@ -99,7 +99,7 @@ namespace uMod.Libraries
             Type selectedCandidate;
             if (candidates.Count == 0)
             {
-                logger.Write(LogType.Warning, "Covalence not available yet for this game");
+                logger.Write(LogType.Warning, "Universal not available yet for this game");
                 return;
             }
 
@@ -116,7 +116,7 @@ namespace uMod.Libraries
 
                     sb.Append(candidates[i].FullName);
                 }
-                logger.Write(LogType.Warning, "Multiple Covalence providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
+                logger.Write(LogType.Warning, "Multiple Universal providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
             }
             else
             {
@@ -125,11 +125,11 @@ namespace uMod.Libraries
 
             try
             {
-                provider = (ICovalenceProvider)Activator.CreateInstance(selectedCandidate);
+                provider = (IUniversalProvider)Activator.CreateInstance(selectedCandidate);
             }
             catch (Exception ex)
             {
-                logger.Write(LogType.Warning, "Got exception when instantiating Covalence provider, Covalence will not be functional for this session.");
+                logger.Write(LogType.Warning, "Got exception when instantiating Universal provider, Universal will not be functional for this session.");
                 logger.Write(LogType.Warning, "{0}", ex);
                 return;
             }
@@ -138,7 +138,7 @@ namespace uMod.Libraries
             Players = provider.CreatePlayerManager();
             cmdSystem = provider.CreateCommandSystemProvider();
 
-            logger.Write(LogType.Info, "Using Covalence provider for game '{0}'", provider.GameName);
+            logger.Write(LogType.Info, "Using Universal provider for game '{0}'", provider.GameName);
         }
 
         /// <summary>

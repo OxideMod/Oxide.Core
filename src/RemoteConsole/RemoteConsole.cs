@@ -9,6 +9,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using uMod.Configuration;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 using uMod.Logging;
 
 namespace uMod.RemoteConsole
@@ -17,7 +18,7 @@ namespace uMod.RemoteConsole
     {
         #region Initialization
 
-        private readonly Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+        private readonly Universal universal = Interface.uMod.GetLibrary<Universal>();
         private readonly uModConfig.uModRcon config = Interface.uMod.Config.Rcon;
 
         private RconListener listener;
@@ -120,9 +121,9 @@ namespace uMod.RemoteConsole
         /// <param name="connection"></param>
         private void OnMessage(MessageEventArgs e, WebSocketContext connection)
         {
-            if (covalence == null)
+            if (universal == null)
             {
-                Interface.uMod.LogError("[Rcon] Failed to process command, Covalence is null");
+                Interface.uMod.LogError("[Rcon] Failed to process command, Universal is null");
                 return;
             }
 
@@ -146,7 +147,7 @@ namespace uMod.RemoteConsole
 
             if (Interface.CallHook("OnRconCommand", connection.UserEndPoint, command, args) == null)
             {
-                covalence.Server.Command(command, args);
+                universal.Server.Command(command, args);
             }
         }
 

@@ -56,7 +56,7 @@ namespace uMod.Libraries
     /// </summary>
     public class WebRequests : Library
     {
-        private static readonly Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+        private static readonly Universal.Universal universal = Interface.uMod.GetLibrary<Universal.Universal>();
 
         private readonly AutoResetEvent workevent = new AutoResetEvent(false);
         private readonly Queue<WebRequest> queue = new Queue<WebRequest>();
@@ -263,7 +263,7 @@ namespace uMod.Libraries
                     if (!request.RequestUri.IsLoopback)
                     {
                         // Assign server's assigned IP address, not primary network adapter address
-                        creator.SetSocketFactory(SimpleSocket.GetFactory(covalence.Server.LocalAddress ?? covalence.Server.Address));
+                        creator.SetSocketFactory(SimpleSocket.GetFactory(universal.Server.LocalAddress ?? universal.Server.Address));
                     }
 
                     // Optional request body for POST requests

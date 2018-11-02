@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using uMod.Configuration;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 
 namespace uMod.Plugins
 {
@@ -206,7 +207,7 @@ namespace uMod.Plugins
             }
 
             OnAddedToManager?.Invoke(this, manager);
-            RegisterWithCovalence();
+            RegisterWithUniversal();
         }
 
         /// <summary>
@@ -215,7 +216,7 @@ namespace uMod.Plugins
         /// <param name="manager"></param>
         public virtual void HandleRemovedFromManager(PluginManager manager)
         {
-            UnregisterWithCovalence();
+            UnregisterWithUniversal();
             if (Manager == manager)
             {
                 Manager = null;
@@ -410,40 +411,40 @@ namespace uMod.Plugins
 
         #endregion Lang
 
-        #region Covalence
+        #region Universal
 
-        public void AddCovalenceCommand(string command, string callback, string perm = null)
+        public void AddUniversalCommand(string command, string callback, string perm = null)
         {
-            AddCovalenceCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+            AddUniversalCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
         }
 
-        public void AddCovalenceCommand(string[] commands, string callback, string perm)
+        public void AddUniversalCommand(string[] commands, string callback, string perm)
         {
-            AddCovalenceCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+            AddUniversalCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
         }
 
-        public void AddCovalenceCommand(string[] commands, string callback, string[] perms = null)
+        public void AddUniversalCommand(string[] commands, string callback, string[] perms = null)
         {
-            AddCovalenceCommand(commands, perms, (caller, command, args) =>
+            AddUniversalCommand(commands, perms, (caller, command, args) =>
             {
                 CallHook(callback, caller, command, args);
                 return true;
             });
 
-            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+            Universal universal = Interface.uMod.GetLibrary<Universal>();
             foreach (string command in commands)
             {
-                covalence.RegisterCommand(command, this, CovalenceCommandCallback);
+                universal.RegisterCommand(command, this, UniversalCommandCallback);
             }
         }
 
-        protected void AddCovalenceCommand(string[] commands, string[] perms, CommandCallback callback)
+        protected void AddUniversalCommand(string[] commands, string[] perms, CommandCallback callback)
         {
             foreach (string cmdName in commands)
             {
                 if (commandInfos.ContainsKey(cmdName.ToLowerInvariant()))
                 {
-                    Interface.uMod.LogWarning("Covalence command alias already exists: {0}", cmdName);
+                    Interface.uMod.LogWarning("Universal command alias already exists: {0}", cmdName);
                     continue;
                 }
 
@@ -462,23 +463,23 @@ namespace uMod.Plugins
             }
         }
 
-        private void RegisterWithCovalence()
+        private void RegisterWithUniversal()
         {
-            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+            Universal universal = Interface.uMod.GetLibrary<Universal>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
-                covalence.RegisterCommand(pair.Key, this, CovalenceCommandCallback);
+                universal.RegisterCommand(pair.Key, this, UniversalCommandCallback);
             }
         }
 
-        private bool CovalenceCommandCallback(IPlayer caller, string cmd, string[] args)
+        private bool UniversalCommandCallback(IPlayer caller, string cmd, string[] args)
         {
             CommandInfo cmdInfo;
             if (commandInfos.TryGetValue(cmd, out cmdInfo))
             {
                 if (caller == null)
                 {
-                    Interface.uMod.LogWarning("Plugin.CovalenceCommandCallback received null as the caller (bad game Covalence bindings?)");
+                    Interface.uMod.LogWarning("Plugin.UniversalCommandCallback received null as the caller (bad game Universal bindings?)");
                     return false;
                 }
 
@@ -501,15 +502,15 @@ namespace uMod.Plugins
             return false;
         }
 
-        private void UnregisterWithCovalence()
+        private void UnregisterWithUniversal()
         {
-            Covalence covalence = Interface.uMod.GetLibrary<Covalence>();
+            Universal universal = Interface.uMod.GetLibrary<Universal>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
-                covalence.UnregisterCommand(pair.Key, this);
+                universal.UnregisterCommand(pair.Key, this);
             }
         }
 
-        #endregion Covalence
+        #endregion Universal
     }
 }

@@ -13,6 +13,7 @@ using System.Threading;
 using uMod.Configuration;
 using uMod.Extensions;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 using uMod.Logging;
 using uMod.Plugins;
 using uMod.Plugins.Watchers;
@@ -86,7 +87,7 @@ namespace uMod
         private CSharpPluginLoader coreLoader;
 
         // Various libraries
-        private Covalence covalence;
+        private Universal universal;
         private Permission libperm;
         private Timer libtimer;
 
@@ -257,7 +258,7 @@ namespace uMod
             }
 
             // Register libraries (these are going to get replaced soon)
-            extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
+            extensionManager.RegisterLibrary("Universal", universal = new Universal());
             extensionManager.RegisterLibrary("Lang", new Lang());
             extensionManager.RegisterLibrary("Permission", libperm = new Permission());
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
@@ -269,7 +270,7 @@ namespace uMod
 
             // Run cleanup of old files and initialize universal API
             Cleanup.Run();
-            covalence.Initialize();
+            universal.Initialize();
 
             // Initialize custom console
             RemoteConsole = new RemoteConsole.RemoteConsole();

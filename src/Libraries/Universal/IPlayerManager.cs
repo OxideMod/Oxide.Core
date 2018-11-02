@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace uMod.Libraries
+namespace uMod.Libraries.Universal
 {
     /// <summary>
     /// Represents a generic player manager

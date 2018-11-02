@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace uMod.Libraries
+namespace uMod.Libraries.Universal
 {
     /// <summary>
     /// Represents a generic player within a game, either connected or not

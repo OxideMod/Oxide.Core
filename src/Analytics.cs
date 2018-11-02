@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using uMod.Libraries;
+using uMod.Libraries.Universal;
 using uMod.Plugins;
 
 namespace uMod
@@ -9,7 +10,7 @@ namespace uMod
     {
         private static readonly WebRequests Webrequests = Interface.uMod.GetLibrary<WebRequests>();
         private static readonly PluginManager PluginManager = Interface.uMod.RootPluginManager;
-        private static readonly Covalence Covalence = Interface.uMod.GetLibrary<Covalence>();
+        private static readonly Universal Universal = Interface.uMod.GetLibrary<Universal>();
         private static readonly Lang Lang = Interface.uMod.GetLibrary<Lang>();
 
         private const string trackingId = "UA-48448359-3";
@@ -31,11 +32,11 @@ namespace uMod
             { "dimension6", string.Join(", ", PluginNames().ToArray()) } // Plugin names
         };*/
 
-        private static readonly string Identifier = $"{Covalence.Server.Address}:{Covalence.Server.Port}";
+        private static readonly string Identifier = $"{Universal.Server.Address}:{Universal.Server.Port}";
 
         public static void Collect()
         {
-            string payload = $"v=1&tid={trackingId}&cid={Identifier}&t=screenview&cd={Covalence.Game}+{Covalence.Server.Version}";
+            string payload = $"v=1&tid={trackingId}&cid={Identifier}&t=screenview&cd={Universal.Game}+{Universal.Server.Version}";
             payload += $"&an=uMod&av={uMod.Version}&ul={Lang.GetServerLanguage()}";
             //payload += string.Join("&", Tags.Select(kv => kv.Key + "=" + kv.Value).ToArray());
             SendPayload(payload);
