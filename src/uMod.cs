@@ -28,7 +28,11 @@ namespace uMod
     /// </summary>
     public sealed class uMod
     {
+        // Get assembly info
+        internal static Assembly Assembly = Assembly.GetExecutingAssembly();
+        internal static AssemblyName AssemblyName = Assembly.GetName();
         internal static readonly Version AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        internal static string AssemblyAuthors = ((AssemblyCompanyAttribute)Attribute.GetCustomAttribute(Assembly, typeof(AssemblyCompanyAttribute), false)).Company;
 
         /// <summary>
         /// The current uMod version
@@ -122,7 +126,7 @@ namespace uMod
             }
             if (RootDirectory == null)
             {
-                throw new Exception("Could not identify root directory");
+                throw new Exception("Could not identify root directory"); // TODO: Localization
             }
 
             // Set the instance directory, where uMod content will be
@@ -149,7 +153,7 @@ namespace uMod
                 if (string.IsNullOrEmpty(instanceDirectory) && CommandLine.HasVariable("oxide.directory"))
                 {
                     CommandLine.GetArgument("oxide.directory", out instanceDirectory, out format);
-                    LogWarning("oxide.directory in command-line is deprecated, please use umod.directory instead");
+                    LogWarning("oxide.directory in command-line is deprecated, please use umod.directory instead"); // TODO: Localization
                 }
 
                 if (string.IsNullOrEmpty(instanceDirectory) || CommandLine.HasVariable(instanceDirectory))
@@ -162,7 +166,7 @@ namespace uMod
             ExtensionDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (ExtensionDirectory == null || !Directory.Exists(ExtensionDirectory))
             {
-                throw new Exception("Could not identify extension directory");
+                throw new Exception("Could not identify extension directory"); // TODO: Localization
             }
             if (!Directory.Exists(InstanceDirectory))
             {
@@ -231,11 +235,11 @@ namespace uMod
             if (CommandLine.HasVariable("nolog"))
             {
                 Config.Options.Logging = false;
-                LogWarning("Usage of the 'nolog' variable will prevent logging");
+                LogWarning("Usage of the 'nolog' variable will prevent logging"); // TODO: Localization
             }
 
             // Setup core managers and data file system
-            LogInfo($"Loading uMod v{Version}...");
+            LogInfo($"Loading uMod v{Version}..."); // TODO: Localization
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
             extensionManager = new ExtensionManager(RootLogger);
             DataFileSystem = new DataFileSystem(DataDirectory);
@@ -254,14 +258,13 @@ namespace uMod
 
             // Register libraries (these are going to get replaced soon)
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
-            extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
             extensionManager.RegisterLibrary("Permission", libperm = new Permission());
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
             extensionManager.RegisterLibrary("WebRequests", new WebRequests());
 
             // Load all extensions
-            LogInfo("Loading extensions...");
+            LogInfo("Loading extensions..."); // TODO: Localization
             extensionManager.LoadAllExtensions(ExtensionDirectory);
 
             // Run cleanup of old files and initialize universal API
@@ -278,7 +281,7 @@ namespace uMod
                 timer = new Stopwatch();
                 timer.Start();
                 getTimeSinceStartup = () => (float)timer.Elapsed.TotalSeconds;
-                LogWarning("A reliable clock is not available, falling back to a clock which may be unreliable on certain hardware");
+                LogWarning("A reliable clock is not available, falling back to a clock which may be unreliable on certain hardware"); // TODO: Localization
             }
 
             // Register .cs plugin watcher
@@ -297,7 +300,7 @@ namespace uMod
             }
 
             // Load all plugins
-            LogInfo("Loading plugins...");
+            LogInfo("Loading plugins..."); // TODO: Localization
             LoadAllPlugins(true);
 
             // Setup events for all plugin changes watchers
@@ -396,7 +399,7 @@ namespace uMod
                         }
                         catch (Exception ex)
                         {
-                            LogException($"Could not load core plugin {type.Name}", ex);
+                            LogException($"Could not load core plugin {type.Name}", ex); // TODO: Localization
                         }
                     }
                 }
@@ -469,13 +472,13 @@ namespace uMod
             if (loaders.Count == 0)
             {
                 // TODO: Fix symlinked plugins unloaded still triggering this
-                LogError($"Could not load plugin '{name}' (no plugin found with that file name)");
+                LogError($"Could not load plugin '{name}' (no plugin found with that file name)"); // TODO: Localization
                 return false;
             }
 
             if (loaders.Count > 1)
             {
-                LogError($"Could not load plugin '{name}' (multiple plugin with that name)");
+                LogError($"Could not load plugin '{name}' (multiple plugin with that name)"); // TODO: Localization
                 return false;
             }
 
@@ -500,7 +503,7 @@ namespace uMod
             }
             catch (Exception ex)
             {
-                LogException($"Could not load plugin {name}", ex);
+                LogException($"Could not load plugin {name}", ex); // TODO: Localization
                 return false;
             }
         }
@@ -524,7 +527,7 @@ namespace uMod
                 plugin.IsLoaded = true;
                 if (!plugin.IsCorePlugin)
                 {
-                    LogInfo($"Loaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}");
+                    LogInfo($"Loaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}"); // TODO: Localization
                     CallHook("OnPluginLoaded", plugin); // Let plugins know
                 }
 
@@ -537,7 +540,7 @@ namespace uMod
                     plugin.Loader.PluginErrors[plugin.Name] = ex.Message;
                 }
 
-                LogException($"Could not initialize plugin '{plugin.Name} v{plugin.Version}'", ex);
+                LogException($"Could not initialize plugin '{plugin.Name} v{plugin.Version}'", ex); // TODO: Localization
                 return false;
             }
         }
@@ -560,7 +563,7 @@ namespace uMod
 
                 if (plugin.IsLoaded && !plugin.IsCorePlugin)
                 {
-                    LogInfo($"Unloaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}");
+                    LogInfo($"Unloaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}"); // TODO: Localization
                     CallHook("OnPluginUnloaded", plugin); // Let plugins know
                 }
                 plugin.IsLoaded = false;
@@ -732,7 +735,7 @@ namespace uMod
                     }
                     catch (Exception ex)
                     {
-                        LogException("Exception while calling NextTick callback", ex);
+                        LogException("Exception while calling NextTick callback", ex); // TODO: Localization
                     }
                 }
                 queued.Clear();
@@ -753,7 +756,7 @@ namespace uMod
                 }
                 catch (Exception ex)
                 {
-                    LogException($"{ex.GetType().Name} while invoke OnFrame in extensions", ex);
+                    LogException($"{ex.GetType().Name} while invoke OnFrame in extensions", ex); // TODO: Localization
                 }
 
                 // Call OnFrame hook in plugins
