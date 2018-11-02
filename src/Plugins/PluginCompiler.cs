@@ -155,7 +155,7 @@ namespace uMod.Plugins
 
                 if (downloadRetries >= 3)
                 {
-                    Interface.uMod.LogInfo($"Couldn't download {FileName}! Please download manually from: https://github.com/theumod/cmpiler/releases/download/latest/{FileName}");
+                    Interface.uMod.LogInfo($"Couldn't download {FileName}! Please download manually from: https://github.com/theumod/Compiler/releases/download/latest/{FileName}");
                     return;
                 }
 
@@ -172,7 +172,7 @@ namespace uMod.Plugins
             }
             catch (Exception ex)
             {
-                Interface.uMod.LogError($"Couldn't download {FileName}! Please download manually from: https://github.com/theumod/compiler/releases/download/latest/{FileName}");
+                Interface.uMod.LogError($"Couldn't download {FileName}! Please download manually from: https://github.com/theumod/Compiler/releases/download/latest/{FileName}");
                 Interface.uMod.LogError(ex.Message);
             }
         }
@@ -201,7 +201,7 @@ namespace uMod.Plugins
                 creator.ValidatingCertificate += (sender, args) => args.Accept();
 
                 // Create the web request
-                HttpRequest request = creator.Create($"https://github.com/theumod/compiler/releases/download/latest/{FileName}");
+                HttpRequest request = creator.Create($"https://github.com/theumod/Compiler/releases/download/latest/{FileName}");
 
                 string filePath = Path.Combine(Interface.uMod.RootDirectory, FileName);
                 HttpResponse response = (HttpResponse)request.GetResponse();
