@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Net;
 
-namespace uMod.Libraries.Covalence
+namespace uMod.Libraries
 {
     /// <summary>
     /// Represents a generic server hosting the game instance

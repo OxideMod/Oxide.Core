@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using uMod.Configuration;
 using uMod.Libraries;
-using uMod.Libraries.Covalence;
 
 namespace uMod.Plugins
 {

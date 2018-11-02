@@ -13,7 +13,6 @@ using System.Threading;
 using uMod.Configuration;
 using uMod.Extensions;
 using uMod.Libraries;
-using uMod.Libraries.Covalence;
 using uMod.Logging;
 using uMod.Plugins;
 using uMod.Plugins.Watchers;

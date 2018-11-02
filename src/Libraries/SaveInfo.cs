@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace uMod.Libraries.Covalence
+namespace uMod.Libraries
 {
     public class SaveInfo
     {

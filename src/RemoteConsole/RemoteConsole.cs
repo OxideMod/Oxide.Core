@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using uMod.Configuration;
-using uMod.Libraries.Covalence;
+using uMod.Libraries;
 using uMod.Logging;
 
 namespace uMod.RemoteConsole

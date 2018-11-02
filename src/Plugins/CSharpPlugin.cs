@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using uMod.Libraries.Covalence;
+using uMod.Libraries;
 using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins

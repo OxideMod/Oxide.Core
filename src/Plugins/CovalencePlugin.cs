@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using uMod.Libraries.Covalence;
+using uMod.Libraries;
 
 namespace uMod.Plugins
 {
