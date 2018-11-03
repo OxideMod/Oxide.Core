@@ -526,6 +526,7 @@ namespace uMod
                 }
 
                 plugin.IsLoaded = true;
+                plugin.TimeLoaded = DateTime.Now;
                 if (!plugin.IsCorePlugin)
                 {
                     LogInfo($"Loaded plugin {plugin.Title} v{plugin.Version} by {plugin.Author}"); // TODO: Localization

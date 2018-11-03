@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using uMod.Libraries;
 using uMod.Libraries.Universal;
 using uMod.Plugins;
+using uMod.Utilities;
 
 namespace uMod
 {
@@ -312,19 +314,22 @@ namespace uMod
                 return;
             }
 
-            string output = $"Listing {loadedPlugins.Length + unloadedPluginErrors.Count} plugins:"; // TODO: Localization
+            FacePunchTextTable table = new FacePunchTextTable();
+            table.AppendLine($"Listing {loadedPlugins.Length + unloadedPluginErrors.Count} loaded plugins:"); // TODO: Localization
             int number = 1;
+            table.AddColumns("Index", "Plugin", "Version", "Author", "Hook Execution", "Time Loaded", "File Name / Error");
             foreach (Plugin plugin in loadedPlugins.Where(p => p.Filename != null))
             {
-                output += $"\n  {number++:00} \"{plugin.Title}\" ({plugin.Version}) by {plugin.Author} ({plugin.TotalHookTime:0.00}s) - {plugin.Filename.Basename()}";
+                var timeLoaded = DateTime.Now.Subtract(plugin.TimeLoaded);
+                table.AddRow(number++.ToString("00"), plugin.Title.ToString(), plugin.Version.ToString(), plugin.Author, $"{plugin.TotalHookTime:0.00}s", $"{(int)timeLoaded.TotalHours:00}:{timeLoaded.Minutes:00}", plugin.Filename.Basename());
             }
 
             foreach (string pluginName in unloadedPluginErrors.Keys)
             {
-                output += $"\n  {number++:00} {pluginName} - {unloadedPluginErrors[pluginName]}";
+                table.AppendLine($"{pluginName} - {unloadedPluginErrors[pluginName]}");
             }
 
-            player.Reply(output);
+            player.Reply(table.ToString());
         }
 
         #endregion Plugins Command

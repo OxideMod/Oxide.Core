@@ -131,6 +131,11 @@ namespace uMod.Plugins
         public bool IsLoaded { get; internal set; }
 
         /// <summary>
+        /// Store the time the plugin was loaded so we can calculate average hook execution time
+        /// </summary>
+        public DateTime TimeLoaded { get; internal set; }
+
+        /// <summary>
         /// Gets or sets the total hook time
         /// </summary>
         /// <value>The total hook time.</value>
