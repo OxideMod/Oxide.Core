@@ -175,10 +175,15 @@ namespace uMod.Libraries
                     request.Proxy = null; // Make sure no proxy is set
                     request.KeepAlive = false;
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? DefaultTimeout : Timeout) * 1000f);
-                    request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
+#if !NET35 && !NET40
+                    request.ServerCertificateValidationCallback = delegate { return true; };
+#else
+                    ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+#endif
+                    request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
 
                     // Exclude loopback requests and Linux from IP binding for now
                     if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
@@ -614,11 +619,6 @@ namespace uMod.Libraries
         /// </summary>
         public WebRequests()
         {
-            // Initialize SSL
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            ServicePointManager.DefaultConnectionLimit = 200;
-
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
             maxCompletionPortThreads = (int)(maxCompletionPortThreads * 0.6);
             maxWorkerThreads = (int)(maxWorkerThreads * 0.75);
