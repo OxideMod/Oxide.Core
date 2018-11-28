@@ -236,6 +236,9 @@ namespace uMod.Libraries
 
                     // Override the web request creator
                     HttpRequestCreator creator = new HttpRequestCreator();
+#if DEBUG
+                    creator.LogWriter = new Rebex.ConsoleLogWriter(Rebex.LogLevel.Verbose);
+#endif
                     creator.Register();
 
                     // Import NIST and Brainpool curves crypto
