@@ -178,11 +178,6 @@ namespace uMod.Libraries
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
-#if !NET35 && !NET40
-                    request.ServerCertificateValidationCallback = delegate { return true; };
-#else
-                    ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-#endif
                     request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
 
                     // Exclude loopback requests and Linux from IP binding for now
@@ -619,6 +614,9 @@ namespace uMod.Libraries
         /// </summary>
         public WebRequests()
         {
+            // Accept all SSL certificates for compiler and web request library (temporary)
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
             maxCompletionPortThreads = (int)(maxCompletionPortThreads * 0.6);
             maxWorkerThreads = (int)(maxWorkerThreads * 0.75);

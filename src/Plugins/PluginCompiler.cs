@@ -181,7 +181,6 @@ namespace uMod.Plugins
             {
                 // Create the web request
                 WebRequest request = WebRequest.Create($"https://nyc3.digitaloceanspaces.com/umod-01/{FileName}");
-                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
 
                 string filePath = Path.Combine(Interface.uMod.RootDirectory, FileName);
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
