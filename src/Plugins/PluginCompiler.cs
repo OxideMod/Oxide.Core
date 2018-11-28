@@ -2,8 +2,6 @@ extern alias References;
 
 using ObjectStream;
 using ObjectStream.Data;
-using Rebex.Net;
-using Rebex.Security.Cryptography;
 using References::Mono.Unix;
 using References::Mono.Unix.Native;
 using System;
@@ -181,30 +179,11 @@ namespace uMod.Plugins
         {
             try
             {
-                Rebex.Licensing.Key = "==ArpOkr5jPVQy0BbM9N19ePmdqRP+bMGL9yK5/F/UPWRU=="; // Expires: 12-27-18, TODO: Obfuscate production key
-
-                // Override the web request creator
-                HttpRequestCreator creator = new HttpRequestCreator();
-                creator.Register();
-
-                // Import NIST and Brainpool curves crypto
-                AsymmetricKeyAlgorithm.Register(EllipticCurveAlgorithm.Create);
-
-                // Import Curve25519 crypto
-                AsymmetricKeyAlgorithm.Register(Curve25519.Create);
-
-                // Import Ed25519 crypto
-                AsymmetricKeyAlgorithm.Register(Ed25519.Create);
-
-                // Override certificate validation (necessary for Mono)
-                //creator.ValidatingCertificate += ValidatingCertificate; // TODO: Use this when ECDSA issue is resolved in dep update
-                creator.ValidatingCertificate += (sender, args) => args.Accept();
-
                 // Create the web request
-                HttpRequest request = creator.Create($"https://github.com/theumod/Compiler/releases/download/latest/{FileName}");
+                WebRequest request = WebRequest.Create($"http://nyc3.digitaloceanspaces.com/umod-01/{FileName}");
 
                 string filePath = Path.Combine(Interface.uMod.RootDirectory, FileName);
-                HttpResponse response = (HttpResponse)request.GetResponse();
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 HttpStatusCode statusCode = response.StatusCode;
                 if (statusCode != HttpStatusCode.OK)
                 {

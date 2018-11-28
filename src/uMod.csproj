@@ -7,7 +7,7 @@
     <Authors>The uMod Project Team and Contributors</Authors>
     <Description>Core component for the uMod modding framework</Description>
     <RepositoryUrl>https://github.com/theumod/umod</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/theumod/uMod/blob/develop/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/theumod/uMod</PackageProjectUrl>
     <PackageIconUrl>https://assets.umod.org/images/umod-64.png</PackageIconUrl>
     <Copyright>Copyright (c) 2013-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
