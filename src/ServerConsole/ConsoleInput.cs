@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -200,16 +200,18 @@ namespace uMod.ServerConsole
                         }
                         if (lowestDiff > 0)
                         {
-                            inputString = results[0].Substring(0, lowestDiff);
+                            inputString = results[0].Substring(0, lowestDiff); // TODO: Fix ArgumentOutOfRangeException with single character input
                         }
 
                         RedrawInputLine();
                         return;
                     }
+
                     inputString = results[0];
                     RedrawInputLine();
                     return;
             }
+
             if (consoleKeyInfo.KeyChar == 0)
             {
                 return;

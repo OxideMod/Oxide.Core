@@ -224,7 +224,7 @@ namespace uMod.Plugins
             catch (Exception ex)
             {
                 Interface.uMod.LogError($"Couldn't check for update to {FileName}");
-                Interface.uMod.LogError(ex.Message);
+                Interface.uMod.LogError(ex.ToString());
             }
         }
 
@@ -235,7 +235,7 @@ namespace uMod.Plugins
         }
 
         private Process process;
-        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+)\(\d+\,\d+\+?\): error|error \w+: Source file `[\\\./]*([\w\.]+)", RegexOptions.Compiled);
+        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+)\(\d+\,\d+\+?\): error|error \w+: Source file `[\\\./]*([\w\.]+)");
         private ObjectStreamClient<CompilerMessage> client;
         private Hash<int, Compilation> compilations;
         private Queue<CompilerMessage> messageQueue;

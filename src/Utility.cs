@@ -11,8 +11,11 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+
 #if DEBUG
+
 using System.Text;
+
 #endif
 
 namespace uMod
@@ -38,6 +41,7 @@ namespace uMod
 
         public bool IsReadOnly => false;
         public int Count { get { lock (syncRoot) { return collection.Count; } } }
+
         public bool Contains(T value)
         {
             lock (syncRoot)
@@ -45,6 +49,7 @@ namespace uMod
                 return collection.Contains(value);
             }
         }
+
         public bool Add(T value)
         {
             lock (syncRoot)
@@ -52,6 +57,7 @@ namespace uMod
                 return collection.Add(value);
             }
         }
+
         public bool Remove(T value)
         {
             lock (syncRoot)
@@ -59,6 +65,7 @@ namespace uMod
                 return collection.Remove(value);
             }
         }
+
         public void Clear()
         {
             lock (syncRoot)
@@ -66,6 +73,7 @@ namespace uMod
                 collection.Clear();
             }
         }
+
         public void CopyTo(T[] array, int index)
         {
             lock (syncRoot)
@@ -73,7 +81,9 @@ namespace uMod
                 collection.CopyTo(array, index);
             }
         }
+
         public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
+
         public bool Any(Func<T, bool> callback)
         {
             lock (syncRoot)
@@ -81,6 +91,7 @@ namespace uMod
                 return collection.Any(callback);
             }
         }
+
         public T[] ToArray()
         {
             lock (syncRoot)
@@ -104,6 +115,7 @@ namespace uMod
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
         void ICollection<T>.Add(T value) => Add(value);
     }
 
@@ -158,14 +170,23 @@ namespace uMod
         public bool IsReadOnly => dictionary.IsReadOnly;
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => dictionary.GetEnumerator();
+
         public bool ContainsKey(TKey key) => dictionary.ContainsKey(key);
+
         public bool Contains(KeyValuePair<TKey, TValue> item) => dictionary.Contains(item);
+
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int index) => dictionary.CopyTo(array, index);
+
         public bool TryGetValue(TKey key, out TValue value) => dictionary.TryGetValue(key, out value);
+
         public void Add(TKey key, TValue value) => dictionary.Add(key, value);
+
         public void Add(KeyValuePair<TKey, TValue> item) => dictionary.Add(item);
+
         public bool Remove(TKey key) => dictionary.Remove(key);
+
         public bool Remove(KeyValuePair<TKey, TValue> item) => dictionary.Remove(item);
+
         public void Clear() => dictionary.Clear();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -288,7 +309,7 @@ namespace uMod
                         }
                 }
             }
-            End:
+        End:
             return value.Substring(firstIndex, lastIndex - firstIndex + 1);
         }
 
