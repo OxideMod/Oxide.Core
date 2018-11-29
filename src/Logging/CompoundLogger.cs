@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace uMod.Logging
 {
@@ -35,7 +36,7 @@ namespace uMod.Logging
             subLoggers.Add(logger);
 
             // Write the message cache to it
-            foreach (LogMessage message in messageCache)
+            foreach (LogMessage message in messageCache.ToList())
             {
                 logger.Write(message);
             }

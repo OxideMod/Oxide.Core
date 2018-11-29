@@ -78,12 +78,15 @@ namespace uMod.ServerConsole
 
         public void AddMessage(string message, ConsoleColor color = ConsoleColor.Gray)
         {
-            Console.ForegroundColor = color;
-            int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + (int)Math.Ceiling((double)line.Length / Console.BufferWidth));
-            input.ClearLine((Interface.uMod.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
-            Console.WriteLine(message);
-            input.RedrawInputLine();
-            Console.ForegroundColor = ConsoleColor.Gray;
+            if (Interface.uMod.ServerConsole != null)
+            {
+                Console.ForegroundColor = color;
+                int messageLength = message.Split('\n').Aggregate(0, (sum, line) => sum + (int)Math.Ceiling((double)line.Length / Console.BufferWidth));
+                input.ClearLine((Interface.uMod.Config.Console.ShowStatusBar ? input.StatusTextLeft.Length : 0) + messageLength);
+                Console.WriteLine(message);
+                input.RedrawInputLine();
+                Console.ForegroundColor = ConsoleColor.Gray;
+            }
         }
 
         public void OnDisable()
@@ -124,29 +127,26 @@ namespace uMod.ServerConsole
 
         public static void PrintColored(params object[] objects)
         {
-            if (Interface.uMod.ServerConsole == null)
+            if (Interface.uMod.ServerConsole != null)
             {
-                return;
-            }
-
-            Interface.uMod.ServerConsole.input.ClearLine(Interface.uMod.Config.Console.ShowStatusBar ? Interface.uMod.ServerConsole.input.StatusTextLeft.Length : 1);
-            for (int i = 0; i < objects.Length; i++)
-            {
-                if (i % 2 != 0)
+                Interface.uMod.ServerConsole.input.ClearLine(Interface.uMod.Config.Console.ShowStatusBar ? Interface.uMod.ServerConsole.input.StatusTextLeft.Length : 1);
+                for (int i = 0; i < objects.Length; i++)
                 {
-                    Console.Write((string)objects[i]);
+                    if (i % 2 != 0)
+                    {
+                        Console.Write((string)objects[i]);
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = (ConsoleColor)(int)objects[i];
+                    }
                 }
-                else
+                if (Console.CursorLeft != 0)
                 {
-                    Console.ForegroundColor = (ConsoleColor)(int)objects[i];
+                    Console.CursorTop = Console.CursorTop + 1;
                 }
+                Interface.uMod.ServerConsole.input.RedrawInputLine();
             }
-            if (Console.CursorLeft != 0)
-            {
-                Console.CursorTop = Console.CursorTop + 1;
-            }
-
-            Interface.uMod.ServerConsole.input.RedrawInputLine();
         }
 
         public void Update()

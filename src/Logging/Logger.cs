@@ -116,8 +116,8 @@ namespace uMod.Logging
                     break;
             }
 
-            Interface.uMod.ServerConsole.AddMessage(message, consoleColor);
-            Interface.uMod.RemoteConsole.SendMessage(new RemoteMessage
+            Interface.uMod.ServerConsole?.AddMessage(message, consoleColor);
+            Interface.uMod.RemoteConsole?.SendMessage(new RemoteMessage
             {
                 Message = message,
                 Identifier = -1,
