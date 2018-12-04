@@ -1,8 +1,12 @@
+extern alias References;
+
+using References::Newtonsoft.Json;
+using References::Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using uMod.Plugins;
@@ -87,14 +91,19 @@ namespace uMod.Libraries
             public Action<WebResponse> CallbackV2 { get; }
 
             /// <summary>
+            /// Gets or sets the web request synchronicity
+            /// </summary>
+            public bool Async { get; set; } = true;
+
+            /// <summary>
             /// Gets or sets the request timeout
             /// </summary>
-            public float Timeout { get; set; }
+            public float Timeout { get; set; } = DefaultTimeout;
 
             /// <summary>
             /// Gets or sets the web request method
             /// </summary>
-            public string Method { get; set; }
+            public string Method { get; set; } = "GET";
 
             /// <summary>
             /// Gets the destination URL
@@ -105,6 +114,11 @@ namespace uMod.Libraries
             /// Gets or sets the request body
             /// </summary>
             public string Body { get; set; }
+
+            /// <summary>
+            /// Gets or sets the request body
+            /// </summary>
+            public Dictionary<string, string> Cookies { get; set; }
 
             /// <summary>
             /// Gets the HTTP response code
@@ -131,9 +145,8 @@ namespace uMod.Libraries
             /// </summary>
             public Dictionary<string, string> RequestHeaders { get; set; }
 
-            private HttpWebRequest request;
-            private WaitHandle waitHandle;
-            private RegisteredWaitHandle registeredWaitHandle;
+            private Process process;
+
             private Event.Callback<Plugin, PluginManager> removedFromManager;
 
             /// <summary>
@@ -154,11 +167,69 @@ namespace uMod.Libraries
             /// Initializes a new instance of the WebRequest class
             /// </summary>
             /// <param name="url"></param>
-            /// <param name="owner"></param>
             /// <param name="callback"></param>
-            public WebRequest(string url, Plugin owner, Action<WebResponse> callback) : this(url, null, owner)
+            /// <param name="owner"></param>
+            public WebRequest(string url, Action<WebResponse> callback, Plugin owner)
             {
+                Url = url;
                 CallbackV2 = callback;
+                Owner = owner;
+                removedFromManager = Owner?.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
+            }
+
+            /// <summary>
+            /// Gets timeout and ensures it is valid
+            /// </summary>
+            /// <returns></returns>
+            private int GetTimeout()
+            {
+                return (int)Math.Round((Timeout.Equals(0f) ? DefaultTimeout : Timeout));
+            }
+
+            /// <summary>
+            /// Creates web client process
+            /// </summary>
+            /// <returns></returns>
+            protected Process CreateProcess()
+            {
+                IPAddress address = universal.Server.LocalAddress ?? universal.Server.Address;
+                string decompression = AllowDecompression ? "both" : "none";
+                int timeout = GetTimeout();
+
+                process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        WorkingDirectory = Interface.uMod.RootDirectory,
+                        FileName = Path.Combine(Interface.uMod.RootDirectory, "WebClient.exe"),
+                        Arguments = $"--method={Method} --url=\"{Url}\" --address=\"{address}\" --timeout={timeout} --decompression={decompression}",
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true
+                    }
+                };
+
+                if (RequestHeaders != null)
+                {
+                    foreach (KeyValuePair<string, string> kvp in RequestHeaders)
+                    {
+                        process.StartInfo.Arguments += $" --header=\"{kvp.Key}:{kvp.Value}\"";
+                    }
+                }
+                if (Cookies != null && Cookies.Count > 0)
+                {
+                    foreach (KeyValuePair<string, string> kvp in Cookies)
+                    {
+                        process.StartInfo.Arguments += $" --cookie=\"{kvp.Key}:{kvp.Value}\"";
+                    }
+                }
+                if (!string.IsNullOrEmpty(Body))
+                {
+                    process.StartInfo.Arguments += $" --body=\"{Body}\"";
+                }
+
+                return process;
             }
 
             /// <summary>
@@ -166,177 +237,108 @@ namespace uMod.Libraries
             /// </summary>
             public void Start()
             {
+#if !DEBUG
+                if (!Net.WebClient.IsHashValid())
+                {
+                    Interface.Oxide.LogError($"Secure web channel potentially compromised, cancelling web request {Url}");
+                    Interface.uMod.NextTick(Net.WebClient.CheckWebClientBinary);
+                    return;
+                }
+#endif
                 try
                 {
-                    // Create the web request
-                    request = (HttpWebRequest)System.Net.WebRequest.Create(Url);
-                    request.Method = Method;
-                    request.Credentials = CredentialCache.DefaultCredentials;
-                    request.Proxy = null; // Make sure no proxy is set
-                    request.KeepAlive = false;
-                    request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? DefaultTimeout : Timeout) * 1000f);
-                    request.ServicePoint.MaxIdleTime = request.Timeout;
-                    request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
-                    request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
-                    request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
-
-                    // Exclude loopback requests and Linux from IP binding for now
-                    if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
+                    using (process = CreateProcess())
                     {
-                        request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
+                        string errorText = null;
+                        string response = string.Empty;
+                        process.Start();
+                        while (true)
                         {
-                            // Try to assign server's assigned IP address, not primary network adapter address
-                            return new IPEndPoint(universal.Server.LocalAddress ?? universal.Server.Address, 0); // TODO: Figure out why this doesn't work on Linux
-                        };
-                    }
-
-                    // Optional request body for POST requests
-                    byte[] data = new byte[0];
-                    if (Body != null && !request.Method.Equals("HEAD"))
-                    {
-                        data = Encoding.UTF8.GetBytes(Body);
-                        request.ContentLength = data.Length;
-                        request.ContentType = "application/x-www-form-urlencoded";
-                    }
-
-                    if (RequestHeaders != null)
-                    {
-                        request.SetRawHeaders(RequestHeaders);
-                    }
-
-                    // Perform DNS lookup and connect (blocking)
-                    if (data.Length > 0)
-                    {
-                        request.BeginGetRequestStream(result =>
-                        {
-                            if (request != null)
+                            byte[] buffer = new byte[256];
+                            IAsyncResult result = process.StandardOutput.BaseStream.BeginRead(buffer, 0, 256, null, null);
+                            result.AsyncWaitHandle.WaitOne(1);
+                            int bytesRead = process.StandardOutput.BaseStream.EndRead(result);
+                            if (bytesRead > 0)
                             {
-                                try
-                                {
-                                    // Write request body
-                                    using (Stream stream = request.EndGetRequestStream(result))
-                                    {
-                                        stream.Write(data, 0, data.Length);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                                    if (Response == null)
-                                    {
-                                        Response = new WebResponse(ResponseText,
-                                            Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
-                                            (RequestMethod)Enum.Parse(typeof(RequestMethod), request.Method));
-                                    }
-
-                                    request?.Abort();
-                                    OnComplete();
-                                    return;
-                                }
-
-                                WaitForResponse();
+                                response += Encoding.ASCII.GetString(buffer, 0, bytesRead);
                             }
-                        }, null);
-                    }
-                    else
-                    {
-                        WaitForResponse();
+                            else
+                            {
+                                Abort();
+                                break;
+                            }
+                        }
+
+                        if (process.ExitCode == 0) // Success
+                        {
+                            if (string.IsNullOrEmpty(response))
+                            {
+                                ResponseText = errorText;
+                            }
+                            else
+                            {
+                                JObject jsonObject = JObject.Parse(response);
+                                Response = jsonObject.ToObject<WebResponse>();
+                                ResponseText = Response.ReadAsString();
+                                ResponseCode = Response.StatusCode;
+                            }
+                        }
+                        else
+                        {
+                            if (process.ExitCode == (int)WebExceptionStatus.Timeout)
+                            {
+                                OnTimeout();
+                            }
+                            string exceptionName = Enum.GetName(typeof(WebExceptionStatus), process.ExitCode);
+                            string message = $"Web request produced exception {exceptionName} (Url: {Url})";
+                            if (Owner)
+                            {
+                                message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                            }
+                            message += Environment.NewLine + response;
+                            Interface.Oxide.LogError(message);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                    string message = $"Web request produced exception (Url: {Url})";
+                    string message = $"Web client produced exception (Url: {Url})";
                     if (Owner)
                     {
                         message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                     }
-
-                    Interface.uMod.LogException(message, ex);
-
-                    if (Response == null)
-                    {
-                        Response = new WebResponse(ResponseText,
-                            Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
-                            (RequestMethod)Enum.Parse(typeof(RequestMethod), request.Method));
-                    }
-
-                    request?.Abort();
+                    message += Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace;
+                    Interface.Oxide.LogError(message);
+                }
+                finally
+                {
+                    Abort();
                     OnComplete();
                 }
             }
 
-            private void WaitForResponse()
+            private void Abort()
             {
-                IAsyncResult result = request.BeginGetResponse(res =>
+                if (process != null)
                 {
                     try
                     {
-                        using (HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(res))
+                        if (process.Handle != IntPtr.Zero && !process.HasExited)
                         {
-                            Response = new WebResponse(response, Owner);
-                            ResponseText = Response.ReadAsString();
-                            ResponseCode = Response.StatusCode;
+                            process.Kill();
+                            process = null;
                         }
                     }
-                    catch (WebException ex)
+                    catch (InvalidOperationException)
                     {
-                        ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                        HttpWebResponse response = ex.Response as HttpWebResponse;
-                        if (response != null)
-                        {
-                            try
-                            {
-                                Response = new WebResponse(response, Owner);
-                                ResponseCode = Response.StatusCode;
-                                ResponseText = Response.ReadAsString();
-                            }
-                            catch (Exception)
-                            {
-                                if (Response == null)
-                                {
-                                    Response = new WebResponse(ResponseText,
-                                        Uri.TryCreate(Url, UriKind.Absolute, out Uri uri) ? uri : null,
-                                        (RequestMethod)Enum.Parse(typeof(RequestMethod), Method));
-                                }
-                            }
-                        }
+                        process?.Dispose();
                     }
-                    catch (Exception ex)
-                    {
-                        ResponseText = FormatWebException(ex, ResponseText ?? string.Empty);
-                        string message = $"Web request produced exception (Url: {Url})";
-                        if (Owner)
-                        {
-                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
-                        }
-
-                        Interface.uMod.LogException(message, ex);
-                        if (Response == null)
-                        {
-                            Response = new WebResponse(ResponseText, Uri.TryCreate(Url,
-                                UriKind.Absolute, out Uri uri) ? uri : null,
-                                (RequestMethod)Enum.Parse(typeof(RequestMethod), Method));
-                        }
-                    }
-
-                    if (request != null)
-                    {
-                        request.Abort();
-                        OnComplete();
-                    }
-                }, null);
-
-                waitHandle = result.AsyncWaitHandle;
-                registeredWaitHandle = ThreadPool.RegisterWaitForSingleObject(waitHandle, OnTimeout, null, request.Timeout, true);
+                }
             }
 
-            private void OnTimeout(object state, bool timedOut)
+            private void OnTimeout()
             {
-                if (timedOut)
-                {
-                    request?.Abort();
-                }
+                Abort();
 
                 if (Owner != null)
                 {
@@ -348,32 +350,30 @@ namespace uMod.Libraries
             private void OnComplete()
             {
                 Event.Remove(ref removedFromManager);
-                registeredWaitHandle?.Unregister(waitHandle);
                 Interface.uMod.NextTick(() =>
                 {
-                    if (request != null)
+                    Owner?.TrackStart();
+                    try
                     {
-                        request = null;
-                        Owner?.TrackStart();
-                        try
+                        Callback?.Invoke(ResponseCode, ResponseText);
+
+                        if (Response != null)
                         {
-                            Callback?.Invoke(ResponseCode, ResponseText);
                             CallbackV2?.Invoke(Response);
                         }
-                        catch (Exception ex)
-                        {
-                            string message = "Web request callback raised an exception";
-                            if (Owner && Owner != null)
-                            {
-                                message += $" in '{Owner.Name} v{Owner.Version}' plugin";
-                            }
-
-                            Interface.uMod.LogException(message, ex);
-                        }
-
-                        Owner?.TrackEnd();
-                        Owner = null;
                     }
+                    catch (Exception ex)
+                    {
+                        string message = "Web request callback raised an exception";
+                        if (Owner && Owner != null)
+                        {
+                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
+                        }
+                        Interface.Oxide.LogException(message, ex);
+                    }
+
+                    Owner?.TrackEnd();
+                    Owner = null;
                 });
             }
 
@@ -384,12 +384,7 @@ namespace uMod.Libraries
             /// <param name="manager"></param>
             private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager)
             {
-                if (request != null)
-                {
-                    HttpWebRequest outstandingRequest = request;
-                    request = null;
-                    outstandingRequest.Abort();
-                }
+                Abort();
             }
         }
 
@@ -398,161 +393,71 @@ namespace uMod.Libraries
         /// </summary>
         public class WebResponse : IDisposable
         {
-            // Holds the response data if any
-            private MemoryStream responseStream;
-
             /// <summary>
             /// The Headers from the response
             /// </summary>
+            [JsonProperty("Headers")]
             public IDictionary<string, string> Headers { get; protected set; }
 
             /// <summary>
             /// The Content-Length returned from the response
             /// </summary>
-            public virtual long ContentLength => responseStream?.Length ?? 0;
+            [JsonProperty("ContentLength")]
+            public virtual long ContentLength { get; protected set; }
 
             /// <summary>
             /// Content-Type set by the Content-Type Header of the response
             /// </summary>
+            [JsonProperty("ContentType")]
             public string ContentType { get; protected set; }
 
             /// <summary>
             /// Gets the Content-Encoding from the response
             /// </summary>
+            [JsonProperty("ContentEncoding")]
             public string ContentEncoding { get; protected set; }
 
             /// <summary>
             /// Gets the status code returned from the responding server
             /// </summary>
+            [JsonProperty("StatusCode")]
             public int StatusCode { get; protected set; }
 
             /// <summary>
             /// Gets information on the returned status code
             /// </summary>
+            [JsonProperty("StatusDescription")]
             public string StatusDescription { get; protected set; }
 
             /// <summary>
             /// The original method used to get this response
             /// </summary>
+            [JsonProperty("Method")]
             public RequestMethod Method { get; protected set; }
 
             /// <summary>
             /// Gets the Uri of the responding server
             /// </summary>
+            [JsonProperty("ResponseUri")]
             public Uri ResponseUri { get; protected set; }
 
             /// <summary>
             /// Gets the HTTP protocol version
             /// </summary>
+            [JsonProperty("ProtocolVersion")]
             public VersionNumber ProtocolVersion { get; protected set; }
 
-            protected WebResponse(HttpWebResponse response, Plugin Owner = null)
-            {
-                // Make sure we aren't creating an empty response
-                if (response == null)
-                {
-                    throw new ArgumentNullException(nameof(response), "A WebResponse cannot be created from an null HttpResponse");
-                }
-
-                // Verify the original Request Method
-                switch (response.Method.ToUpper())
-                {
-                    case "DELETE":
-                        Method = RequestMethod.DELETE;
-                        break;
-
-                    case "GET":
-                        Method = RequestMethod.GET;
-                        break;
-
-                    case "HEAD":
-                        Method = RequestMethod.HEAD;
-                        break;
-
-                    case "PATCH":
-                        Method = RequestMethod.PATCH;
-                        break;
-
-                    case "POST":
-                        Method = RequestMethod.POST;
-                        break;
-
-                    case "PUT":
-                        Method = RequestMethod.PUT;
-                        break;
-
-                    default:
-                        throw new InvalidOperationException($"Unknown request method was defined '{response.Method}'");
-                }
-
-                ContentType = response.ContentType;
-                ResponseUri = response.ResponseUri;
-                StatusCode = (int)response.StatusCode;
-                StatusDescription = response.StatusDescription;
-                ProtocolVersion = new VersionNumber(response.ProtocolVersion?.Major ?? 1, response.ProtocolVersion?.Minor ?? 1, response.ProtocolVersion?.Revision ?? 0);
-                ContentEncoding = response.ContentEncoding;
-
-                if (response.Headers != null)
-                {
-                    Headers = new Dictionary<string, string>();
-
-                    for (int h = 0; h < response.Headers.Count; h++)
-                    {
-                        string key = response.Headers.GetKey(h);
-                        string[] values = response.Headers.GetValues(h);
-
-                        if (values != null && values.Length > 0 && !Headers.ContainsKey(key))
-                        {
-                            Headers.Add(key, string.Join(";", values));
-                        }
-                    }
-                }
-
-                if (Method != RequestMethod.HEAD)
-                {
-                    try
-                    {
-                        using (Stream stream = response.GetResponseStream())
-                        {
-                            responseStream = new MemoryStream();
-
-                            byte[] responseCache = new byte[256];
-                            int currentBytes;
-
-                            while (stream != null && (currentBytes = stream.Read(responseCache, 0, 256)) != 0)
-                            {
-                                responseStream.Write(responseCache, 0, currentBytes);
-                                responseCache = new byte[256];
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        string message = $"Web request produced exception (Url: {ResponseUri?.AbsoluteUri})";
-                        if (Owner)
-                        {
-                            message += $" in '{Owner.Name} v{Owner.Version}' plugin";
-                        }
-
-                        Interface.uMod.LogException(message, ex);
-                    }
-                }
-            }
-
-            internal WebResponse(System.Net.WebResponse response, Plugin Owner = null) : this((HttpWebResponse)response, Owner)
-            {
-            }
-
-            internal WebResponse(string errorText, Uri originalUri, RequestMethod method)
-            {
-                StatusDescription = errorText;
-            }
+            /// <summary>
+            /// Gets the response body
+            /// </summary>
+            [JsonProperty("Body")]
+            public byte[] Body { get; protected set; }
 
             /// <summary>
             /// Reads the Response in it's raw data
             /// </summary>
             /// <returns></returns>
-            public byte[] ReadAsBytes() => ContentLength != 0 ? responseStream.ToArray() : new byte[0];
+            public byte[] ReadAsBytes() => ContentLength != 0 ? Body : new byte[0];
 
             /// <summary>
             /// Reads the response as a string
@@ -574,8 +479,6 @@ namespace uMod.Libraries
             /// </summary>
             public virtual void Dispose()
             {
-                responseStream?.Dispose();
-                responseStream = null;
                 Headers?.Clear();
                 Headers = null;
 
@@ -583,30 +486,8 @@ namespace uMod.Libraries
                 ContentEncoding = null;
                 ResponseUri = null;
                 StatusDescription = null;
+                Body = null;
             }
-        }
-
-        /// <summary>
-        /// Formats given WebException to string
-        /// </summary>
-        /// <param name="exception"></param>
-        /// <param name="response"></param>
-        /// <returns></returns>
-        public static string FormatWebException(Exception exception, string response)
-        {
-            if (!string.IsNullOrEmpty(response))
-            {
-                response += Environment.NewLine;
-            }
-
-            response += exception.Message; // TODO: Fix duplicate messages
-
-            if (exception.InnerException != null && !response.Equals(exception.InnerException.Message))
-            {
-                response = FormatWebException(exception.InnerException, response);
-            }
-
-            return response;
         }
 
         /// <summary>
@@ -614,9 +495,6 @@ namespace uMod.Libraries
         /// </summary>
         public WebRequests()
         {
-            // Accept all SSL certificates for compiler and web request library (temporary)
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
             maxCompletionPortThreads = (int)(maxCompletionPortThreads * 0.6);
             maxWorkerThreads = (int)(maxWorkerThreads * 0.75);
@@ -693,14 +571,10 @@ namespace uMod.Libraries
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
         [LibraryFunction("Enqueue")]
-        public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+        public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 30f)
         {
             WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            lock (syncRoot)
-            {
-                queue.Enqueue(request);
-            }
-            workevent.Set();
+            Enqueue(request);
         }
 
         /// <summary>
@@ -714,14 +588,30 @@ namespace uMod.Libraries
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
         [LibraryFunction("EnqueueV2")]
-        public void Enqueue(string url, string body, Action<WebResponse> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+        public void Enqueue(string url, string body, Action<WebResponse> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 30f)
         {
-            WebRequest request = new WebRequest(url, owner, callback) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            lock (syncRoot)
+            WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
+            Enqueue(request);
+        }
+
+        /// <summary>
+        /// Enqueues a web request
+        /// </summary>
+        /// <param name="request"></param>
+        protected void Enqueue(WebRequest request)
+        {
+            if (request.Async)
             {
-                queue.Enqueue(request);
+                lock (syncRoot)
+                {
+                    queue.Enqueue(request);
+                }
+                workevent.Set();
             }
-            workevent.Set();
+            else
+            {
+                request.Start();
+            }
         }
 
         /// <summary>
@@ -730,93 +620,5 @@ namespace uMod.Libraries
         /// <returns></returns>
         [LibraryFunction("GetQueueLength")]
         public int GetQueueLength() => queue.Count;
-    }
-
-    // HttpWebRequest extensions to add raw header support
-    public static class HttpWebRequestExtensions
-    {
-        /// <summary>
-        /// Headers that require modification via a property
-        /// </summary>
-        private static readonly string[] RestrictedHeaders = {
-            "Accept",
-            "Connection",
-            "Content-Length",
-            "Content-Type",
-            "Date",
-            "Expect",
-            "Host",
-            "If-Modified-Since",
-            "Keep-Alive",
-            "Proxy-Connection",
-            "Range",
-            "Referer",
-            "Transfer-Encoding",
-            "User-Agent"
-        };
-
-        /// <summary>
-        /// Dictionary of all of the header properties
-        /// </summary>
-        private static readonly Dictionary<string, PropertyInfo> HeaderProperties = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Initialize the HeaderProperties dictionary
-        /// </summary>
-        static HttpWebRequestExtensions()
-        {
-            Type type = typeof(HttpWebRequest);
-            foreach (string header in RestrictedHeaders)
-            {
-                HeaderProperties[header] = type.GetProperty(header.Replace("-", ""));
-            }
-        }
-
-        /// <summary>
-        /// Sets raw HTTP request headers
-        /// </summary>
-        /// <param name="request">Request object</param>
-        /// <param name="headers">Dictionary of headers to set</param>
-        public static void SetRawHeaders(this WebRequest request, Dictionary<string, string> headers)
-        {
-            foreach (KeyValuePair<string, string> keyValPair in headers)
-            {
-                request.SetRawHeader(keyValPair.Key, keyValPair.Value);
-            }
-        }
-
-        /// <summary>
-        /// Sets a raw HTTP request header
-        /// </summary>
-        /// <param name="request">Request object</param>
-        /// <param name="name">Name of the header</param>
-        /// <param name="value">Value of the header</param>
-        public static void SetRawHeader(this WebRequest request, string name, string value)
-        {
-            if (HeaderProperties.ContainsKey(name))
-            {
-                PropertyInfo property = HeaderProperties[name];
-                if (property.PropertyType == typeof(DateTime))
-                {
-                    property.SetValue(request, DateTime.Parse(value), null);
-                }
-                else if (property.PropertyType == typeof(bool))
-                {
-                    property.SetValue(request, bool.Parse(value), null);
-                }
-                else if (property.PropertyType == typeof(long))
-                {
-                    property.SetValue(request, long.Parse(value), null);
-                }
-                else
-                {
-                    property.SetValue(request, value, null);
-                }
-            }
-            else
-            {
-                request.Headers[name] = value;
-            }
-        }
     }
 }

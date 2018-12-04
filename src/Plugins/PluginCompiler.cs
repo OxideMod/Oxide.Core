@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Logging;
@@ -157,7 +156,7 @@ namespace uMod.Plugins
                     return;
                 }
 
-                string localHash = File.Exists(BinaryPath) ? GetHash(BinaryPath, Algorithms.MD5) : "0";
+                string localHash = File.Exists(BinaryPath) ? Utility.GetHash(BinaryPath, Utilities.Algorithms.MD5) : "0";
                 if (remoteHash != localHash)
                 {
                     Interface.uMod.LogInfo($"Local hash did not match remote hash for {FileName}, attempting download again");
@@ -182,6 +181,9 @@ namespace uMod.Plugins
                 // Create the web request
                 WebRequest request = WebRequest.Create($"https://nyc3.digitaloceanspaces.com/umod-01/{FileName}");
 
+                // Accept all SSL certificates for compiler and web request library (temporary)
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+
                 string filePath = Path.Combine(Interface.uMod.RootDirectory, FileName);
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 HttpStatusCode statusCode = response.StatusCode;
@@ -191,7 +193,7 @@ namespace uMod.Plugins
                 }
 
                 string remoteHash = response.Headers[HttpResponseHeader.ETag].Trim('"');
-                string localHash = File.Exists(filePath) ? GetHash(filePath, Algorithms.MD5) : "0";
+                string localHash = File.Exists(filePath) ? Utility.GetHash(filePath, Utilities.Algorithms.MD5) : "0";
                 Interface.uMod.LogInfo($"Latest compiler MD5: {remoteHash}");
                 Interface.uMod.LogInfo($"Local compiler MD5: {localHash}");
                 if (remoteHash != localHash)
@@ -618,25 +620,6 @@ namespace uMod.Plugins
             path = Regex.Replace(path, @"(\\*)" + "\"", @"$1\$0");
             path = Regex.Replace(path, @"^(.*\s.*?)(\\*)$", "\"$1$2$2\"");
             return path;
-        }
-
-        private static class Algorithms
-        {
-            public static readonly HashAlgorithm MD5 = new MD5CryptoServiceProvider();
-            public static readonly HashAlgorithm SHA1 = new SHA1Managed();
-            public static readonly HashAlgorithm SHA256 = new SHA256Managed();
-            public static readonly HashAlgorithm SHA384 = new SHA384Managed();
-            public static readonly HashAlgorithm SHA512 = new SHA512Managed();
-            public static readonly HashAlgorithm RIPEMD160 = new RIPEMD160Managed();
-        }
-
-        private static string GetHash(string filePath, HashAlgorithm algorithm)
-        {
-            using (BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 100000))
-            {
-                byte[] hash = algorithm.ComputeHash(stream);
-                return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
-            }
         }
     }
 }

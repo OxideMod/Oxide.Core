@@ -294,6 +294,9 @@ namespace uMod
             extensionManager.RegisterPluginLoader(coreLoader);
             coreLoader.AddReferences();
 
+            // Check web client binary
+            Libraries.Net.WebClient.CheckWebClientBinary();
+
             // Load all plugin watchers for extensions
             foreach (Extension ext in extensionManager.GetAllExtensions())
             {

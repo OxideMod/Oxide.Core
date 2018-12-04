@@ -10,12 +10,11 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 #if DEBUG
-
 using System.Text;
-
 #endif
 
 namespace uMod
@@ -458,6 +457,21 @@ namespace uMod
             int numbers;
             int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out numbers);
             return numbers;
+        }
+
+        /// <summary>
+        /// Gets file checksum
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="algorithm"></param>
+        /// <returns></returns>
+        internal static string GetHash(string filePath, HashAlgorithm algorithm)
+        {
+            using (BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 100000))
+            {
+                byte[] hash = algorithm.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
+            }
         }
     }
 }
