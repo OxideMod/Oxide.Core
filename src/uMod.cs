@@ -318,7 +318,14 @@ namespace uMod
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public T GetLibrary<T>(string name = null) where T : Library => extensionManager.GetLibrary(name ?? typeof(T).Name) as T;
+        public Library GetLibrary(string name) => extensionManager.GetLibrary(name);
+
+        /// <summary>
+        /// Gets the library by the specified name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public T GetLibrary<T>(string name = null) where T : Library => GetLibrary(name ?? typeof(T).Name) as T;
 
         /// <summary>
         /// Gets all loaded extensions

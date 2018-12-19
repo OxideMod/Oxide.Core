@@ -32,6 +32,9 @@ namespace uMod.Plugins
     /// </summary>
     public abstract class CSPlugin : Plugin
     {
+        // Defines the current library type for hook calling
+        private static readonly Type LibType = typeof(Library);
+
         /// <summary>
         /// Gets the library by the specified type or name
         /// </summary>
@@ -150,7 +153,13 @@ namespace uMod.Plugins
                         for (int n = received; n < hookArgs.Length; n++)
                         {
                             ParameterInfo parameter = h.Parameters[n];
-                            if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
+
+                            if (LibType.IsAssignableFrom(parameter.ParameterType) && parameter.ParameterType != LibType)
+                            {
+                                // Assign the value to the requesting library type
+                                hookArgs[n] = Interface.uMod.GetLibrary(parameter.ParameterType.Name);
+                            }
+                            else if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
                                 hookArgs[n] = parameter.DefaultValue;
@@ -259,7 +268,13 @@ namespace uMod.Plugins
                         for (int n = received; n < hookArgs.Length; n++)
                         {
                             ParameterInfo parameter = h.Parameters[n];
-                            if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
+
+                            if (LibType.IsAssignableFrom(parameter.ParameterType) && parameter.ParameterType != LibType)
+                            {
+                                // Assign the value to the requesting library type
+                                hookArgs[n] = Interface.uMod.GetLibrary(parameter.ParameterType.Name);
+                            }
+                            else if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
                                 hookArgs[n] = parameter.DefaultValue;
