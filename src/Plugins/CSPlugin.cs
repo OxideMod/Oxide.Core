@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using uMod.Libraries;
 using uMod.Utilities;
@@ -32,8 +33,11 @@ namespace uMod.Plugins
     /// </summary>
     public abstract class CSPlugin : Plugin
     {
-        // Defines the current library type for hook calling
+        // Defines the base type of a library for dependency injection
         private static readonly Type LibType = typeof(Library);
+
+        // Defines the base type of a plugin for dependency injection
+        private static readonly Type PluginType = typeof(Plugin);
 
         /// <summary>
         /// Gets the library by the specified type or name
@@ -159,6 +163,24 @@ namespace uMod.Plugins
                                 // Assign the value to the requesting library type
                                 hookArgs[n] = Interface.uMod.GetLibrary(parameter.ParameterType.Name);
                             }
+                            else if (PluginType.IsAssignableFrom(parameter.ParameterType))
+                            {
+                                // Make sure we are only returning community plugins that are loaded
+                                var plugins = Interface.uMod.RootPluginManager.GetPlugins()
+                                    .Where(p => parameter.ParameterType.IsInstanceOfType(p) && p.IsLoaded && !p.IsCorePlugin);
+
+                                if (parameter.ParameterType != PluginType && plugins.Count() == 1)
+                                {
+                                    // Return the plugin with the matching type if only one exists
+                                    hookArgs[n] = plugins.First();
+                                }
+                                else
+                                {
+                                    // Finds the plugin with the matching name
+                                    hookArgs[n] = plugins
+                                        .FirstOrDefault(p => p.GetType().Name.Equals(parameter.Name, StringComparison.InvariantCultureIgnoreCase));
+                                }
+                            }
                             else if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
@@ -273,6 +295,24 @@ namespace uMod.Plugins
                             {
                                 // Assign the value to the requesting library type
                                 hookArgs[n] = Interface.uMod.GetLibrary(parameter.ParameterType.Name);
+                            }
+                            else if (PluginType.IsAssignableFrom(parameter.ParameterType))
+                            {
+                                // Make sure we are only returning community plugins that are loaded
+                                var plugins = Interface.uMod.RootPluginManager.GetPlugins()
+                                    .Where(p => parameter.ParameterType.IsInstanceOfType(p) && p.IsLoaded && !p.IsCorePlugin);
+
+                                if (parameter.ParameterType != PluginType && plugins.Count() == 1)
+                                {
+                                    // Return the plugin with the matching type if only one exists
+                                    hookArgs[n] = plugins.First();
+                                }
+                                else
+                                {
+                                    // Finds the plugin with the matching name
+                                    hookArgs[n] = plugins
+                                        .FirstOrDefault(p => p.GetType().Name.Equals(parameter.Name, StringComparison.InvariantCultureIgnoreCase));
+                                }
                             }
                             else if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
