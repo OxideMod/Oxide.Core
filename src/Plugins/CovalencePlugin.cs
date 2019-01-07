@@ -94,7 +94,11 @@ namespace uMod.Plugins
                     {
                         AddUniversalCommand(cmd.Commands, perm?.Permission, (caller, command, args) =>
                         {
-                            CallHook(method.Name, caller, command, args);
+                            object universalCall = CallHook(method.Name, caller, command, args);
+                            if (universalCall == null)
+                            {
+                                CallHook(method.Name, caller.Object, command, args);
+                            }
                             return true;
                         });
                     }
