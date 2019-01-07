@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using uMod.Libraries.Universal;
 
@@ -54,6 +54,16 @@ namespace uMod.Plugins
         protected void Log(string format, params object[] args)
         {
             Interface.uMod.LogInfo("[{0}] {1}", Title, args.Length > 0 ? string.Format(format, args) : format);
+        }
+
+        /// <summary>
+        /// Print an debug message using the uMod root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="args"></param>
+        protected void LogDebug(string format, params object[] args)
+        {
+            Interface.uMod.LogDebug("[{0}] {1}", Title, args.Length > 0 ? string.Format(format, args) : format);
         }
 
         /// <summary>
