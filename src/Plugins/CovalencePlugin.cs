@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Reflection;
-using uMod.Libraries;
 using uMod.Libraries.Universal;
 
 namespace uMod.Plugins
@@ -31,6 +30,12 @@ namespace uMod.Plugins
         {
             Permission = new[] { permission };
         }
+    }
+
+    [Obsolete("Use UniversalPlugin instead")]
+    public class CovalencePlugin : UniversalPlugin
+    {
+        // TODO: Remove this eventually
     }
 
     public class UniversalPlugin : CSharpPlugin
