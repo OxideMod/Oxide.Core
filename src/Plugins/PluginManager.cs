@@ -253,7 +253,7 @@ namespace uMod.Plugins
             {
                 Plugin plugin = plugins[0];
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.uMod.LogWarning($"'{plugin.Name} v{plugin.Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate:D}. Please ask the author to update to '{newHook}'");
+                Interface.uMod.LogWarning($"'{plugin.Name} v{plugin.Version}' is using obsolete hook '{oldHook}', which will stop working on {expireDate:D}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);

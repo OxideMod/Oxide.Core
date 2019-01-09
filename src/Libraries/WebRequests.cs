@@ -273,7 +273,7 @@ namespace uMod.Libraries
                         {
                             if (string.IsNullOrEmpty(response))
                             {
-                                ResponseText = errorText;
+                                ResponseText = errorText; // TODO: Fix this always being null
                             }
                             else
                             {

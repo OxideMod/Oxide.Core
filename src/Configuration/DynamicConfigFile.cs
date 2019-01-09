@@ -171,12 +171,6 @@ namespace uMod.Configuration
             return name.TrimStart('.');
         }
 
-        [Obsolete("SanitiseName is deprecated, use SanitizeName instead")]
-        public static string SanitiseName(string name)
-        {
-            return SanitizeName(name);
-        }
-
         /// <summary>
         /// Clears this config
         /// </summary>

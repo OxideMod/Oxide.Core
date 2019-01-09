@@ -264,7 +264,7 @@ namespace uMod
                 return;
             }
 
-            if (args[0].Equals("*") || args[0].Equals("all"))
+            if (args[0].Equals("*") || args[0].ToLower().Equals("all"))
             {
                 Interface.uMod.LoadAllPlugins();
                 return;
@@ -345,7 +345,7 @@ namespace uMod
                 return;
             }
 
-            if (args[0].Equals("*") || args[0].Equals("all"))
+            if (args[0].Equals("*") || args[0].ToLower().Equals("all"))
             {
                 Interface.uMod.ReloadAllPlugins();
                 return;

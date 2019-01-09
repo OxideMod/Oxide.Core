@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -38,7 +39,7 @@ namespace uMod.Plugins
         {
             this.Title = Title;
             this.Author = Author;
-            SetVersion(Version.ToString());
+            SetVersion(Version.ToString(CultureInfo.CurrentCulture));
         }
 
         private void SetVersion(string version)
