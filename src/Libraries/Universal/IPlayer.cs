@@ -50,6 +50,21 @@ namespace uMod.Libraries.Universal
         CultureInfo Language { get; }
 
         /// <summary>
+        /// Returns if the player is a server admin
+        /// </summary>
+        bool IsAdmin { get; }
+
+        /// <summary>
+        /// Returns if the player is a server moderator
+        /// </summary>
+        bool IsModerator { get; }
+
+        /// <summary>
+        /// Gets if the player is banned
+        /// </summary>
+        bool IsBanned { get; }
+
+        /// <summary>
         /// Returns if the player is connected
         /// </summary>
         bool IsConnected { get; }
@@ -67,16 +82,6 @@ namespace uMod.Libraries.Universal
         #endregion Information
 
         #region Administration
-
-        /// <summary>
-        /// Returns if the player is admin
-        /// </summary>
-        bool IsAdmin { get; }
-
-        /// <summary>
-        /// Gets if the player is banned
-        /// </summary>
-        bool IsBanned { get; }
 
         /// <summary>
         /// Bans the player for the specified reason and duration
