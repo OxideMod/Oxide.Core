@@ -26,13 +26,15 @@ namespace uMod.Configuration
         [JsonObject]
         public class DefaultGroups : IEnumerable<string>
         {
-            public string Players;
             public string Administrators;
+            public string Moderators;
+            public string Players;
 
             public IEnumerator<string> GetEnumerator()
             {
-                yield return Players;
                 yield return Administrators;
+                yield return Moderators;
+                yield return Players;
             }
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -113,7 +115,7 @@ namespace uMod.Configuration
                 Modded = true,
                 PluginWatchers = true,
                 PluginDirectories = new[] { "universal" },
-                DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" }
+                DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "admin", Players = "default" }
             };
             Console = new uModConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new uModRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
