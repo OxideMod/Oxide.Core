@@ -9,6 +9,13 @@ namespace uMod
     public static class Interface
     {
         /// <summary>
+        /// Gets the mod by the previous name, "Oxide"
+        /// </summary>
+        /// <returns></returns>
+        [Obsolete("Use Interface.uMod instead")]
+        public static uMod Oxide => uMod;
+
+        /// <summary>
         /// Gets the main uMod instance
         /// </summary>
         public static uMod uMod { get; private set; }
@@ -322,11 +329,5 @@ namespace uMod
         /// <param name="args"></param>
         /// <returns></returns>
         public static T Call<T>(string hook, params object[] args) => (T)Convert.ChangeType(CallHook(hook, args), typeof(T));
-
-        /// <summary>
-        /// Gets the mod by the previous name, "Oxide"
-        /// </summary>
-        /// <returns></returns>
-        public static uMod Oxide => uMod; // TODO: This needs to be removed eventually
     }
 }

@@ -4,6 +4,11 @@ using uMod.Libraries.Universal;
 
 namespace uMod.Plugins
 {
+    [Obsolete("Use UniversalPlugin instead")]
+    public class CovalencePlugin : UniversalPlugin
+    {
+    }
+
     /// <summary>
     /// Indicates that the specified method should be a handler for a universal command
     /// </summary>
@@ -30,12 +35,6 @@ namespace uMod.Plugins
         {
             Permission = new[] { permission };
         }
-    }
-
-    [Obsolete("Use UniversalPlugin instead")]
-    public class CovalencePlugin : UniversalPlugin
-    {
-        // TODO: Remove this eventually
     }
 
     public class UniversalPlugin : CSharpPlugin

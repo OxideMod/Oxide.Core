@@ -137,7 +137,6 @@ namespace uMod
                         {
                             formatsb.Append("{0}");
                         }
-
                         break;
 
                     default:
@@ -149,7 +148,6 @@ namespace uMod
                         {
                             varnamesb.Append(c);
                         }
-
                         break;
                 }
             }

@@ -219,7 +219,6 @@ namespace uMod.Plugins
         public CSharpPlugin()
         {
             timer = new PluginTimers(this);
-
             Type type = GetType();
             foreach (FieldInfo field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -260,7 +259,6 @@ namespace uMod.Plugins
             if (infoAttributes.Length > 0)
             {
                 InfoAttribute info = infoAttributes[0] as InfoAttribute;
-
                 if (info != null)
                 {
                     Title = info.Title;

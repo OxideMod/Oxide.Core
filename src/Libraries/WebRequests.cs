@@ -296,7 +296,7 @@ namespace uMod.Libraries
                                 message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                             }
                             message += Environment.NewLine + response;
-                            Interface.Oxide.LogError(message);
+                            Interface.uMod.LogError(message);
                         }
                     }
                 }
@@ -308,7 +308,7 @@ namespace uMod.Libraries
                         message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                     }
                     message += Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace;
-                    Interface.Oxide.LogError(message);
+                    Interface.uMod.LogError(message);
                 }
                 finally
                 {
@@ -369,7 +369,7 @@ namespace uMod.Libraries
                         {
                             message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         }
-                        Interface.Oxide.LogException(message, ex);
+                        Interface.uMod.LogException(message, ex);
                     }
 
                     Owner?.TrackEnd();

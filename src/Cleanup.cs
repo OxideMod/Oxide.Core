@@ -7,6 +7,7 @@ namespace uMod
     public static class Cleanup
     {
         internal static HashSet<string> files = new HashSet<string>();
+
         public static void Add(string file) => files.Add(file);
 
         internal static void Run()
