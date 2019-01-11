@@ -171,9 +171,14 @@ namespace uMod.Plugins
             plugin.IncludePaths.Clear();
 
             // Try to provide at least some deprecation for the rename
-            if (plugin.ScriptLines.Any(line => line.Contains("Oxide")))
+            if (plugin.ScriptLines.Any(line => line.Contains("Oxide") || line.Contains("Covalence")))
             {
-                plugin.ScriptLines = plugin.ScriptLines.Select(s => s.Replace("Oxide.Core", "uMod").Replace("OxideMod", "uMod").Replace("Oxide", "uMod")).ToArray();
+                plugin.ScriptLines = plugin.ScriptLines.Select(s => s
+                    .Replace("Oxide.Core", "uMod")
+                    .Replace("OxideMod", "uMod")
+                    .Replace("Oxide", "uMod")
+                    .Replace("Covalence", "Universal"))
+                    .ToArray();
                 Interface.uMod.LogWarning($"Plugin {plugin.ScriptName} is using Oxide naming, please update to uMod naming");
             }
 

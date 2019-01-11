@@ -6,6 +6,14 @@ using System.Text;
 using uMod.Logging;
 using uMod.Plugins;
 
+namespace uMod.Libraries.Covalence
+{
+    [Obsolete("Use Universal instead")]
+    public class Covalence : Universal.Universal
+    {
+    }
+}
+
 namespace uMod.Libraries.Universal
 {
     /// <summary>

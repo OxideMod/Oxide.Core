@@ -259,7 +259,7 @@ namespace uMod.Plugins
             }
             catch (Exception ex)
             {
-                Interface.uMod.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex);
+                Interface.uMod.LogException($"Failed to call hook '{hook}' on plugin '{Name} v{Version}'", ex); // TODO: Localization
                 return null;
             }
             finally
@@ -479,7 +479,7 @@ namespace uMod.Plugins
             {
                 if (caller == null)
                 {
-                    Interface.uMod.LogWarning("Plugin.UniversalCommandCallback received null as the caller (bad game Universal bindings?)");
+                    Interface.uMod.LogWarning("Plugin.UniversalCommandCallback received null as the caller (bad game universal bindings?)"); // TODO: Localization
                     return false;
                 }
 
@@ -489,7 +489,7 @@ namespace uMod.Plugins
                     {
                         if (!caller.HasPermission(perm) && !caller.IsServer && (!caller.IsAdmin || !IsCorePlugin))
                         {
-                            caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
+                            caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Localization
                             return true;
                         }
                     }

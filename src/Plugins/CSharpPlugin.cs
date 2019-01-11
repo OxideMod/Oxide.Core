@@ -200,6 +200,9 @@ namespace uMod.Plugins
 
         public FSWatcher Watcher;
 
+        [Obsolete("Use universal instead")]
+        protected Universal covalence = Interface.uMod.GetLibrary<Universal>();
+
         protected Universal universal = Interface.uMod.GetLibrary<Universal>();
         protected Lang lang = Interface.uMod.GetLibrary<Lang>();
         protected Permission permission = Interface.uMod.GetLibrary<Permission>();

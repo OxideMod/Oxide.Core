@@ -130,19 +130,12 @@ namespace uMod
                 throw new Exception("Could not identify root directory"); // TODO: Localization
             }
 
-            // Set the instance directory, where uMod content will be
-            InstanceDirectory = Path.Combine(RootDirectory, "umod");
-
-            // Move files from "oxide" directory to "umod" directory
-            string oxideDirectory = Path.Combine(RootDirectory, "oxide");
-            if (Directory.Exists(oxideDirectory) && !Directory.Exists(InstanceDirectory))
-            {
-                Directory.Move(oxideDirectory, InstanceDirectory);
-            }
-
             // Set culture settings for thread and JSON handling
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
+
+            // Set the instance directory, where uMod content will be
+            InstanceDirectory = Path.Combine(RootDirectory, "umod");
 
             // Parse command-line to set instance directory
             CommandLine = new CommandLine(Environment.GetCommandLineArgs());
@@ -150,13 +143,10 @@ namespace uMod
             {
                 string instanceDirectory, format;
                 CommandLine.GetArgument("umod.directory", out instanceDirectory, out format);
-
                 if (string.IsNullOrEmpty(instanceDirectory) && CommandLine.HasVariable("oxide.directory"))
                 {
                     CommandLine.GetArgument("oxide.directory", out instanceDirectory, out format);
-                    LogWarning("oxide.directory in command-line is deprecated, please use umod.directory instead"); // TODO: Localization
                 }
-
                 if (string.IsNullOrEmpty(instanceDirectory) || CommandLine.HasVariable(instanceDirectory))
                 {
                     InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(instanceDirectory))));
@@ -199,8 +189,12 @@ namespace uMod
                 Directory.CreateDirectory(PluginDirectory);
             }
 
-            // Register the library search path for dependencies
-            RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
+            // Move files from "oxide" directory to "umod" directory
+            string oxideDirectory = Path.Combine(RootDirectory, "oxide");
+            if (Directory.Exists(oxideDirectory) && !Directory.Exists(InstanceDirectory))
+            {
+                Directory.Move(oxideDirectory, InstanceDirectory);
+            }
 
             // Load core configuration file
             string config = Path.Combine(InstanceDirectory, "umod.config.json"); // TODO: Rename existing oxide.config.json if exists
@@ -214,6 +208,27 @@ namespace uMod
                 Config.Save();
             }
 
+            // Add core logger
+            RootLogger = new CompoundLogger();
+            RootLogger.AddLogger(new RotatingFileLogger { Directory = LogDirectory });
+            if (debugCallback != null)
+            {
+                RootLogger.AddLogger(new CallbackLogger(debugCallback));
+            }
+
+            // Warn if using obsolete command-line argument(s)
+            if (CommandLine.HasVariable("oxide.directory"))
+            {
+                LogWarning("oxide.directory in command-line is obsolete, please use umod.directory instead"); // TODO: Localization
+            }
+
+            // Check for and warn if logging is disabled
+            if (CommandLine.HasVariable("nolog"))
+            {
+                Config.Options.Logging = false;
+                LogWarning("Usage of the 'nolog' variable will prevent logging"); // TODO: Localization
+            }
+
             // Check for and set configuration options from command-line
             if (CommandLine.HasVariable("rcon.port"))
             {
@@ -224,20 +239,8 @@ namespace uMod
                 Config.Rcon.Password = CommandLine.GetVariable("rcon.password");
             }
 
-            // Add core logger
-            RootLogger = new CompoundLogger();
-            RootLogger.AddLogger(new RotatingFileLogger { Directory = LogDirectory });
-            if (debugCallback != null)
-            {
-                RootLogger.AddLogger(new CallbackLogger(debugCallback));
-            }
-
-            // Check for and warn if logging is disabled
-            if (CommandLine.HasVariable("nolog"))
-            {
-                Config.Options.Logging = false;
-                LogWarning("Usage of the 'nolog' variable will prevent logging"); // TODO: Localization
-            }
+            // Register the library search path for dependencies
+            RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
             // Setup core managers and data file system
             LogInfo($"Loading uMod v{Version}..."); // TODO: Localization
@@ -248,7 +251,7 @@ namespace uMod
             // Setup configuration and DLL mapping for references
             if (Environment.OSVersion.Platform == PlatformID.Unix)
             {
-                string configPath = Path.Combine(ExtensionDirectory, "Oxide.References.dll.config");
+                string configPath = Path.Combine(ExtensionDirectory, "Oxide.References.dll.config"); // TODO: Update to uMod.References
                 if (!File.Exists(configPath))
                 {
                     File.WriteAllText(configPath,
