@@ -298,7 +298,7 @@ namespace uMod
             coreLoader.AddReferences();
 
             // Check web client binary
-            Libraries.Net.WebClient.CheckWebClientBinary();
+            WebClient.CheckWebClientBinary();
 
             // Load all plugin watchers for extensions
             foreach (Extension ext in extensionManager.GetAllExtensions())

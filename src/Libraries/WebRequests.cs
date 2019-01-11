@@ -238,10 +238,10 @@ namespace uMod.Libraries
             public void Start()
             {
 #if !DEBUG
-                if (!Net.WebClient.IsHashValid())
+                if (!WebClient.IsHashValid())
                 {
-                    Interface.Oxide.LogError($"Secure web channel potentially compromised, cancelling web request {Url}");
-                    Interface.uMod.NextTick(Net.WebClient.CheckWebClientBinary);
+                    Interface.uMod.LogError($"Secure web channel potentially compromised, cancelling web request {Url}");
+                    Interface.uMod.NextTick(WebClient.CheckWebClientBinary);
                     return;
                 }
 #endif

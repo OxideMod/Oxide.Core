@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Net;
 
-namespace uMod.Libraries.Net
+namespace uMod.Libraries
 {
     internal class WebClient
     {
