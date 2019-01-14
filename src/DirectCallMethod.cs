@@ -146,8 +146,7 @@ namespace uMod
                 for (int i = 1; i <= methodName.Length; i++)
                 {
                     char letter = methodName[i - 1];
-                    Node nextNode;
-                    if (!currentNode.Edges.TryGetValue(letter, out nextNode))
+                    if (!currentNode.Edges.TryGetValue(letter, out Node nextNode))
                     {
                         nextNode = new Node { Parent = currentNode, Char = letter };
                         currentNode.Edges[letter] = nextNode;

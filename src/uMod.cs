@@ -141,8 +141,7 @@ namespace uMod
             CommandLine = new CommandLine(Environment.GetCommandLineArgs());
             if (CommandLine.HasVariable("umod.directory") || CommandLine.HasVariable("oxide.directory"))
             {
-                string instanceDirectory, format;
-                CommandLine.GetArgument("umod.directory", out instanceDirectory, out format);
+                CommandLine.GetArgument("umod.directory", out string instanceDirectory, out string format);
                 if (string.IsNullOrEmpty(instanceDirectory) && CommandLine.HasVariable("oxide.directory"))
                 {
                     CommandLine.GetArgument("oxide.directory", out instanceDirectory, out format);
@@ -480,7 +479,6 @@ namespace uMod
             HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Any(f => f.Name.StartsWith(name))));
             if (loaders.Count == 0)
             {
-                // TODO: Fix symlinked plugins unloaded still triggering this
                 LogError($"Could not load plugin '{name}' (no plugin found with that file name)"); // TODO: Localization
                 return false;
             }

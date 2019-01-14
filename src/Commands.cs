@@ -299,9 +299,8 @@ namespace uMod
             {
                 foreach (FileInfo file in loader.ScanDirectory(Interface.uMod.PluginDirectory).Where(f => !loadedPluginNames.Contains(f.Name)))
                 {
-                    string msg;
                     string pluginName = Utility.GetFileNameWithoutExtension(file.Name);
-                    unloadedPluginErrors[pluginName] = loader.PluginErrors.TryGetValue(file.Name, out msg) ? msg : "Unloaded"; // TODO: Localization
+                    unloadedPluginErrors[pluginName] = loader.PluginErrors.TryGetValue(file.Name, out string msg) ? msg : "Unloaded"; // TODO: Localization
                 }
             }
 

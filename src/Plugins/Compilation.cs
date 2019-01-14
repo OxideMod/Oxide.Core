@@ -124,8 +124,7 @@ namespace uMod.Plugins
                         }
                     }
 
-                    CompilablePlugin plugin;
-                    while (queuedPlugins.TryDequeue(out plugin))
+                    while (queuedPlugins.TryDequeue(out CompilablePlugin plugin))
                     {
                         if (Current == null)
                         {

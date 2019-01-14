@@ -145,8 +145,7 @@ namespace uMod.Libraries.Universal
 
             private static object ParseColor(string val)
             {
-                string color;
-                if (!colorNames.TryGetValue(val.ToLower(), out color) && !IsValidColorCode(val))
+                if (!colorNames.TryGetValue(val.ToLower(), out string color) && !IsValidColorCode(val))
                 {
                     return null;
                 }
@@ -160,8 +159,7 @@ namespace uMod.Libraries.Universal
 
             private static object ParseSize(string val)
             {
-                int size;
-                if (int.TryParse(val, out size)) { return size; }
+                if (int.TryParse(val, out int size)) { return size; }
                 return null;
             }
 
@@ -380,8 +378,7 @@ namespace uMod.Libraries.Universal
 
         private static Tag Translation(Element e, Dictionary<ElementType, Func<object, Tag>> translations)
         {
-            Func<object, Tag> parse;
-            return translations.TryGetValue(e.Type, out parse) ? parse(e.Val) : new Tag("", "");
+            return translations.TryGetValue(e.Type, out Func<object, Tag> parse) ? parse(e.Val) : new Tag("", "");
         }
 
         private static string ToTreeFormat(List<Element> tree, Dictionary<ElementType, Func<object, Tag>> translations)

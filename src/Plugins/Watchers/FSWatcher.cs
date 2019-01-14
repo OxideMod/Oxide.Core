@@ -18,7 +18,7 @@ namespace uMod.Plugins.Watchers
             internal Libraries.Timer.TimerInstance timer;
         }
 
-        // The filesystem watcher
+        // The file system watcher
         private FileSystemWatcher watcher;
 
         // The plugin list
@@ -51,7 +51,7 @@ namespace uMod.Plugins.Watchers
         }
 
         /// <summary>
-        /// Loads the filesystem watcher
+        /// Loads the file system watcher
         /// </summary>
         /// <param name="directory"></param>
         /// <param name="filter"></param>
@@ -83,7 +83,7 @@ namespace uMod.Plugins.Watchers
         public void RemoveMapping(string name) => watchedPlugins.Remove(name);
 
         /// <summary>
-        /// Called when the watcher has registered a filesystem change
+        /// Called when the watcher has registered a file system change
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -91,13 +91,12 @@ namespace uMod.Plugins.Watchers
         {
             FileSystemWatcher watcher = (FileSystemWatcher)sender;
             int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
-            string sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
-            QueuedChange change;
+            string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
 
-            if (!changeQueue.TryGetValue(sub_path, out change))
+            if (!changeQueue.TryGetValue(subPath, out QueuedChange change))
             {
                 change = new QueuedChange();
-                changeQueue[sub_path] = change;
+                changeQueue[subPath] = change;
             }
             change.timer?.Destroy();
             change.timer = null;
@@ -127,7 +126,7 @@ namespace uMod.Plugins.Watchers
                 case WatcherChangeTypes.Deleted:
                     if (change.type == WatcherChangeTypes.Created)
                     {
-                        changeQueue.Remove(sub_path);
+                        changeQueue.Remove(subPath);
                         return;
                     }
 
@@ -141,12 +140,12 @@ namespace uMod.Plugins.Watchers
                 change.timer = timers.Once(.2f, () =>
                 {
                     change.timer = null;
-                    changeQueue.Remove(sub_path);
-                    if (Regex.Match(sub_path, @"include\\", RegexOptions.IgnoreCase).Success)
+                    changeQueue.Remove(subPath);
+                    if (Regex.Match(subPath, @"include\\", RegexOptions.IgnoreCase).Success)
                     {
                         if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
                         {
-                            FirePluginSourceChanged(sub_path);
+                            FirePluginSourceChanged(subPath);
                         }
 
                         return;
@@ -155,25 +154,25 @@ namespace uMod.Plugins.Watchers
                     switch (change.type)
                     {
                         case WatcherChangeTypes.Changed:
-                            if (watchedPlugins.Contains(sub_path))
+                            if (watchedPlugins.Contains(subPath))
                             {
-                                FirePluginSourceChanged(sub_path);
+                                FirePluginSourceChanged(subPath);
                             }
                             else
                             {
-                                FirePluginAdded(sub_path);
+                                FirePluginAdded(subPath);
                             }
 
                             break;
 
                         case WatcherChangeTypes.Created:
-                            FirePluginAdded(sub_path);
+                            FirePluginAdded(subPath);
                             break;
 
                         case WatcherChangeTypes.Deleted:
-                            if (watchedPlugins.Contains(sub_path))
+                            if (watchedPlugins.Contains(subPath))
                             {
-                                FirePluginRemoved(sub_path);
+                                FirePluginRemoved(subPath);
                             }
 
                             break;

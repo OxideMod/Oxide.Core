@@ -48,11 +48,7 @@ namespace uMod.Libraries
 
             // Get the message
             message = message.Substring(1);
-
-            // Parse the command
-            string command;
-            string[] args;
-            ParseCommand(message, out command, out args);
+            ParseCommand(message, out string command, out string[] args);
 
             // Set command type for the player
             player.LastCommand = CommandType.Chat;
@@ -73,11 +69,7 @@ namespace uMod.Libraries
             {
                 message = message.Substring(7);
             }
-
-            // Parse the command
-            string command;
-            string[] args;
-            ParseCommand(message, out command, out args);
+            ParseCommand(message, out string command, out string[] args);
 
             // Set command type for the player
             player.LastCommand = CommandType.Console;

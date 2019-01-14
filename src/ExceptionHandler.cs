@@ -11,8 +11,7 @@ namespace uMod
 
         public static string FormatException(Exception ex)
         {
-            Func<Exception, string> func;
-            return Handlers.TryGetValue(ex.GetType(), out func) ? func(ex) : null;
+            return Handlers.TryGetValue(ex.GetType(), out Func<Exception, string> func) ? func(ex) : null;
         }
     }
 }

@@ -136,8 +136,7 @@ namespace uMod
         {
             get
             {
-                TValue value;
-                if (TryGetValue(key, out value))
+                if (TryGetValue(key, out TValue value))
                 {
                     return value;
                 }
@@ -454,8 +453,7 @@ namespace uMod
         /// <returns></returns>
         public static int GetNumbers(string input)
         {
-            int numbers;
-            int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out numbers);
+            int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out int numbers);
             return numbers;
         }
 

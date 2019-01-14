@@ -22,8 +22,7 @@ namespace uMod.Plugins
         public static CompilablePlugin GetCompilablePlugin(string directory, string name)
         {
             string className = Regex.Replace(name, "_", "");
-            CompilablePlugin plugin;
-            if (!compatiblePlugins.TryGetValue(className, out plugin))
+            if (!compatiblePlugins.TryGetValue(className, out CompilablePlugin plugin))
             {
                 plugin = new CompilablePlugin(Instance, Watcher, directory, name);
                 compatiblePlugins[className] = plugin;
@@ -53,7 +52,6 @@ namespace uMod.Plugins
                 {
                     Assembly assembly = extension.GetType().Assembly;
                     string assemblyName = assembly.GetName().Name;
-
                     if (!AssemblyBlacklist.Contains(assemblyName))
                     {
                         PluginReferences.Add(assemblyName);
@@ -94,7 +92,7 @@ namespace uMod.Plugins
             CompilablePlugin compilablePlugin = GetCompilablePlugin(directory, name);
             if (compilablePlugin.IsLoading)
             {
-                Interface.uMod.LogDebug($"Load requested for plugin which is already loading: {compilablePlugin.Name}");
+                Interface.uMod.LogDebug($"Load requested for plugin which is already loading: {compilablePlugin.Name}"); // TODO: Localization
                 return null;
             }
 
@@ -118,7 +116,7 @@ namespace uMod.Plugins
                 {
                     if (plugin.References.Contains(name))
                     {
-                        Interface.uMod.LogInfo($"Reloading {plugin.Name} because it references updated include file: {name}");
+                        Interface.uMod.LogInfo($"Reloading {plugin.Name} because it references updated include file: {name}"); // TODO: Localization
                         plugin.LastModifiedAt = DateTime.Now;
                         Load(plugin);
                     }
@@ -129,7 +127,7 @@ namespace uMod.Plugins
             CompilablePlugin compilablePlugin = GetCompilablePlugin(directory, name);
             if (compilablePlugin.IsLoading)
             {
-                Interface.uMod.LogDebug($"Reload requested for plugin which is already loading: {compilablePlugin.Name}");
+                Interface.uMod.LogDebug($"Reload requested for plugin which is already loading: {compilablePlugin.Name}"); // TODO: Localization
                 return;
             }
 
@@ -181,12 +179,12 @@ namespace uMod.Plugins
                     string[] loadingRequirements = plugin.Requires.Where(r => LoadingPlugins.Contains(r)).ToArray();
                     if (loadingRequirements.Any())
                     {
-                        Interface.uMod.LogDebug($"Plugin '{plugin.Name}' is waiting for requirements to be loaded: {loadingRequirements.ToSentence()}");
+                        Interface.uMod.LogDebug($"Plugin '{plugin.Name}' is waiting for requirements to be loaded: {loadingRequirements.ToSentence()}"); // TODO: Localization
                     }
                     else
                     {
-                        Interface.uMod.LogError($"Plugin '{plugin.Name}' requires missing dependencies: {missingRequirements.ToSentence()}");
-                        PluginErrors[plugin.Name] = $"Missing dependencies: {missingRequirements.ToSentence()}";
+                        Interface.uMod.LogError($"Plugin '{plugin.Name}' requires missing dependencies: {missingRequirements.ToSentence()}"); // TODO: Localization
+                        PluginErrors[plugin.Name] = $"Missing dependencies: {missingRequirements.ToSentence()}"; // TODO: Localization
                         PluginLoadingCompleted(plugin);
                     }
                 }
@@ -199,7 +197,6 @@ namespace uMod.Plugins
                         {
                             LoadedPlugins[pl.Name] = pl;
                         }
-
                         PluginLoadingCompleted(plugin);
                     });
                 }
@@ -260,8 +257,8 @@ namespace uMod.Plugins
                     foreach (CompilablePlugin plugin in compilation.plugins)
                     {
                         plugin.OnCompilationFailed();
-                        PluginErrors[plugin.Name] = $"Failed to compile: {plugin.CompilerErrors}";
-                        Interface.uMod.LogError($"Error while compiling: {plugin.CompilerErrors}");
+                        PluginErrors[plugin.Name] = $"Failed to compile: {plugin.CompilerErrors}"; // TODO: Localization
+                        Interface.uMod.LogError($"Error while compiling: {plugin.CompilerErrors}"); // TODO: Localization
                         //RemoteLogger.Warning($"{plugin.ScriptName} plugin failed to compile!\n{plugin.CompilerErrors}");
                     }
                 }
@@ -271,7 +268,7 @@ namespace uMod.Plugins
                     {
                         string[] compiledNames = compilation.plugins.Where(pl => string.IsNullOrEmpty(pl.CompilerErrors)).Select(pl => pl.Name).ToArray();
                         string verb = compiledNames.Length > 1 ? "were" : "was";
-                        Interface.uMod.LogInfo($"{compiledNames.ToSentence()} {verb} compiled successfully in {Math.Round(compilation.duration * 1000f)}ms");
+                        Interface.uMod.LogInfo($"{compiledNames.ToSentence()} {verb} compiled successfully in {Math.Round(compilation.duration * 1000f)}ms"); // TODO: Localization
                     }
 
                     foreach (CompilablePlugin plugin in compilation.plugins)
@@ -284,8 +281,8 @@ namespace uMod.Plugins
                         else
                         {
                             plugin.OnCompilationFailed();
-                            PluginErrors[plugin.Name] = $"Failed to compile: {plugin.CompilerErrors}";
-                            Interface.uMod.LogError($"Error while compiling: {plugin.CompilerErrors}");
+                            PluginErrors[plugin.Name] = $"Failed to compile: {plugin.CompilerErrors}"; // TODO: Localization
+                            Interface.uMod.LogError($"Error while compiling: {plugin.CompilerErrors}"); // TODO: Localization
                         }
                     }
                 }

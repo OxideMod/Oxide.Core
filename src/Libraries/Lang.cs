@@ -31,7 +31,6 @@ namespace uMod.Libraries
         public Lang()
         {
             // TODO: Rename oxide.lang if exists
-
             langFiles = new Dictionary<string, Dictionary<string, string>>();
             langData = ProtoStorage.Load<LangData>("umod.lang") ?? new LangData();
             pluginRemovedFromManager = new Dictionary<Plugin, Event.Callback<Plugin, PluginManager>>();
@@ -55,10 +54,9 @@ namespace uMod.Libraries
                 return;
             }
 
+            bool changed;
             string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
             Dictionary<string, string> existingMessages = GetMessageFile(plugin.Name, lang);
-
-            bool changed;
             if (existingMessages == null)
             {
                 langFiles.Remove(file);
@@ -71,17 +69,14 @@ namespace uMod.Libraries
                 messages = existingMessages;
             }
 
-            if (!changed)
+            if (changed)
             {
-                return;
+                if (!Directory.Exists(Path.Combine(Interface.uMod.LangDirectory, lang)))
+                {
+                    Directory.CreateDirectory(Path.Combine(Interface.uMod.LangDirectory, lang));
+                }
+                File.WriteAllText(Path.Combine(Interface.uMod.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
             }
-
-            if (!Directory.Exists(Path.Combine(Interface.uMod.LangDirectory, lang)))
-            {
-                Directory.CreateDirectory(Path.Combine(Interface.uMod.LangDirectory, lang));
-            }
-
-            File.WriteAllText(Path.Combine(Interface.uMod.LangDirectory, file), JsonConvert.SerializeObject(messages, Formatting.Indented));
         }
 
         /// <summary>
@@ -92,13 +87,11 @@ namespace uMod.Libraries
         [LibraryFunction("GetLanguage")]
         public string GetLanguage(string userId)
         {
-            string lang;
-            if (!string.IsNullOrEmpty(userId) && langData.UserData.TryGetValue(userId, out lang))
+            if (string.IsNullOrEmpty(userId) || !langData.UserData.TryGetValue(userId, out string lang))
             {
-                return lang;
+                return langData.Lang;
             }
-
-            return langData.Lang;
+            return lang;
         }
 
         /// <summary>
@@ -112,16 +105,15 @@ namespace uMod.Libraries
             List<string> languages = new List<string>();
             foreach (string directory in Directory.GetDirectories(Interface.uMod.LangDirectory))
             {
-                if (Directory.GetFiles(directory).Length == 0)
+                if (Directory.GetFiles(directory).Length != 0)
                 {
-                    continue;
-                }
-
-                if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
-                {
-                    languages.Add(directory.Substring(Interface.uMod.LangDirectory.Length + 1));
+                    if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
+                    {
+                        languages.Add(directory.Substring(Interface.uMod.LangDirectory.Length + 1));
+                    }
                 }
             }
+
             return languages.ToArray();
         }
 
@@ -135,12 +127,12 @@ namespace uMod.Libraries
         [LibraryFunction("GetMessage")]
         public string GetMessage(string key, Plugin plugin, string userId = null)
         {
-            if (string.IsNullOrEmpty(key) || plugin == null)
+            if (!string.IsNullOrEmpty(key) && plugin != null)
             {
-                return key;
+                return GetMessageKey(key, plugin, GetLanguage(userId));
             }
 
-            return GetMessageKey(key, plugin, GetLanguage(userId));
+            return key;
         }
 
         /// <summary>
@@ -150,25 +142,23 @@ namespace uMod.Libraries
         [LibraryFunction("GetMessages")]
         public Dictionary<string, string> GetMessages(string lang, Plugin plugin)
         {
-            if (string.IsNullOrEmpty(lang) || plugin == null)
+            if (!string.IsNullOrEmpty(lang) && plugin != null)
             {
-                return null;
-            }
-
-            string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
-
-            Dictionary<string, string> langFile;
-            if (!langFiles.TryGetValue(file, out langFile))
-            {
-                langFile = GetMessageFile(plugin.Name, lang);
-                if (langFile == null)
+                string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
+                if (!langFiles.TryGetValue(file, out Dictionary<string, string> langFile))
                 {
+                    langFile = GetMessageFile(plugin.Name, lang);
+                    if (langFile != null)
+                    {
+                        AddLangFile(file, langFile, plugin);
+                    }
                     return null;
                 }
 
-                AddLangFile(file, langFile, plugin);
+                return langFile.ToDictionary(k => k.Key, v => v.Value);
             }
-            return langFile.ToDictionary(k => k.Key, v => v.Value);
+
+            return null;
         }
 
         /// <summary>
@@ -186,19 +176,14 @@ namespace uMod.Libraries
         [LibraryFunction("SetLanguage")]
         public void SetLanguage(string lang, string userId)
         {
-            if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(lang) && !string.IsNullOrEmpty(userId))
             {
-                return;
+                if (!langData.UserData.TryGetValue(userId, out string currentLang) || !lang.Equals(currentLang))
+                {
+                    langData.UserData[userId] = lang;
+                    SaveData();
+                }
             }
-
-            string currentLang;
-            if (langData.UserData.TryGetValue(userId, out currentLang) && lang.Equals(currentLang))
-            {
-                return;
-            }
-
-            langData.UserData[userId] = lang;
-            SaveData();
         }
 
         /// <summary>
@@ -208,13 +193,11 @@ namespace uMod.Libraries
         [LibraryFunction("SetServerLanguage")]
         public void SetServerLanguage(string lang)
         {
-            if (string.IsNullOrEmpty(lang) || lang.Equals(langData.Lang))
+            if (!string.IsNullOrEmpty(lang) && !lang.Equals(langData.Lang))
             {
-                return;
+                langData.Lang = lang;
+                SaveData();
             }
-
-            langData.Lang = lang;
-            SaveData();
         }
 
         #endregion Library Functions
@@ -250,7 +233,6 @@ namespace uMod.Libraries
                 {
                     lang = lang.Replace(invalidChar, '_');
                 }
-
                 string file = $"{lang}{Path.DirectorySeparatorChar}{plugin}.json";
                 string filename = Path.Combine(Interface.uMod.LangDirectory, file);
                 return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
@@ -268,10 +250,8 @@ namespace uMod.Libraries
         /// <returns></returns>
         private string GetMessageKey(string key, Plugin plugin, string lang = defaultLang)
         {
-            Dictionary<string, string> langFile;
             string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
-
-            if (!langFiles.TryGetValue(file, out langFile))
+            if (!langFiles.TryGetValue(file, out Dictionary<string, string> langFile))
             {
                 langFile = GetMessageFile(plugin.Name, lang) ?? GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name);
                 if (langFile == null || langFile.Count == 0)
@@ -285,12 +265,10 @@ namespace uMod.Libraries
                 {
                     File.WriteAllText(Path.Combine(Interface.uMod.LangDirectory, file), JsonConvert.SerializeObject(langFile, Formatting.Indented));
                 }
-
                 AddLangFile(file, langFile, plugin);
             }
 
-            string message;
-            return langFile.TryGetValue(key, out message) ? message : key;
+            return langFile.TryGetValue(key, out string message) ? message : key;
         }
 
         /// <summary>
@@ -302,7 +280,6 @@ namespace uMod.Libraries
         private bool MergeMessages(Dictionary<string, string> existingMessages, Dictionary<string, string> messages)
         {
             bool changed = false;
-
             foreach (KeyValuePair<string, string> message in messages)
             {
                 if (!existingMessages.ContainsKey(message.Key))
@@ -311,7 +288,6 @@ namespace uMod.Libraries
                     changed = true;
                 }
             }
-
             if (existingMessages.Count > 0)
             {
                 foreach (string message in existingMessages.Keys.ToArray())
@@ -323,7 +299,6 @@ namespace uMod.Libraries
                     }
                 }
             }
-
             return changed;
         }
 
@@ -339,13 +314,11 @@ namespace uMod.Libraries
         /// <param name="manager"></param>
         private void plugin_OnRemovedFromManager(Plugin sender, PluginManager manager)
         {
-            Event.Callback<Plugin, PluginManager> callback;
-            if (pluginRemovedFromManager.TryGetValue(sender, out callback))
+            if (pluginRemovedFromManager.TryGetValue(sender, out Event.Callback<Plugin, PluginManager> callback))
             {
                 callback.Remove();
                 pluginRemovedFromManager.Remove(sender);
             }
-
             string[] langs = GetLanguages(sender);
             foreach (string lang in langs)
             {

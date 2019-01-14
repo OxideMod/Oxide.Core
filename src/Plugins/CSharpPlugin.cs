@@ -46,8 +46,7 @@ namespace uMod.Plugins
         {
             List<ushort> versionParts = version.Split('.').Select(part =>
             {
-                ushort number;
-                if (!ushort.TryParse(part, out number))
+                if (!ushort.TryParse(part, out ushort number))
                 {
                     number = 0;
                 }
@@ -183,8 +182,7 @@ namespace uMod.Plugins
 
             public object Call(string methodName, params object[] args)
             {
-                MethodInfo method;
-                if (!Methods.TryGetValue(methodName, out method))
+                if (!Methods.TryGetValue(methodName, out MethodInfo method))
                 {
                     method = FieldType.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
                     Methods[methodName] = method;
@@ -372,8 +370,7 @@ namespace uMod.Plugins
                 }
                 try
                 {
-                    object ret;
-                    if (DirectCallHook(method.Name, out ret, args))
+                    if (DirectCallHook(method.Name, out object ret, args))
                     {
                         return ret;
                     }
@@ -402,8 +399,7 @@ namespace uMod.Plugins
         [HookMethod("OnPluginLoaded")]
         private void base_OnPluginLoaded(Plugin plugin)
         {
-            FieldInfo field;
-            if (pluginReferenceFields.TryGetValue(plugin.Name, out field))
+            if (pluginReferenceFields.TryGetValue(plugin.Name, out FieldInfo field))
             {
                 field.SetValue(this, plugin);
             }
@@ -412,8 +408,7 @@ namespace uMod.Plugins
         [HookMethod("OnPluginUnloaded")]
         private void base_OnPluginUnloaded(Plugin plugin)
         {
-            FieldInfo field;
-            if (pluginReferenceFields.TryGetValue(plugin.Name, out field))
+            if (pluginReferenceFields.TryGetValue(plugin.Name, out FieldInfo field))
             {
                 field.SetValue(this, null);
             }

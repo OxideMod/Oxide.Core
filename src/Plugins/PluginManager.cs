@@ -104,8 +104,7 @@ namespace uMod.Plugins
         /// <returns></returns>
         public Plugin GetPlugin(string name)
         {
-            Plugin plugin;
-            return loadedPlugins.TryGetValue(name, out plugin) ? plugin : null;
+            return loadedPlugins.TryGetValue(name, out Plugin plugin) ? plugin : null;
         }
 
         /// <summary>
@@ -123,8 +122,7 @@ namespace uMod.Plugins
         {
             if (loadedPlugins.ContainsKey(plugin.Name) && (plugin.IsCorePlugin || !hook.StartsWith("I")))
             {
-                IList<Plugin> sublist;
-                if (!hookSubscriptions.TryGetValue(hook, out sublist))
+                if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist))
                 {
                     sublist = new List<Plugin>();
                     hookSubscriptions.Add(hook, sublist);
@@ -146,8 +144,7 @@ namespace uMod.Plugins
         {
             if (loadedPlugins.ContainsKey(plugin.Name) && (plugin.IsCorePlugin || !hook.StartsWith("I")))
             {
-                IList<Plugin> sublist;
-                if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
+                if (hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist) && sublist.Contains(plugin))
                 {
                     sublist.Remove(plugin);
                 }
@@ -163,8 +160,7 @@ namespace uMod.Plugins
         public object CallHook(string hook, params object[] args)
         {
             // Locate the sublist
-            IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(hook, out plugins) || plugins.Count == 0)
+            if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> plugins) || plugins.Count == 0)
             {
                 return null;
             }
@@ -241,15 +237,13 @@ namespace uMod.Plugins
         /// <returns></returns>
         public object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
-            IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(oldHook, out plugins) || plugins.Count == 0 || expireDate < DateTime.Now)
+            if (!hookSubscriptions.TryGetValue(oldHook, out IList<Plugin> plugins) || plugins.Count == 0 || expireDate < DateTime.Now)
             {
                 return null;
             }
 
-            float lastWarningAt;
             float now = Interface.uMod.Now;
-            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
+            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 300f)
             {
                 Plugin plugin = plugins[0];
                 lastDeprecatedWarningAt[oldHook] = now;

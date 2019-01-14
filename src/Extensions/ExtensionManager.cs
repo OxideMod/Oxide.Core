@@ -92,8 +92,7 @@ namespace uMod.Extensions
         /// <returns></returns>
         public Library GetLibrary(string name)
         {
-            Library lib;
-            return !libraries.TryGetValue(name, out lib) ? null : lib;
+            return !libraries.TryGetValue(name, out Library lib) ? null : lib;
         }
 
         /// <summary>

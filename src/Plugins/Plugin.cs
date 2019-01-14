@@ -474,8 +474,7 @@ namespace uMod.Plugins
 
         private bool UniversalCommandCallback(IPlayer caller, string cmd, string[] args)
         {
-            CommandInfo cmdInfo;
-            if (commandInfos.TryGetValue(cmd, out cmdInfo))
+            if (commandInfos.TryGetValue(cmd, out CommandInfo cmdInfo))
             {
                 if (caller == null)
                 {

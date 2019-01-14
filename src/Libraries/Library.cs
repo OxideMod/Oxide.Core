@@ -170,8 +170,7 @@ namespace uMod.Libraries
         /// <returns></returns>
         public MethodInfo GetFunction(string name)
         {
-            MethodInfo info;
-            return functions.TryGetValue(name, out info) ? info : null;
+            return functions.TryGetValue(name, out MethodInfo info) ? info : null;
         }
 
         /// <summary>
@@ -181,8 +180,7 @@ namespace uMod.Libraries
         /// <returns></returns>
         public PropertyInfo GetProperty(string name)
         {
-            PropertyInfo info;
-            return properties.TryGetValue(name, out info) ? info : null;
+            return properties.TryGetValue(name, out PropertyInfo info) ? info : null;
         }
     }
 }
