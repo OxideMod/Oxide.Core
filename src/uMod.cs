@@ -469,10 +469,12 @@ namespace uMod
         public bool LoadPlugin(string name)
         {
             // Check if the plugin is already loaded
-            if (RootPluginManager.GetPlugin(name) != null)
+            if (RootPluginManager.GetPlugin(name) != null) // TODO: This requires the full path right now, probably should register without
             {
                 return false;
             }
+
+            name = Utility.GetFileNameWithoutExtension(name); // Necessary to make sure path is removed from plugin name
 
             // Find all plugin loaders that lay claim to the name
             HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Any(f => f.Name.StartsWith(name))));
@@ -597,7 +599,7 @@ namespace uMod
                 if (subPath != null)
                 {
                     directory = Path.Combine(directory, subPath);
-                    name = name.Substring(subPath.Length + 1);
+                    name = Utility.GetFileNameWithoutExtension(name);
                 }
             }
 
