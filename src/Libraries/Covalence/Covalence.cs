@@ -1,10 +1,18 @@
-﻿using Oxide.Core.Logging;
+﻿using Oxide.Core.Libraries.Covalence;
+using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
+namespace uMod.Libraries.Universal
+{
+    public class Universal : Covalence
+    {
+    }
+}
 
 namespace Oxide.Core.Libraries.Covalence
 {

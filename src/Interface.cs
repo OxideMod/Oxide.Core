@@ -343,5 +343,7 @@ namespace Oxide.Core
         /// </summary>
         /// <returns></returns>
         public static OxideMod GetMod() => Oxide;
+
+        public static OxideMod uMod => Oxide;
     }
 }
