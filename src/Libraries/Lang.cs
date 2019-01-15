@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using References::Newtonsoft.Json;
 using References::ProtoBuf;
@@ -152,13 +152,12 @@ namespace uMod.Libraries
                     {
                         AddLangFile(file, langFile, plugin);
                     }
-                    return null;
                 }
 
                 return langFile.ToDictionary(k => k.Key, v => v.Value);
             }
 
-            return null;
+            return new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -238,7 +237,7 @@ namespace uMod.Libraries
                 return File.Exists(filename) ? JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(filename)) : null;
             }
 
-            return null;
+            return new Dictionary<string, string>();
         }
 
         /// <summary>
