@@ -242,7 +242,6 @@ namespace uMod.Plugins
                         return;
                     }
 
-                    FileInfo dependency = plugin.Loader.ScanDirectory(Interface.uMod.PluginDirectory).First(f => f.Name.StartsWith(dependencyName));
                     CompilablePlugin dependencyPlugin = CSharpPluginLoader.GetCompilablePlugin(dependency.DirectoryName, dependencyName);
                     AddDependency(dependencyPlugin);
                     continue;
