@@ -233,7 +233,8 @@ namespace uMod.Plugins
                     string dependencyName = match.Groups[1].Value;
                     plugin.Requires.Add(dependencyName);
 
-                    if (!File.Exists(Path.Combine(plugin.Directory, dependencyName + ".cs")))
+                    FileInfo dependency = plugin.Loader.ScanDirectory(Interface.uMod.PluginDirectory).First(f => f.Name.StartsWith(dependencyName));
+                    if (dependency == null)
                     {
                         Interface.uMod.LogError($"Plugin '{plugin.Name}' requires missing dependency: {dependencyName}");
                         plugin.CompilerErrors = $"Missing dependency: {dependencyName}";
