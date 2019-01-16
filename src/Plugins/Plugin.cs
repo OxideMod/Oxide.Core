@@ -413,14 +413,32 @@ namespace uMod.Plugins
 
         #region Universal
 
+        [Obsolete("Use AddUniversalCommand instead")]
+        public void AddCovalenceCommand(string command, string callback, string perm = null)
+        {
+            AddUniversalCommand(command, callback, perm);
+        }
+
         public void AddUniversalCommand(string command, string callback, string perm = null)
         {
             AddUniversalCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
         }
 
+        [Obsolete("Use AddUniversalCommand instead")]
+        public void AddCovalenceCommand(string[] commands, string callback, string perm)
+        {
+            AddUniversalCommand(commands, callback, perm);
+        }
+
         public void AddUniversalCommand(string[] commands, string callback, string perm)
         {
             AddUniversalCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+        }
+
+        [Obsolete("Use AddUniversalCommand instead")]
+        public void AddCovalenceCommand(string[] commands, string callback, string[] perms = null)
+        {
+            AddUniversalCommand(commands, callback, perms);
         }
 
         public void AddUniversalCommand(string[] commands, string callback, string[] perms = null)
@@ -436,6 +454,12 @@ namespace uMod.Plugins
             {
                 universal.RegisterCommand(command, this, UniversalCommandCallback);
             }
+        }
+
+        [Obsolete("Use AddUniversalCommand instead")]
+        protected void AddCovalenceCommand(string[] commands, string[] perms, CommandCallback callback)
+        {
+            AddUniversalCommand(commands, perms, callback);
         }
 
         protected void AddUniversalCommand(string[] commands, string[] perms, CommandCallback callback)
