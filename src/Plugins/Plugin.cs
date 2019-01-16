@@ -1,4 +1,4 @@
-﻿using Oxide.Core.Configuration;
+using Oxide.Core.Configuration;
 using Oxide.Core.Libraries;
 using Oxide.Core.Libraries.Covalence;
 using System;
@@ -428,14 +428,29 @@ namespace Oxide.Core.Plugins
 
         #region Covalence
 
+        public void AddUniversalCommand(string command, string callback, string perm = null)
+        {
+            AddCovalenceCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+        }
+
         public void AddCovalenceCommand(string command, string callback, string perm = null)
         {
             AddCovalenceCommand(new[] { command }, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
         }
 
+        public void AddUniversalCommand(string[] commands, string callback, string perm)
+        {
+            AddCovalenceCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+        }
+
         public void AddCovalenceCommand(string[] commands, string callback, string perm)
         {
             AddCovalenceCommand(commands, callback, string.IsNullOrEmpty(perm) ? null : new[] { perm });
+        }
+
+        public void AddUniversalCommand(string[] commands, string callback, string[] perms = null)
+        {
+            AddCovalenceCommand(commands, callback, perms);
         }
 
         public void AddCovalenceCommand(string[] commands, string callback, string[] perms = null)
@@ -451,6 +466,11 @@ namespace Oxide.Core.Plugins
             {
                 covalence.RegisterCommand(command, this, CovalenceCommandCallback);
             }
+        }
+
+        protected void AddUniversalCommand(string[] commands, string[] perms, CommandCallback callback)
+        {
+            AddCovalenceCommand(commands, perms, callback);
         }
 
         protected void AddCovalenceCommand(string[] commands, string[] perms, CommandCallback callback)
