@@ -176,7 +176,8 @@ namespace uMod.Plugins
                     .Replace("Oxide.Core", "uMod")
                     .Replace("OxideMod", "uMod")
                     .Replace("Oxide", "uMod")
-                    .Replace("Covalence", "Universal"))
+                    .Replace("CovalencePlugin", "UniversalPlugin")
+                    .Replace("Libraries.Covalence", "Libraries.Universal"))
                     .ToArray();
                 Interface.uMod.LogWarning($"Plugin {plugin.ScriptName} is using Oxide naming, please update to uMod naming");
             }
@@ -415,17 +416,14 @@ namespace uMod.Plugins
                             {
                                 lines.Add(reader.ReadLine());
                             }
-
                             if (!string.IsNullOrEmpty(gameExtensionName))
                             {
-                                lines.Insert(0, $"#define {gameExtensionName}");
-
                                 if (!string.IsNullOrEmpty(gameExtensionBranch) && gameExtensionBranch != "public")
                                 {
                                     lines.Insert(0, $"#define {gameExtensionName}{gameExtensionBranch}");
                                 }
+                                lines.Insert(0, $"#define {gameExtensionName}");
                             }
-
                             plugin.ScriptLines = lines.ToArray();
                             plugin.ScriptEncoding = reader.CurrentEncoding;
                         }
@@ -458,7 +456,6 @@ namespace uMod.Plugins
                 {
                     CacheScriptLines(plugin);
                 }
-
                 Thread.Sleep(100);
                 CacheModifiedScripts();
             }

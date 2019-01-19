@@ -204,6 +204,7 @@ namespace uMod.Plugins
         protected Universal universal = Interface.uMod.GetLibrary<Universal>();
         protected Lang lang = Interface.uMod.GetLibrary<Lang>();
         protected Permission permission = Interface.uMod.GetLibrary<Permission>();
+        protected PluginManager plugins = Interface.uMod.RootPluginManager;
         protected WebRequests webrequest = Interface.uMod.GetLibrary<WebRequests>();
         protected PluginTimers timer;
 
