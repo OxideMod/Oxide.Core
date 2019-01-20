@@ -249,31 +249,21 @@ namespace uMod.Libraries
                 {
                     using (process = CreateProcess())
                     {
-                        string errorText = null;
-                        string response = string.Empty;
                         process.Start();
-                        while (true)
+                        string response = process.StandardOutput.ReadToEnd();
+                        string errorText = process.StandardError.ReadToEnd();
+
+                        if (!process.WaitForExit((GetTimeout() + 1) * 1000)) // process timeout must be slightly longer than request timeout
                         {
-                            byte[] buffer = new byte[256];
-                            IAsyncResult result = process.StandardOutput.BaseStream.BeginRead(buffer, 0, 256, null, null);
-                            result.AsyncWaitHandle.WaitOne(1);
-                            int bytesRead = process.StandardOutput.BaseStream.EndRead(result);
-                            if (bytesRead > 0)
-                            {
-                                response += Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                            }
-                            else
-                            {
-                                Abort();
-                                break;
-                            }
+                            process.Kill();
+                            OnTimeout();
                         }
 
                         if (process.ExitCode == 0) // Success
                         {
                             if (string.IsNullOrEmpty(response))
                             {
-                                ResponseText = errorText; // TODO: Fix this always being null
+                                ResponseText = errorText;
                             }
                             else
                             {
