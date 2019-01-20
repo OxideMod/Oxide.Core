@@ -78,7 +78,7 @@ namespace uMod.Libraries
         /// <summary>
         /// Represents a single WebRequest instance
         /// </summary>
-        public class WebRequest
+        public class WebRequest : IDisposable
         {
             /// <summary>
             /// Gets the callback delegate
@@ -376,6 +376,39 @@ namespace uMod.Libraries
             {
                 Abort();
             }
+
+            #region IDisposable Support
+            private bool disposedValue = false; // To detect redundant calls
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposedValue)
+                {
+                    if (disposing)
+                    {
+                        // Dispose managed state (managed objects) 
+                        Cookies?.Clear();
+                        RequestHeaders?.Clear();
+                        Response?.Dispose();
+                        Response = null;
+
+                        process?.Dispose();
+                        process = null;
+                    }
+
+                    // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                    // TODO: set large fields to null.
+
+                    disposedValue = true;
+                }
+            }
+
+            void IDisposable.Dispose()
+            {
+                // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+                Dispose(true);
+            }
+            #endregion
         }
 
         /// <summary>
@@ -563,7 +596,7 @@ namespace uMod.Libraries
         public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 30f)
         {
             WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            Enqueue(request);
+            EnqueueRequest(request);
         }
 
         /// <summary>
@@ -580,14 +613,14 @@ namespace uMod.Libraries
         public void Enqueue(string url, string body, Action<WebResponse> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 30f)
         {
             WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
-            Enqueue(request);
+            EnqueueRequest(request);
         }
 
         /// <summary>
         /// Enqueues a web request
         /// </summary>
         /// <param name="request"></param>
-        protected void Enqueue(WebRequest request)
+        public void EnqueueRequest(WebRequest request)
         {
             if (request.Async)
             {
