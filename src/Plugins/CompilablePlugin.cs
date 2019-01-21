@@ -11,7 +11,7 @@ namespace uMod.Plugins
         public CompiledAssembly LastGoodAssembly;
         public bool IsLoading;
 
-        public CompilablePlugin(CSharpPluginLoader loader, FSWatcher watcher, string directory, string name) : base(loader, watcher, directory, name)
+        public CompilablePlugin(CSharpPluginLoader loader, string directory, string name) : base(loader, directory, name)
         {
         }
 
@@ -84,7 +84,6 @@ namespace uMod.Plugins
                     return;
                 }
 
-                plugin.Watcher = Watcher;
                 plugin.Loader = Loader;
 
                 if (!Interface.uMod.PluginLoaded(plugin))

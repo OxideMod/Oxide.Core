@@ -18,6 +18,7 @@ namespace uMod.Configuration
         {
             public bool Logging;
             public bool Modded;
+            public bool ConfigWatchers;
             public bool PluginWatchers;
             public string[] PluginDirectories;
             public DefaultGroups DefaultGroups;
@@ -113,6 +114,7 @@ namespace uMod.Configuration
             {
                 Logging = true,
                 Modded = true,
+                ConfigWatchers = false,
                 PluginWatchers = true,
                 PluginDirectories = new[] { "universal" },
                 DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "admin", Players = "default" }

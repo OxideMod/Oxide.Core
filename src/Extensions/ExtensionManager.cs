@@ -33,7 +33,7 @@ namespace uMod.Extensions
         private IDictionary<string, Library> libraries;
 
         // All registered watchers
-        private IList<PluginChangeWatcher> changeWatchers;
+        private IList<ChangeWatcher> changeWatchers;
 
         /// <summary>
         /// Initializes a new instance of the ExtensionManager class
@@ -45,7 +45,7 @@ namespace uMod.Extensions
             extensions = new List<Extension>();
             pluginLoaders = new List<PluginLoader>();
             libraries = new Dictionary<string, Library>();
-            changeWatchers = new List<PluginChangeWatcher>();
+            changeWatchers = new List<ChangeWatcher>();
         }
 
         #region Registering
@@ -99,13 +99,13 @@ namespace uMod.Extensions
         /// Registers the specified watcher
         /// </summary>
         /// <param name="watcher"></param>
-        public void RegisterPluginChangeWatcher(PluginChangeWatcher watcher) => changeWatchers.Add(watcher);
+        public void RegisterChangeWatcher(ChangeWatcher watcher) => changeWatchers.Add(watcher);
 
         /// <summary>
         /// Gets all plugin change watchers
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PluginChangeWatcher> GetPluginChangeWatchers() => changeWatchers;
+        public IEnumerable<ChangeWatcher> GetChangeWatchers() => changeWatchers;
 
         #endregion Registering
 

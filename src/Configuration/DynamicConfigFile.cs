@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace uMod.Configuration
 {
@@ -18,7 +17,6 @@ namespace uMod.Configuration
         public JsonSerializerSettings Settings { get; set; } = new JsonSerializerSettings();
         private Dictionary<string, object> _keyvalues;
         private readonly JsonSerializerSettings _settings;
-        private readonly string _chroot;
 
         /// <summary>
         /// Initializes a new instance of the DynamicConfigFile class
@@ -28,7 +26,6 @@ namespace uMod.Configuration
             _keyvalues = new Dictionary<string, object>();
             _settings = new JsonSerializerSettings();
             _settings.Converters.Add(new KeyValuesConverter());
-            _chroot = Interface.uMod.InstanceDirectory;
         }
 
         /// <summary>
@@ -70,6 +67,10 @@ namespace uMod.Configuration
         public override void Save(string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
+            if (Interface.uMod.Config.Options.ConfigWatchers)
+            {
+                Interface.uMod.ConfigChanges.Add(filename);
+            }
             string dir = Utility.GetDirectoryName(filename);
             if (dir != null && !Directory.Exists(dir))
             {
@@ -88,6 +89,10 @@ namespace uMod.Configuration
         public void WriteObject<T>(T config, bool sync = false, string filename = null)
         {
             filename = CheckPath(filename ?? Filename);
+            if (Interface.uMod.Config.Options.ConfigWatchers)
+            {
+                Interface.uMod.ConfigChanges.Add(filename);
+            }
             string dir = Utility.GetDirectoryName(filename);
             if (dir != null && !Directory.Exists(dir))
             {
@@ -138,40 +143,6 @@ namespace uMod.Configuration
         }
 
         /// <summary>
-        /// Check if file path is in chroot directory
-        /// </summary>
-        /// <param name="filename"></param>
-        private string CheckPath(string filename)
-        {
-            filename = SanitizeName(filename);
-            string path = Path.GetFullPath(filename);
-            if (!path.StartsWith(_chroot, StringComparison.Ordinal))
-            {
-                throw new Exception($"Only access to 'umod' directory!\nPath: {path}");
-            }
-
-            return path;
-        }
-
-        /// <summary>
-        /// Makes the specified name safe for use in a filename
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static string SanitizeName(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return string.Empty;
-            }
-
-            name = name.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-            name = Regex.Replace(name, "[" + Regex.Escape(new string(Path.GetInvalidPathChars())) + "]", "_");
-            name = Regex.Replace(name, @"\.+", ".");
-            return name.TrimStart('.');
-        }
-
-        /// <summary>
         /// Clears this config
         /// </summary>
         public void Clear()
@@ -194,10 +165,7 @@ namespace uMod.Configuration
         /// <returns></returns>
         public object this[string key]
         {
-            get
-            {
-                return _keyvalues.TryGetValue(key, out object val) ? val : null;
-            }
+            get => _keyvalues.TryGetValue(key, out object val) ? val : null;
             set => _keyvalues[key] = value;
         }
 
@@ -250,6 +218,7 @@ namespace uMod.Configuration
 
                 return list;
             }
+
             if (destinationType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
                 Type keyType = destinationType.GetGenericArguments()[0];
@@ -262,6 +231,7 @@ namespace uMod.Configuration
 
                 return dict;
             }
+
             throw new InvalidCastException("Generic types other than List<> and Dictionary<,> are not supported");
         }
 
@@ -298,6 +268,7 @@ namespace uMod.Configuration
                     return null;
                 }
             }
+
             return val;
         }
 
@@ -332,6 +303,7 @@ namespace uMod.Configuration
                 _keyvalues[path[0]] = value;
                 return;
             }
+
             if (!_keyvalues.TryGetValue(path[0], out object val))
             {
                 _keyvalues[path[0]] = val = new Dictionary<string, object>();

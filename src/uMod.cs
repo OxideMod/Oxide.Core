@@ -79,12 +79,13 @@ namespace uMod
 
         // Various configs
         public uModConfig Config { get; private set; }
+        internal List<string> ConfigChanges;
 
         // The extension manager
-        private ExtensionManager extensionManager;
+        internal ExtensionManager ExtensionManager;
 
         // The .cs plugin loader
-        private CSharpPluginLoader coreLoader;
+        private CSharpPluginLoader pluginLoader;
 
         // Various libraries
         private Universal universal;
@@ -244,7 +245,7 @@ namespace uMod
             // Setup core managers and data file system
             LogInfo($"Loading uMod v{Version}..."); // TODO: Localization
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
-            extensionManager = new ExtensionManager(RootLogger);
+            ExtensionManager = new ExtensionManager(RootLogger);
             DataFileSystem = new DataFileSystem(DataDirectory);
 
             // Setup configuration and DLL mapping for references
@@ -260,15 +261,15 @@ namespace uMod
             }
 
             // Register libraries (these are going to get replaced soon)
-            extensionManager.RegisterLibrary("Universal", universal = new Universal());
-            extensionManager.RegisterLibrary("Lang", new Lang());
-            extensionManager.RegisterLibrary("Permission", libperm = new Permission());
-            extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
-            extensionManager.RegisterLibrary("WebRequests", new WebRequests());
+            ExtensionManager.RegisterLibrary("Universal", universal = new Universal());
+            ExtensionManager.RegisterLibrary("Lang", new Lang());
+            ExtensionManager.RegisterLibrary("Permission", libperm = new Permission());
+            ExtensionManager.RegisterLibrary("Timer", libtimer = new Timer());
+            ExtensionManager.RegisterLibrary("WebRequests", new WebRequests());
 
             // Load all extensions
             LogInfo("Loading extensions..."); // TODO: Localization
-            extensionManager.LoadAllExtensions(ExtensionDirectory);
+            ExtensionManager.LoadAllExtensions(ExtensionDirectory);
 
             // Run cleanup of old files and initialize universal API
             foreach (string extPath in Directory.GetFiles(ExtensionDirectory, "Oxide.*.dll")) // TODO: Remove this cleanup eventually
@@ -292,19 +293,33 @@ namespace uMod
             }
 
             // Register .cs plugin watcher
-            FSWatcher coreWatcher = new FSWatcher(PluginDirectory, "*.cs");
-            extensionManager.RegisterPluginChangeWatcher(coreWatcher);
+            SourceWatcher pluginWatcher = null;
+            if (Interface.uMod.Config.Options.PluginWatchers)
+            {
+                pluginWatcher = new SourceWatcher(PluginDirectory, "*.cs");
+                ExtensionManager.RegisterChangeWatcher(pluginWatcher);
+            }
+            else
+            {
+                Interface.uMod.LogWarning("Automatic plugin reloading and unloading has been disabled"); // TODO: Localization
+            }
+
+            if (Interface.uMod.Config.Options.ConfigWatchers)
+            {
+                ConfigChanges = new List<string>();
+                ExtensionManager.RegisterChangeWatcher(new ConfigWatcher(ConfigDirectory, "*.json"));
+            }
 
             // Register .cs plugin loader
-            coreLoader = new CSharpPluginLoader(coreWatcher);
-            extensionManager.RegisterPluginLoader(coreLoader);
-            coreLoader.AddReferences();
+            pluginLoader = new CSharpPluginLoader();
+            ExtensionManager.RegisterPluginLoader(pluginLoader);
+            pluginLoader.AddReferences();
 
             // Check web client binary
             WebClient.CheckWebClientBinary();
 
             // Load all plugin watchers for extensions
-            foreach (Extension ext in extensionManager.GetAllExtensions())
+            foreach (Extension ext in ExtensionManager.GetAllExtensions())
             {
                 ext.LoadPluginWatchers(PluginDirectory);
             }
@@ -313,12 +328,19 @@ namespace uMod
             LogInfo("Loading plugins..."); // TODO: Localization
             LoadAllPlugins(true);
 
-            // Setup events for all plugin changes watchers
-            foreach (PluginChangeWatcher watcher in extensionManager.GetPluginChangeWatchers())
+            // Setup events for all changes watchers
+            foreach (ChangeWatcher watcher in ExtensionManager.GetChangeWatchers())
             {
-                watcher.OnPluginSourceChanged += watcher_OnPluginSourceChanged;
-                watcher.OnPluginAdded += watcher_OnPluginAdded;
-                watcher.OnPluginRemoved += watcher_OnPluginRemoved;
+                if (watcher is SourceWatcher)
+                {
+                    watcher.OnAdded += watcher_OnPluginAdded;
+                    watcher.OnChanged += watcher_OnPluginChanged;
+                    watcher.OnRemoved += watcher_OnPluginRemoved;
+                }
+                else if (watcher is ConfigWatcher)
+                {
+                    watcher.OnChanged += watcher_OnConfigChanged;
+                }
             }
         }
 
@@ -327,19 +349,19 @@ namespace uMod
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public T GetLibrary<T>(string name = null) where T : Library => extensionManager.GetLibrary(name ?? typeof(T).Name) as T;
+        public T GetLibrary<T>(string name = null) where T : Library => ExtensionManager.GetLibrary(name ?? typeof(T).Name) as T;
 
         /// <summary>
         /// Gets all loaded extensions
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Extension> GetAllExtensions() => extensionManager.GetAllExtensions();
+        public IEnumerable<Extension> GetAllExtensions() => ExtensionManager.GetAllExtensions();
 
         /// <summary>
         /// Gets all loaded extensions
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PluginLoader> GetPluginLoaders() => extensionManager.GetPluginLoaders();
+        public IEnumerable<PluginLoader> GetPluginLoaders() => ExtensionManager.GetPluginLoaders();
 
         #region Logging
 
@@ -392,7 +414,7 @@ namespace uMod
         /// </summary>
         public void LoadAllPlugins(bool init = false)
         {
-            IEnumerable<PluginLoader> loaders = extensionManager.GetPluginLoaders().ToArray();
+            IEnumerable<PluginLoader> loaders = ExtensionManager.GetPluginLoaders().ToArray();
 
             // Load all core plugins first
             if (!HasLoadedCorePlugins)
@@ -428,7 +450,7 @@ namespace uMod
             if (init)
             {
                 float lastCall = Now;
-                foreach (PluginLoader loader in extensionManager.GetPluginLoaders())
+                foreach (PluginLoader loader in ExtensionManager.GetPluginLoaders())
                 {
                     // Wait until all async plugins have finished loading
                     while (loader.LoadingPlugins.Count > 0)
@@ -480,7 +502,7 @@ namespace uMod
             name = Utility.GetFileNameWithoutExtension(name); // Necessary to make sure path is removed from plugin name
 
             // Find all plugin loaders that lay claim to the name
-            HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(extensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Any(f => f.Name.StartsWith(name))));
+            HashSet<PluginLoader> loaders = new HashSet<PluginLoader>(ExtensionManager.GetPluginLoaders().Where(l => l.ScanDirectory(PluginDirectory).Any(f => f.Name.StartsWith(name))));
             if (loaders.Count == 0)
             {
                 LogError($"Could not load plugin '{name}' (no plugin found with that file name)"); // TODO: Localization
@@ -566,7 +588,7 @@ namespace uMod
             Plugin plugin = RootPluginManager.GetPlugin(name);
             if (plugin != null)
             {
-                PluginLoader loader = extensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
+                PluginLoader loader = ExtensionManager.GetPluginLoaders().SingleOrDefault(l => l.LoadedPlugins.ContainsKey(name));
                 loader?.Unloading(plugin);
 
                 // Unload the plugin
@@ -605,7 +627,7 @@ namespace uMod
                 }
             }
 
-            PluginLoader loader = extensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Any(f => f.Name.StartsWith(name)));
+            PluginLoader loader = ExtensionManager.GetPluginLoaders().FirstOrDefault(l => l.ScanDirectory(directory).Any(f => f.Name.StartsWith(name)));
             if (loader != null)
             {
                 loader.Reload(directory, name);
@@ -644,7 +666,7 @@ namespace uMod
                 return false;
             }
 
-            extensionManager.LoadExtension(extPath, false);
+            ExtensionManager.LoadExtension(extPath, false);
             return true;
         }
 
@@ -659,7 +681,7 @@ namespace uMod
                 return false;
             }
 
-            extensionManager.UnloadExtension(extPath);
+            ExtensionManager.UnloadExtension(extPath);
             return true;
         }
 
@@ -674,7 +696,7 @@ namespace uMod
                 return false;
             }
 
-            extensionManager.ReloadExtension(extPath);
+            ExtensionManager.ReloadExtension(extPath);
             return true;
         }
 
@@ -771,7 +793,7 @@ namespace uMod
                 }
 
                 // Call OnFrame hook in plugins
-                foreach (KeyValuePair<string, Plugin> kv in coreLoader.LoadedPlugins)
+                foreach (KeyValuePair<string, Plugin> kv in pluginLoader.LoadedPlugins)
                 {
                     CSharpPlugin plugin = kv.Value as CSharpPlugin;
                     if (plugin != null && plugin.HookedOnFrame)
@@ -798,14 +820,14 @@ namespace uMod
                 IsShuttingDown = true;
                 UnloadAllPlugins();
 
-                foreach (Extension extension in extensionManager.GetAllExtensions())
+                foreach (Extension extension in ExtensionManager.GetAllExtensions())
                 {
                     extension.OnShutdown();
                 }
 
-                foreach (string name in extensionManager.GetLibraries())
+                foreach (string name in ExtensionManager.GetLibraries())
                 {
-                    extensionManager.GetLibrary(name).Shutdown();
+                    ExtensionManager.GetLibrary(name).Shutdown();
                 }
 
                 RemoteConsole?.Shutdown();
@@ -844,27 +866,51 @@ namespace uMod
             return false;
         }
 
-        #region Plugin Change Watchers
+        #region Change Watchers
 
         /// <summary>
-        /// Called when a plugin watcher has reported a change in a plugin source
+        /// Called when a watcher has reported a change in a plugin configuration
         /// </summary>
         /// <param name="name"></param>
-        private void watcher_OnPluginSourceChanged(string name) => ReloadPlugin(name);
+        private void watcher_OnConfigChanged(string name)
+        {
+            Plugin plugin = null;
+            if ((plugin = RootPluginManager.GetPlugin(name)) != null)
+            {
+                if (plugin.IsSubscribed("OnConfigChanged"))
+                {
+                    plugin.CallHook("OnConfigChanged");
+                }
+                else
+                {
+                    ReloadPlugin(name);
+                }
+            }
+            else
+            {
+                Interface.uMod.LogWarning($"Plugin {name} does not exist");
+            }
+        }
 
         /// <summary>
-        /// Called when a plugin watcher has reported a change in a plugin source
+        /// Called when a watcher has reported a change in a plugin source
         /// </summary>
         /// <param name="name"></param>
         private void watcher_OnPluginAdded(string name) => LoadPlugin(name);
 
         /// <summary>
-        /// Called when a plugin watcher has reported a change in a plugin source
+        /// Called when a watcher has reported a change in a plugin source
+        /// </summary>
+        /// <param name="name"></param>
+        private void watcher_OnPluginChanged(string name) => ReloadPlugin(name);
+
+        /// <summary>
+        /// Called when a watcher has reported a change in a plugin source
         /// </summary>
         /// <param name="name"></param>
         private void watcher_OnPluginRemoved(string name) => UnloadPlugin(name);
 
-        #endregion Plugin Change Watchers
+        #endregion Change Watchers
 
         #region Library Paths
 

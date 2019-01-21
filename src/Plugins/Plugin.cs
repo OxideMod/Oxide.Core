@@ -178,6 +178,12 @@ namespace uMod.Plugins
         }
 
         /// <summary>
+        /// Checks if this plugin is subscribed to a specified hook
+        /// </summary>
+        /// <param name="hook"></param>
+        internal bool IsSubscribed(string hook) => Manager.IsSubscribedToHook(hook, this);
+
+        /// <summary>
         /// Subscribes this plugin to the specified hook
         /// </summary>
         /// <param name="hook"></param>

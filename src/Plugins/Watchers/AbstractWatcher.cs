@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Permissions;
@@ -7,47 +7,34 @@ using uMod.Logging;
 
 namespace uMod.Plugins.Watchers
 {
-    /// <summary>
-    /// Represents a file system watcher
-    /// </summary>
-    public sealed class FSWatcher : PluginChangeWatcher
+    public abstract class AbstractWatcher : ChangeWatcher
     {
-        private class QueuedChange
+        protected class QueuedChange
         {
             internal WatcherChangeTypes type;
             internal Libraries.Timer.TimerInstance timer;
         }
 
         // The file system watcher
-        private FileSystemWatcher watcher;
-
-        // The plugin list
-        private ICollection<string> watchedPlugins;
+        protected FileSystemWatcher watcher;
 
         // Changes are buffered briefly to avoid duplicate events
-        private Dictionary<string, QueuedChange> changeQueue;
+        protected Dictionary<string, QueuedChange> changeQueue;
 
-        private Libraries.Timer timers;
+        protected Libraries.Timer timers;
 
         /// <summary>
-        /// Initializes a new instance of the FSWatcher class
+        /// Initializes a new instance of the SourceWatcher class
         /// </summary>
         /// <param name="directory"></param>
         /// <param name="filter"></param>
-        public FSWatcher(string directory, string filter)
+        protected AbstractWatcher(string directory, string filter)
         {
-            watchedPlugins = new HashSet<string>();
+            watchedFiles = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
             timers = Interface.uMod.GetLibrary<Libraries.Timer>();
 
-            if (Interface.uMod.Config.Options.PluginWatchers)
-            {
-                LoadWatcher(directory, filter);
-            }
-            else
-            {
-                Interface.uMod.LogWarning("Automatic plugin reloading and unloading has been disabled");
-            }
+            LoadWatcher(directory, filter);
         }
 
         /// <summary>
@@ -56,42 +43,39 @@ namespace uMod.Plugins.Watchers
         /// <param name="directory"></param>
         /// <param name="filter"></param>
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
-        private void LoadWatcher(string directory, string filter)
+        protected void LoadWatcher(string directory, string filter)
         {
             // Create the watcher
             watcher = new FileSystemWatcher(directory, filter);
-            watcher.Changed += watcher_Changed;
-            watcher.Created += watcher_Changed;
-            watcher.Deleted += watcher_Changed;
-            watcher.Error += watcher_Error;
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.Changed += (sender, e) => watcher_Changed(sender, e);
+            watcher.Created += (sender, e) => watcher_Changed(sender, e);
+            watcher.Deleted += (sender, e) => watcher_Changed(sender, e);
+            watcher.Error += (sender, e) => watcher_Error(sender, e);
+            watcher.NotifyFilter = GetNotifyFilters();
             watcher.IncludeSubdirectories = true;
             watcher.EnableRaisingEvents = true;
             GC.KeepAlive(watcher);
         }
 
         /// <summary>
-        /// Adds a filename-plugin mapping to this watcher
+        /// Get the filesystem watcher notify filters
         /// </summary>
-        /// <param name="name"></param>
-        public void AddMapping(string name) => watchedPlugins.Add(name);
-
-        /// <summary>
-        /// Removes the specified mapping from this watcher
-        /// </summary>
-        /// <param name="name"></param>
-        public void RemoveMapping(string name) => watchedPlugins.Remove(name);
+        /// <returns></returns>
+        protected virtual NotifyFilters GetNotifyFilters()
+        {
+            return NotifyFilters.LastWrite;
+        }
 
         /// <summary>
         /// Called when the watcher has registered a file system change
         /// </summary>
         /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void watcher_Changed(object sender, FileSystemEventArgs e)
+        /// <param name="args"></param>
+        protected virtual void watcher_Changed(object sender, FileSystemEventArgs args)
         {
             FileSystemWatcher watcher = (FileSystemWatcher)sender;
-            int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
-            string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
+            int length = args.FullPath.Length - watcher.Path.Length - Path.GetExtension(args.Name).Length - 1;
+            string subPath = args.FullPath.Substring(watcher.Path.Length + 1, length);
 
             if (!changeQueue.TryGetValue(subPath, out QueuedChange change))
             {
@@ -101,7 +85,7 @@ namespace uMod.Plugins.Watchers
             change.timer?.Destroy();
             change.timer = null;
 
-            switch (e.ChangeType)
+            switch (args.ChangeType)
             {
                 case WatcherChangeTypes.Changed:
                     if (change.type != WatcherChangeTypes.Created)
@@ -145,7 +129,7 @@ namespace uMod.Plugins.Watchers
                     {
                         if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
                         {
-                            FirePluginSourceChanged(subPath);
+                            FireChanged(subPath);
                         }
 
                         return;
@@ -154,25 +138,25 @@ namespace uMod.Plugins.Watchers
                     switch (change.type)
                     {
                         case WatcherChangeTypes.Changed:
-                            if (watchedPlugins.Contains(subPath))
+                            if (watchedFiles.Contains(subPath))
                             {
-                                FirePluginSourceChanged(subPath);
+                                FireChanged(subPath);
                             }
                             else
                             {
-                                FirePluginAdded(subPath);
+                                FireAdded(subPath);
                             }
 
                             break;
 
                         case WatcherChangeTypes.Created:
-                            FirePluginAdded(subPath);
+                            FireAdded(subPath);
                             break;
 
                         case WatcherChangeTypes.Deleted:
-                            if (watchedPlugins.Contains(subPath))
+                            if (watchedFiles.Contains(subPath))
                             {
-                                FirePluginRemoved(subPath);
+                                FireRemoved(subPath);
                             }
 
                             break;
@@ -181,12 +165,12 @@ namespace uMod.Plugins.Watchers
             });
         }
 
-        private void watcher_Error(object sender, ErrorEventArgs e)
+        protected virtual void watcher_Error(object sender, ErrorEventArgs e)
         {
             Interface.uMod.NextTick(() =>
             {
-                Interface.uMod.LogError("FSWatcher error: {0}", e.GetException());
-                RemoteLogger.Exception("FSWatcher error", e.GetException());
+                Interface.uMod.LogError("Watcher error: {0}", e.GetException());
+                RemoteLogger.Exception("Watcher error", e.GetException());
             });
         }
     }

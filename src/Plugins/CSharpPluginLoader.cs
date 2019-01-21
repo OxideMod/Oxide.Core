@@ -5,14 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using uMod.Extensions;
-using uMod.Plugins.Watchers;
 
 namespace uMod.Plugins
 {
     public class CSharpPluginLoader : PluginLoader
     {
         public static CSharpPluginLoader Instance;
-        public static FSWatcher Watcher;
         public static string[] DefaultReferences = { "mscorlib", "System", "System.Core", "System.Data", "uMod" };
         public static HashSet<string> PluginReferences = new HashSet<string>(DefaultReferences);
 
@@ -24,7 +22,7 @@ namespace uMod.Plugins
             string className = Regex.Replace(name, "_", "");
             if (!compatiblePlugins.TryGetValue(className, out CompilablePlugin plugin))
             {
-                plugin = new CompilablePlugin(Instance, Watcher, directory, name);
+                plugin = new CompilablePlugin(Instance, directory, name);
                 compatiblePlugins[className] = plugin;
             }
             return plugin;
@@ -35,10 +33,9 @@ namespace uMod.Plugins
         private List<CompilablePlugin> compilationQueue = new List<CompilablePlugin>();
         private PluginCompiler compiler;
 
-        public CSharpPluginLoader(FSWatcher watcher)
+        public CSharpPluginLoader()
         {
             Instance = this;
-            Watcher = watcher;
             PluginCompiler.CheckCompilerBinary();
             compiler = new PluginCompiler();
         }

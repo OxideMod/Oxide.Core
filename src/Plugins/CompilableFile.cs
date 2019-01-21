@@ -16,7 +16,6 @@ namespace uMod.Plugins
         private Libraries.Timer.TimerInstance timeoutTimer;
 
         public CSharpPluginLoader Loader;
-        public FSWatcher Watcher;
         public string Name;
         public string Directory;
         public string ScriptName;
@@ -39,10 +38,9 @@ namespace uMod.Plugins
 
         public byte[] ScriptSource => ScriptEncoding.GetBytes(string.Join(Environment.NewLine, ScriptLines));
 
-        public CompilableFile(CSharpPluginLoader loader, FSWatcher watcher, string directory, string name)
+        public CompilableFile(CSharpPluginLoader loader, string directory, string name)
         {
             Loader = loader;
-            Watcher = watcher;
             Directory = directory;
             ScriptName = name;
             ScriptPath = Path.Combine(Directory, $"{ScriptName}.cs");

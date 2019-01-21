@@ -10,12 +10,12 @@ namespace uMod.Plugins.Watchers
         /// <summary>
         /// Gets the Name
         /// </summary>
-        public string Name { get; private set; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the ChangeType
         /// </summary>
-        public WatcherChangeTypes ChangeType { get; private set; }
+        public WatcherChangeTypes ChangeType { get; }
 
         /// <summary>
         /// Initializes a new instance of the FileChange class
@@ -24,7 +24,6 @@ namespace uMod.Plugins.Watchers
         /// <param name="changeType"></param>
         public FileChange(string name, WatcherChangeTypes changeType)
         {
-            // Initialize
             Name = name;
             ChangeType = changeType;
         }

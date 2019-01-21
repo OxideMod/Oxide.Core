@@ -196,8 +196,6 @@ namespace uMod.Plugins
             }
         }
 
-        public FSWatcher Watcher;
-
         [Obsolete("Use universal instead")]
         protected Universal covalence = Interface.uMod.GetLibrary<Universal>();
 
@@ -302,7 +300,10 @@ namespace uMod.Plugins
 
             if (Filename != null)
             {
-                Watcher.AddMapping(Name);
+                foreach (ChangeWatcher watcher in Interface.uMod.ExtensionManager.GetChangeWatchers())
+                {
+                    watcher.AddMapping(Name);
+                }
             }
 
             foreach (string name in pluginReferenceFields.Keys)
@@ -328,7 +329,10 @@ namespace uMod.Plugins
                 CallHook("Unload");
             }
 
-            Watcher.RemoveMapping(Name);
+            foreach (ChangeWatcher watcher in Interface.uMod.ExtensionManager.GetChangeWatchers())
+            {
+                watcher.RemoveMapping(Name);
+            }
 
             foreach (string name in pluginReferenceFields.Keys)
             {

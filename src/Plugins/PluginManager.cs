@@ -114,6 +114,25 @@ namespace uMod.Plugins
         public IEnumerable<Plugin> GetPlugins() => loadedPlugins.Values;
 
         /// <summary>
+        /// Check if the specified plugin subscribes to the specified hook
+        /// </summary>
+        /// <param name="hook"></param>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        internal bool IsSubscribedToHook(string hook, Plugin plugin)
+        {
+            if (loadedPlugins.ContainsKey(plugin.Name) && (plugin.IsCorePlugin || !hook.StartsWith("I")))
+            {
+                if (hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist))
+                {
+                    return sublist.Contains(plugin);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Subscribes the specified plugin to the specified hook
         /// </summary>
         /// <param name="hook"></param>
