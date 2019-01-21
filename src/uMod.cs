@@ -271,6 +271,10 @@ namespace uMod
             extensionManager.LoadAllExtensions(ExtensionDirectory);
 
             // Run cleanup of old files and initialize universal API
+            foreach (string extPath in Directory.GetFiles(ExtensionDirectory, "Oxide.*.dll")) // TODO: Remove this cleanup eventually
+            {
+                Cleanup.Add(extPath);
+            }
             Cleanup.Run();
             universal.Initialize();
 
@@ -816,8 +820,18 @@ namespace uMod
         /// <param name="method"></param>
         public void RegisterEngineClock(Func<float> method) => getTimeSinceStartup = method;
 
+        /// <summary>
+        /// Check if the console can be enabled
+        /// </summary>
+        /// <param name="force"></param>
+        /// <returns></returns>
         public bool CheckConsole(bool force = false) => ConsoleWindow.Check(force) && Config.Console.Enabled;
 
+        /// <summary>
+        /// Enable the server console, if allowed
+        /// </summary>
+        /// <param name="force"></param>
+        /// <returns></returns>
         public bool EnableConsole(bool force = false)
         {
             if (CheckConsole(force))

@@ -977,7 +977,6 @@ namespace uMod.Libraries
 
             // Remove group from users
             bool changed = userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group));
-
             if (changed)
             {
                 SaveUsers();
@@ -1039,6 +1038,7 @@ namespace uMod.Libraries
             }
 
             group = group.ToLower();
+
             // First, get the group data
             if (!groupdata.TryGetValue(group, out GroupData data))
             {
