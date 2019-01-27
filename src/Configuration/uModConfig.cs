@@ -20,6 +20,7 @@ namespace uMod.Configuration
             public bool Modded;
             public bool ConfigWatchers;
             public bool PluginWatchers;
+            public char ChatCommandPrefix;
             public string[] PluginDirectories;
             public DefaultGroups DefaultGroups;
         }
@@ -116,6 +117,7 @@ namespace uMod.Configuration
                 Modded = true,
                 ConfigWatchers = false,
                 PluginWatchers = true,
+                ChatCommandPrefix = '/',
                 PluginDirectories = new[] { "universal" },
                 DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "admin", Players = "default" }
             };

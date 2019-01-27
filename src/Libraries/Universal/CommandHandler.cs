@@ -41,7 +41,7 @@ namespace uMod.Libraries
             }
 
             // Is it a chat command?
-            if (message[0] != '/')
+            if (message[0] != Interface.uMod.Config.Options.ChatCommandPrefix || message[0] != '!')
             {
                 return false;
             }
