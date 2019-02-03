@@ -99,7 +99,7 @@ namespace uMod.Libraries.Universal
             }
             if (candidateSet == null)
             {
-                logger.Write(LogType.Warning, "Universal not available yet for this game");
+                logger.Write(LogType.Warning, "Universal API not available yet for this game");
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace uMod.Libraries.Universal
             Type selectedCandidate;
             if (candidates.Count == 0)
             {
-                logger.Write(LogType.Warning, "Universal not available yet for this game");
+                logger.Write(LogType.Warning, "Universal API not available yet for this game");
                 return;
             }
 

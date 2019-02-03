@@ -119,7 +119,7 @@ namespace uMod.Configuration
                 PluginWatchers = true,
                 ChatCommandPrefix = '/',
                 PluginDirectories = new[] { "universal" },
-                DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "admin", Players = "default" }
+                DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "moderators", Players = "default" }
             };
             Console = new uModConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new uModRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };

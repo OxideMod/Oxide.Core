@@ -29,8 +29,8 @@ namespace uMod.Libraries.Universal
     public class Element
     {
         public ElementType Type;
-        public object Val;
         public List<Element> Body = new List<Element>();
+        public object Val;
 
         private Element(ElementType type, object val)
         {
@@ -45,7 +45,10 @@ namespace uMod.Libraries.Universal
         public static Element ParamTag(ElementType type, object val) => new Element(type, val);
     }
 
-    public enum ElementType { String, Bold, Italic, Color, Size }
+    public enum ElementType
+    {
+        String, Bold, Italic, Color, Size
+    }
 
     public class Formatter
     {
@@ -76,10 +79,16 @@ namespace uMod.Libraries.Universal
         };
 
         private class Token
-        { public TokenType Type; public object Val; public string Pattern; }
+        {
+            public TokenType Type;
+            public object Val;
+            public string Pattern;
+        }
 
         private enum TokenType
-        { String, Bold, Italic, Color, Size, CloseBold, CloseItalic, CloseColor, CloseSize }
+        {
+            String, Bold, Italic, Color, Size, CloseBold, CloseItalic, CloseColor, CloseSize
+        }
 
         private static readonly Dictionary<ElementType, TokenType?> closeTags = new Dictionary<ElementType, TokenType?>
         {
@@ -92,13 +101,14 @@ namespace uMod.Libraries.Universal
 
         private class Lexer
         {
+            private readonly List<Token> tokens = new List<Token>();
+
             private delegate State State();
 
-            private string text;
             private int patternStart;
-            private int tokenStart;
             private int position;
-            private List<Token> tokens = new List<Token>();
+            private int tokenStart;
+            private string text;
 
             private char Current() => text[position];
 
@@ -114,7 +124,7 @@ namespace uMod.Libraries.Universal
 
             private void Reset() => tokenStart = patternStart;
 
-            private string Token() => text.Substring(tokenStart, position - tokenStart);
+            private string GetToken() => text.Substring(tokenStart, position - tokenStart);
 
             private void Add(TokenType type, object val = null)
             {
@@ -129,15 +139,13 @@ namespace uMod.Libraries.Universal
 
             private void WritePatternString()
             {
-                if (patternStart >= position)
+                if (patternStart < position)
                 {
-                    return;
+                    int ts = tokenStart;
+                    tokenStart = patternStart;
+                    Add(TokenType.String, GetToken());
+                    tokenStart = ts;
                 }
-
-                int ts = tokenStart;
-                tokenStart = patternStart;
-                Add(TokenType.String, Token());
-                tokenStart = ts;
             }
 
             private static bool IsValidColorCode(string val) => (val.Length == 6 || val.Length == 8)
@@ -145,21 +153,27 @@ namespace uMod.Libraries.Universal
 
             private static object ParseColor(string val)
             {
-                if (!colorNames.TryGetValue(val.ToLower(), out string color) && !IsValidColorCode(val))
+                if (colorNames.TryGetValue(val.ToLower(), out string color) || IsValidColorCode(val))
                 {
-                    return null;
+                    color = color ?? val;
+                    if (color.Length == 6)
+                    {
+                        color += "ff";
+                    }
+
+                    return color;
                 }
-                color = color ?? val;
-                if (color.Length == 6)
-                {
-                    color += "ff";
-                }
-                return color;
+
+                return null;
             }
 
             private static object ParseSize(string val)
             {
-                if (int.TryParse(val, out int size)) { return size; }
+                if (int.TryParse(val, out int size))
+                {
+                    return size;
+                }
+
                 return null;
             }
 
@@ -177,6 +191,7 @@ namespace uMod.Libraries.Universal
                         StartNewPattern();
                         return Str;
                     }
+
                     Reset();
                     return Str;
                 };
@@ -187,26 +202,28 @@ namespace uMod.Libraries.Universal
             {
                 Next();
                 StartNewToken();
-                State s = null;
-                s = () =>
+                State State()
                 {
                     if (Current() != ']')
                     {
                         Next();
-                        return s;
+                        return State;
                     }
-                    object parsed = parse(Token());
+
+                    object parsed = parse(GetToken());
                     if (parsed == null)
                     {
                         Reset();
                         return Str;
                     }
+
                     Next();
                     Add(t, parsed);
                     StartNewPattern();
                     return Str;
-                };
-                return s;
+                }
+
+                return State;
             }
 
             // Start of close tag ([/), trying to identify close tag
@@ -233,7 +250,7 @@ namespace uMod.Libraries.Universal
             }
 
             // Start of tag ([), trying to identify tag
-            private State Tag()
+            private State StartTag()
             {
                 switch (Current())
                 {
@@ -267,8 +284,9 @@ namespace uMod.Libraries.Universal
                     WritePatternString();
                     StartNewPattern();
                     Next();
-                    return Tag;
+                    return StartTag;
                 }
+
                 Next();
                 return Str;
             }
@@ -287,6 +305,7 @@ namespace uMod.Libraries.Universal
                     // Each function represents a state. Each state returns a new state
                     state = state();
                 }
+
                 // Flush leftover pattern
                 l.WritePatternString();
                 return l.tokens;
@@ -295,8 +314,8 @@ namespace uMod.Libraries.Universal
 
         private class Entry
         {
-            public string Pattern;
-            public Element Element;
+            public readonly string Pattern;
+            public readonly Element Element;
 
             public Entry(string pattern, Element e)
             {
@@ -313,7 +332,7 @@ namespace uMod.Libraries.Universal
             while (i < tokens.Count)
             {
                 Token t = tokens[i++];
-                Action<Element> push = el => s.Push(new Entry(t.Pattern, el));
+                void Push(Element el) => s.Push(new Entry(t.Pattern, el));
                 Element e = s.Peek().Element;
                 if (t.Type == closeTags[e.Type])
                 {
@@ -322,6 +341,7 @@ namespace uMod.Libraries.Universal
                     s.Peek().Element.Body.Add(e);
                     continue;
                 }
+
                 // open new tags on bold, italic, color & size.
                 // Add strings and invalid tags as strings to body of current tag
                 switch (t.Type)
@@ -331,19 +351,19 @@ namespace uMod.Libraries.Universal
                         break;
 
                     case TokenType.Bold:
-                        push(Element.Tag(ElementType.Bold));
+                        Push(Element.Tag(ElementType.Bold));
                         break;
 
                     case TokenType.Italic:
-                        push(Element.Tag(ElementType.Italic));
+                        Push(Element.Tag(ElementType.Italic));
                         break;
 
                     case TokenType.Color:
-                        push(Element.ParamTag(ElementType.Color, t.Val));
+                        Push(Element.ParamTag(ElementType.Color, t.Val));
                         break;
 
                     case TokenType.Size:
-                        push(Element.ParamTag(ElementType.Size, t.Val));
+                        Push(Element.ParamTag(ElementType.Size, t.Val));
                         break;
 
                     default:
@@ -351,6 +371,7 @@ namespace uMod.Libraries.Universal
                         break;
                 }
             }
+
             // Stringify all tags that weren't closed at EOF
             while (s.Count > 1)
             {
@@ -359,6 +380,7 @@ namespace uMod.Libraries.Universal
                 body.Add(Element.String(e.Pattern));
                 body.AddRange(e.Element.Body);
             }
+
             return s.Pop().Element.Body;
         }
 
@@ -366,8 +388,8 @@ namespace uMod.Libraries.Universal
 
         private class Tag
         {
-            public string Open;
-            public string Close;
+            public readonly string Open;
+            public readonly string Close;
 
             public Tag(string open, string close)
             {
@@ -395,6 +417,7 @@ namespace uMod.Libraries.Universal
                     sb.Append(e.Val);
                     continue;
                 }
+
                 Tag tag = Translation(e, translations);
                 sb.Append(tag.Open);
                 sb.Append(ToTreeFormat(e.Body, translations));
