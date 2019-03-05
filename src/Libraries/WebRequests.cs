@@ -249,15 +249,34 @@ namespace uMod.Libraries
                 {
                     using (process = CreateProcess())
                     {
-                        process.Start();
-                        string response = process.StandardOutput.ReadToEnd();
-                        string errorText = process.StandardError.ReadToEnd();
+                        StringBuilder responseBuilder = new StringBuilder();
+                        StringBuilder errorTextBuilder = new StringBuilder();
+                        
+                        process.OutputDataReceived += new DataReceivedEventHandler(delegate (object sender, DataReceivedEventArgs e)
+                        {
+                            responseBuilder.Append(e.Data);
+                        });
 
+                        process.ErrorDataReceived += new DataReceivedEventHandler(delegate (object sender, DataReceivedEventArgs e)
+                        {
+                            errorTextBuilder.Append(e.Data);
+                        });
+
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+                        
                         if (!process.WaitForExit((GetTimeout() + 1) * 1000)) // process timeout must be slightly longer than request timeout
                         {
                             process.Kill();
                             OnTimeout();
                         }
+
+                        process.CancelOutputRead();
+                        process.CancelErrorRead();
+
+                        string response = responseBuilder.ToString();
+                        string errorText = errorTextBuilder.ToString();
 
                         if (process.ExitCode == 0) // Success
                         {
