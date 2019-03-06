@@ -69,6 +69,7 @@ namespace uMod
                 ["PlayerAddedToGroup"] = "Player '{0}' added to group: {1}",
                 ["PlayerAlreadyHasPermission"] = "Player '{0}' already has permission '{1}'",
                 ["PlayerDoesNotHavePermission"] = "Player '{0}' does not have permission '{1}'",
+                ["PlayerPermissionInherited"] = "Player '{0}' permission '{1}' is inherited from '{2}' group",
                 ["PlayerNotFound"] = "Player '{0}' not found",
                 ["PlayerGroups"] = "Player '{0}' groups",
                 ["PlayerPermissions"] = "Player '{0}' permissions",

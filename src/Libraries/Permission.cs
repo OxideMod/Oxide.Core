@@ -410,7 +410,7 @@ namespace uMod.Libraries
         }
 
         /// <summary>
-        /// Retrieves the parent group that the specified permission belongs to
+        /// Returns the parent group that the specified permission belongs to
         /// </summary>
         /// <param name="name"></param>
         /// <param name="perm"></param>
@@ -469,6 +469,72 @@ namespace uMod.Libraries
 
             // Check if their group has the perm
             return GroupsHavePermission(data.Groups, perm);
+        }
+
+        /// <summary>
+        /// Returns if the specified user permission is inherited from a group
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="perm"></param>
+        /// <returns></returns>
+        [LibraryFunction("IsUserPermissionInherited")]
+        public bool IsUserPermissionInherited(string id, string perm)
+        {
+            if (string.IsNullOrEmpty(perm))
+            {
+                return false;
+            }
+
+            perm = perm.ToLower();
+
+            // First, get the player data
+            UserData data = GetUserData(id);
+
+            // Check if they have the perm
+            if (data.Perms.Contains(perm))
+            {
+                return false;
+            }
+
+            // Check if their group has the perm
+            return GroupsHavePermission(data.Groups, perm);
+        }
+
+        /// <summary>
+        /// Returns the group that a specified user permission is inherited from
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="perm"></param>
+        /// <returns></returns>
+        [LibraryFunction("GetUserPermissionGroup")]
+        public string GetUserPermissionGroup(string id, string perm)
+        {
+            if (string.IsNullOrEmpty(perm))
+            {
+                return null;
+            }
+
+            perm = perm.ToLower();
+
+            // First, get the player data
+            UserData data = GetUserData(id);
+
+            // Check if they have the perm
+            if (data.Perms.Contains(perm))
+            {
+                return null;
+            }
+
+            foreach(string group in data.Groups)
+            {
+                string permissionGroup = GetGroupPermissionGroup(group, perm);
+                if (!string.IsNullOrEmpty(permissionGroup))
+                {
+                    return permissionGroup;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
