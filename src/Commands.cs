@@ -229,20 +229,25 @@ namespace uMod
 
             if (player.IsServer)
             {
-                // TODO: Check if language exists before setting, warn if not
+                if(!lang.HasLanguage(args[0]))
+                {
+                    player.Reply(string.Format(lang.GetMessage("ServerLanguageNotFoundOrEmpty", null, player.Id), args[0]));
+                }
+
                 lang.SetServerLanguage(args[0]);
                 player.Reply(string.Format(lang.GetMessage("ServerLanguage", null, player.Id), lang.GetServerLanguage()));
             }
             else
             {
-                // TODO: Check if language exists before setting, warn if not
-                string[] languages = lang.GetLanguages();
-                if (languages.Contains(args[0]))
+                if(lang.HasLanguage(args[0]))
                 {
                     lang.SetLanguage(args[0], player.Id);
+                    player.Reply(string.Format(lang.GetMessage("PlayerLanguage", null, player.Id), args[0]));
                 }
-
-                player.Reply(string.Format(lang.GetMessage("PlayerLanguage", null, player.Id), args[0]));
+                else
+                {
+                    player.Reply(string.Format(lang.GetMessage("PlayerLanguageNotFound", null, player.Id), args[0]));
+                }                
             }
         }
 

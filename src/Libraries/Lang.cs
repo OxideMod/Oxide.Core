@@ -117,6 +117,27 @@ namespace uMod.Libraries
         }
 
         /// <summary>
+        /// Checks if translations exist for the specified language
+        /// </summary>
+        /// <param name="language"></param>
+        /// <param name="plugin"></param>
+        /// <returns></returns>
+        [LibraryFunction("HasLanguage")]
+        public bool HasLanguage(string language, Plugin plugin = null)
+        {
+            string directory = Path.Combine(Interface.uMod.LangDirectory, language);
+            if (Directory.Exists(directory) && Directory.GetFiles(directory).Length != 0)
+            {
+                if (plugin == null || plugin != null && File.Exists(Path.Combine(directory, $"{plugin.Name}.json")))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Gets a message for a plugin in the required language
         /// </summary>
         /// <param name="key"></param>
