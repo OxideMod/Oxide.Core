@@ -30,6 +30,7 @@ namespace uMod
                 ["GroupAlreadyExists"] = "Group '{0}' already exists",
                 ["GroupAlreadyHasPermission"] = "Group '{0}' already has permission '{1}'",
                 ["GroupDoesNotHavePermission"] = "Group '{0}' does not have permission '{1}'",
+                ["GroupPermissionInherited"] = "Group '{0}' permission '{1}' is inherited from '{2}' group",
                 ["GroupChanged"] = "Group '{0}' changed",
                 ["GroupCreated"] = "Group '{0}' created",
                 ["GroupDeleted"] = "Group '{0}' deleted",

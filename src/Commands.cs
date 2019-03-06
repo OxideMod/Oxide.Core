@@ -396,9 +396,18 @@ namespace uMod
 
                 if (!permission.GroupHasPermission(name, perm))
                 {
-                    // TODO: Check if group is inheriting permission, mention
                     player.Reply(string.Format(lang.GetMessage("GroupDoesNotHavePermission", null, player.Id), name, perm));
                     return;
+                }
+
+                if (permission.IsGroupPermissionInherited(name, perm))
+                {
+                    string permissionGroup = permission.GetGroupPermissionGroup(name, perm);
+                    if(!string.IsNullOrEmpty(permissionGroup))
+                    {
+                        player.Reply(string.Format(lang.GetMessage("GroupPermissionInherited", null, player.Id), name, perm, permissionGroup));
+                        return;
+                    }
                 }
 
                 permission.RevokeGroupPermission(name, perm);

@@ -378,13 +378,62 @@ namespace uMod.Libraries
                 return false;
             }
 
-            // Check if the group has the perm
             if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
             {
                 return false;
             }
 
+            // Check if the group has the perm
             return group.Perms.Contains(perm.ToLower()) || GroupHasPermission(group.ParentGroup, perm);
+        }
+
+        /// <summary>
+        /// Checks if specified permission belongs to group or parent group
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="perm"></param>
+        /// <returns></returns>
+        [LibraryFunction("IsGroupPermissionInherited")]
+        public bool IsGroupPermissionInherited(string name, string perm)
+        {
+            if (!GroupHasPermission(name, perm))
+            {
+                return false;
+            }
+
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
+            {
+                return false;
+            }
+
+            return !group.Perms.Contains(perm.ToLower());
+        }
+
+        /// <summary>
+        /// Retrieves the parent group that the specified permission belongs to
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="perm"></param>
+        /// <returns></returns>
+        [LibraryFunction("GetGroupPermissionGroup")]
+        public string GetGroupPermissionGroup(string name, string perm)
+        {
+            if (!GroupExists(name) || string.IsNullOrEmpty(perm))
+            {
+                return null;
+            }
+
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
+            {
+                return null;
+            }
+
+            if (group.Perms.Contains(perm.ToLower()))
+            {
+                return name;
+            }
+
+            return GetGroupPermissionGroup(group.ParentGroup, perm);
         }
 
         /// <summary>
