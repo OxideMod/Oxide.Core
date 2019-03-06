@@ -192,7 +192,6 @@ namespace uMod.Libraries
             /// <returns></returns>
             protected Process CreateProcess()
             {
-                IPAddress address = universal.Server.LocalAddress ?? universal.Server.Address;
                 string decompression = AllowDecompression ? "both" : "none";
                 int timeout = GetTimeout();
 
@@ -202,7 +201,7 @@ namespace uMod.Libraries
                     {
                         WorkingDirectory = Interface.uMod.RootDirectory,
                         FileName = Path.Combine(Interface.uMod.RootDirectory, "WebClient.exe"),
-                        Arguments = $"--method={Method} --url=\"{Url}\" --address=\"{address}\" --timeout={timeout} --decompression={decompression}",
+                        Arguments = $"--method={Method} --url=\"{Url}\" --timeout={timeout} --decompression={decompression}",
                         CreateNoWindow = true,
                         UseShellExecute = false,
                         RedirectStandardError = true,
@@ -227,6 +226,17 @@ namespace uMod.Libraries
                 if (!string.IsNullOrEmpty(Body))
                 {
                     process.StartInfo.Arguments += $" --body=\"{Body}\"";
+                }
+                if(Interface.uMod.Config.Options.WebRequests.BindIPEndpoint)
+                {
+                    IPAddress address = universal.Server.LocalAddress ?? universal.Server.Address;
+
+                    if(!string.IsNullOrEmpty(Interface.uMod.Config.Options.WebRequests.PreferredEndpoint) && !IPAddress.TryParse(Interface.uMod.Config.Options.WebRequests.PreferredEndpoint, out address))
+                    {
+                        Interface.uMod.LogWarning($"IP Address invalid: Could not parse preferred endpoint ({Interface.uMod.Config.Options.WebRequests.PreferredEndpoint}) from umod.config.json");
+                    }
+                    
+                    process.StartInfo.Arguments += $" --address=\"{address}\"";
                 }
 
                 return process;

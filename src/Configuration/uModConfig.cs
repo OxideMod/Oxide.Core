@@ -23,6 +23,7 @@ namespace uMod.Configuration
             public char ChatCommandPrefix;
             public string[] PluginDirectories;
             public DefaultGroups DefaultGroups;
+            public WebRequestOptions WebRequests;
         }
 
         [JsonObject]
@@ -40,6 +41,13 @@ namespace uMod.Configuration
             }
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        [JsonObject]
+        public class WebRequestOptions
+        {
+            public string PreferredEndpoint;
+            public bool BindIPEndpoint;
         }
 
         /// <summary>
@@ -119,7 +127,8 @@ namespace uMod.Configuration
                 PluginWatchers = true,
                 ChatCommandPrefix = '/',
                 PluginDirectories = new[] { "universal" },
-                DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "moderators", Players = "default" }
+                DefaultGroups = new DefaultGroups { Administrators = "admin", Moderators = "moderators", Players = "default" },
+                WebRequests = new WebRequestOptions { BindIPEndpoint = true, PreferredEndpoint = string.Empty }
             };
             Console = new uModConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new uModRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
