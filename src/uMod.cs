@@ -196,8 +196,25 @@ namespace uMod
                 Directory.Move(oxideDirectory, InstanceDirectory);
             }
 
+            // Perform file upgrades
+            Dictionary<string, string> upgradePaths = new Dictionary<string, string>()
+            {
+                { Path.Combine(InstanceDirectory, "oxide.config.json"), Path.Combine(InstanceDirectory, "umod.config.json") },
+                { Path.Combine(DataDirectory, "oxide.lang.data"), Path.Combine(DataDirectory, "umod.lang.data") },
+                { Path.Combine(DataDirectory, "oxide.users.data"), Path.Combine(DataDirectory, "umod.users.data") },
+                { Path.Combine(DataDirectory, "oxide.groups.data"), Path.Combine(DataDirectory, "umod.groups.data") },
+            };
+
+            foreach(KeyValuePair<string, string> kvp in upgradePaths)
+            {
+                if (!Utility.TryUpgrade(kvp.Key, kvp.Value))
+                {
+                    LogWarning($"Unable to upgrade file: {kvp.Key}");
+                }
+            }
+
             // Load core configuration file
-            string config = Path.Combine(InstanceDirectory, "umod.config.json"); // TODO: Rename existing oxide.config.json if exists
+            string config = Path.Combine(InstanceDirectory, "umod.config.json");
             if (File.Exists(config))
             {
                 Config = ConfigFile.Load<uModConfig>(config);

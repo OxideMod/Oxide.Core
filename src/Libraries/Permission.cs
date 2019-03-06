@@ -94,8 +94,6 @@ namespace uMod.Libraries
         /// </summary>
         private void LoadFromDatafile()
         {
-            // TODO: Rename oxide.users.data and oxide.groups.data if exists
-
             // Initialize
             Utility.DatafileToProto<Dictionary<string, UserData>>("umod.users");
             Utility.DatafileToProto<Dictionary<string, GroupData>>("umod.groups");

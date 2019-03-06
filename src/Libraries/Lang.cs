@@ -30,7 +30,6 @@ namespace uMod.Libraries
         /// </summary>
         public Lang()
         {
-            // TODO: Rename oxide.lang if exists
             langFiles = new Dictionary<string, Dictionary<string, string>>();
             langData = ProtoStorage.Load<LangData>("umod.lang") ?? new LangData();
             pluginRemovedFromManager = new Dictionary<Plugin, Event.Callback<Plugin, PluginManager>>();

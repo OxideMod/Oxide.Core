@@ -471,5 +471,31 @@ namespace uMod
                 return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
             }
         }
+
+        /// <summary>
+        /// Attempt to upgrade a file
+        /// </summary>
+        /// <param name="originalPath"></param>
+        /// <param name="newPath"></param>
+        /// <returns></returns>
+        internal static bool TryUpgrade(string originalPath, string newPath)
+        {
+            if(!File.Exists(originalPath) || File.Exists(newPath)) // file upgraded or can't be upgraded
+            {
+                return true;
+            }
+
+            try
+            {
+                File.Move(originalPath, newPath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Ignore
+            }
+
+            return false;
+        }
     }
 }
