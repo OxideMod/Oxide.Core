@@ -12,7 +12,6 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-
 #if DEBUG
 using System.Text;
 #endif
@@ -146,7 +145,7 @@ namespace uMod
                     return (TValue)Activator.CreateInstance(typeof(TValue));
                 }
 
-                return default(TValue);
+                return default;
             }
 
             set
@@ -480,7 +479,7 @@ namespace uMod
         /// <returns></returns>
         internal static bool TryUpgrade(string originalPath, string newPath)
         {
-            if(!File.Exists(originalPath) || File.Exists(newPath)) // file upgraded or can't be upgraded
+            if (!File.Exists(originalPath) || File.Exists(newPath)) // file upgraded or can't be upgraded
             {
                 return true;
             }
@@ -490,7 +489,7 @@ namespace uMod
                 File.Move(originalPath, newPath);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore
             }

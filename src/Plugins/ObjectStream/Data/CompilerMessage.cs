@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ObjectStream.Data
+namespace uMod.ObjectStream.Data
 {
     [Serializable]
     class CompilerMessage

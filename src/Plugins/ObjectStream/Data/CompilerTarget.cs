@@ -1,10 +1,15 @@
 using System;
 
-namespace ObjectStream.Data
+namespace uMod.ObjectStream.Data
 {
     [Serializable]
     enum CompilerTarget
     {
-        Library, Exe, Module, WinExe
+        ConsoleApplication = 0,
+        WindowsApplication = 1,
+        DynamicallyLinkedLibrary = 2,
+        NetModule = 3,
+        WindowsRuntimeMetadata = 4,
+        WindowsRuntimeApplication = 5
     }
 }

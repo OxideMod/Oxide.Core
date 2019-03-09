@@ -1,15 +1,16 @@
 using System;
 
-namespace ObjectStream.Data
+namespace uMod.ObjectStream.Data
 {
     [Serializable]
     enum CompilerPlatform
     {
-        AnyCPU,
-        AnyCPU32Preferred,
-        Arm,
-        X86,
-        X64,
-        IA64
+        AnyCpu = 0,
+        X86 = 1,
+        X64 = 2,
+        Itanium = 3,
+        AnyCpu32BitPreferred = 4,
+        Arm = 5,
+        Arm64 = 6
     }
 }

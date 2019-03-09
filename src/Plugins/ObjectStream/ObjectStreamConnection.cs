@@ -1,11 +1,11 @@
-﻿using ObjectStream.IO;
-using ObjectStream.Threading;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using uMod.ObjectStream.IO;
+using uMod.ObjectStream.Threading;
 
-namespace ObjectStream
+namespace uMod.ObjectStream
 {
     public class ObjectStreamConnection<TRead, TWrite>
         where TRead : class
@@ -52,10 +52,7 @@ namespace ObjectStream
 
         private void OnError(Exception exception)
         {
-            if (Error != null)
-            {
-                Error(this, exception);
-            }
+            Error?.Invoke(this, exception);
         }
 
         private void ReadStream()

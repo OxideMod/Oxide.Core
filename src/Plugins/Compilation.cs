@@ -1,4 +1,3 @@
-using ObjectStream.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Extensions;
+using uMod.ObjectStream.Data;
 
 namespace uMod.Plugins
 {
@@ -319,7 +319,7 @@ namespace uMod.Plugins
                 referencedPlugins.Add(plugin.Name);
                 if (!references.ContainsKey(compiledDependency.Name))
                 {
-                    references[compiledDependency.Name] = new CompilerFile(compiledDependency.Name, compiledDependency.RawAssembly);
+                    references[compiledDependency.Name] = new CompilerFile(compiledDependency.Name, compiledDependency.RawAssembly, plugin.Directory, plugin.ScriptEncoding);
                 }
             }
             else

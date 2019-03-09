@@ -1,7 +1,5 @@
 extern alias References;
 
-using ObjectStream;
-using ObjectStream.Data;
 using References::Mono.Unix;
 using References::Mono.Unix.Native;
 using System;
@@ -14,6 +12,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using uMod.Logging;
+using uMod.ObjectStream;
+using uMod.ObjectStream.Data;
 
 namespace uMod.Plugins
 {
@@ -46,14 +46,18 @@ namespace uMod.Plugins
                 case PlatformID.Win32Windows:
                     FileName = "Compiler.exe";
                     binaryPath = Path.Combine(rootDirectory, FileName);
+#if !DEBUG
                     UpdateCheck(); // TODO: Only check once on server startup
+#endif
                     break;
 
                 case PlatformID.Unix:
                 case PlatformID.MacOSX:
                     FileName = $"Compiler.{(IntPtr.Size != 8 ? "x86" : "x86_x64")}";
                     binaryPath = Path.Combine(rootDirectory, FileName);
+#if !DEBUG
                     UpdateCheck(); // TODO: Only check once on server startup
+#endif
                     try
                     {
                         if (Syscall.access(binaryPath, AccessModes.X_OK) == 0)
@@ -192,6 +196,7 @@ namespace uMod.Plugins
                     Interface.uMod.LogWarning($"Status code from download location was not okay (code {statusCode})");
                 }
 
+#if !DEBUG
                 string remoteHash = response.Headers[HttpResponseHeader.ETag].Trim('"');
                 string localHash = File.Exists(filePath) ? Utility.GetHash(filePath, Utilities.Algorithms.MD5) : "0";
                 Interface.uMod.LogInfo($"Latest compiler MD5: {remoteHash}");
@@ -201,6 +206,7 @@ namespace uMod.Plugins
                     Interface.uMod.LogInfo("Compiler hashes did not match, downloading latest");
                     DownloadCompiler(response, remoteHash);
                 }
+#endif
             }
             catch (Exception ex)
             {
@@ -216,7 +222,7 @@ namespace uMod.Plugins
         }
 
         private Process process;
-        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+)\(\d+\,\d+\+?\): error|error \w+: Source file `[\\\./]*([\w\.]+)");
+        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+): \(\d+\,\d+\+?\)-\(\d+\,\d+\+?\): error \w+: .*");
         private ObjectStreamClient<CompilerMessage> client;
         private Hash<int, Compilation> compilations;
         private Queue<CompilerMessage> messageQueue;
@@ -291,11 +297,11 @@ namespace uMod.Plugins
             compilation.Started();
             //Interface.uMod.LogDebug("Compiling with references: {0}", compilation.references.Keys.ToSentence());
             List<CompilerFile> sourceFiles = compilation.plugins.SelectMany(plugin => plugin.IncludePaths).Distinct().Select(path => new CompilerFile(path)).ToList();
-            sourceFiles.AddRange(compilation.plugins.Select(plugin => new CompilerFile($"{plugin.ScriptName}.cs", plugin.ScriptSource)));
+            sourceFiles.AddRange(compilation.plugins.Select(plugin => new CompilerFile($"{plugin.ScriptName}.cs", plugin.ScriptSource, plugin.Directory, plugin.ScriptEncoding)));
             //Interface.uMod.LogDebug("Compiling files: {0}", sourceFiles.Select(f => f.Name).ToSentence());
             CompilerData data = new CompilerData
             {
-                OutputFile = compilation.name,
+                AssemblyName = compilation.name,
                 SourceFiles = sourceFiles.ToArray(),
                 ReferenceFiles = compilation.references.Values.ToArray()
             };
@@ -339,7 +345,7 @@ namespace uMod.Plugins
                     string stdOutput = (string)message.ExtraData;
                     if (stdOutput != null)
                     {
-                        foreach (string line in stdOutput.Split('\r', '\n'))
+                        foreach (string line in stdOutput.Split(Environment.NewLine.ToCharArray()))
                         {
                             Match match = fileErrorRegex.Match(line.Trim());
                             for (int i = 1; i < match.Groups.Count; i++)
@@ -368,7 +374,7 @@ namespace uMod.Plugins
                                 }
                                 else
                                 {
-                                    compilablePlugin.CompilerErrors = line.Trim().Replace(Interface.uMod.PluginDirectory + Path.DirectorySeparatorChar, string.Empty);
+                                    compilablePlugin.CompilerErrors += Environment.NewLine + line.Trim();
                                 }
                             }
                         }
@@ -439,7 +445,10 @@ namespace uMod.Plugins
             PurgeOldLogs();
             Shutdown();
 
-            string[] args = { "/service", "/logPath:" + EscapePath(Interface.uMod.LogDirectory) }; // TODO: Handle exception if log path isn't accessible?
+            string[] args = {
+                $"--logPath=\"{EscapePath(Interface.uMod.LogDirectory)}\"",
+                $"--extensionPath=\"{EscapePath(Interface.uMod.ExtensionDirectory)}\""
+            }; // TODO: Handle exception if log path isn't accessible?
             try
             {
                 process = new Process

@@ -1,9 +1,9 @@
-﻿using ObjectStream.IO;
-using ObjectStream.Threading;
 using System;
 using System.IO;
+using uMod.ObjectStream.IO;
+using uMod.ObjectStream.Threading;
 
-namespace ObjectStream
+namespace uMod.ObjectStream
 {
     public class ObjectStreamClient<TReadWrite> : ObjectStreamClient<TReadWrite, TReadWrite> where TReadWrite : class
     {
@@ -68,10 +68,7 @@ namespace ObjectStream
 
         private void OnReceiveMessage(ObjectStreamConnection<TRead, TWrite> connection, TRead message)
         {
-            if (Message != null)
-            {
-                Message(connection, message);
-            }
+            Message?.Invoke(connection, message);
         }
 
         private void ConnectionOnError(ObjectStreamConnection<TRead, TWrite> connection, Exception exception)
@@ -81,10 +78,7 @@ namespace ObjectStream
 
         private void OnError(Exception exception)
         {
-            if (Error != null)
-            {
-                Error(exception);
-            }
+            Error?.Invoke(exception);
         }
 
         #endregion Private methods
