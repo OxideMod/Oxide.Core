@@ -145,7 +145,7 @@ namespace uMod
                     return (TValue)Activator.CreateInstance(typeof(TValue));
                 }
 
-                return default;
+                return default(TValue);
             }
 
             set
