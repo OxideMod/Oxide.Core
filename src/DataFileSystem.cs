@@ -26,7 +26,7 @@ namespace uMod
         /// Initializes a new instance of the DataFileSystem class
         /// </summary>
         /// <param name="directory"></param>
-        public DataFileSystem(string directory)
+        internal DataFileSystem(string directory)
         {
             Directory = directory;
             _datafiles = new Dictionary<string, DynamicConfigFile>();
@@ -87,7 +87,84 @@ namespace uMod
         /// <returns></returns>
         public string[] GetFiles(string path = "", string searchPattern = "*")
         {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
             return System.IO.Directory.GetFiles(Path.Combine(Directory, path), searchPattern);
+        }
+
+        /// <summary>
+        /// Gets data files without extensions from path, with optional search pattern
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string[] GetFilesWithoutPath(string path = "", string searchPattern = "*")
+        {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
+            return System.IO.Directory.GetFiles(Path.Combine(Directory, path), searchPattern).Select(x=>Path.GetFileName(x)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets data files without extensions from path, with optional search pattern
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string[] GetFilesWithoutExtension(string path = "", string searchPattern = "*")
+        {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
+            return System.IO.Directory.GetFiles(Path.Combine(Directory, path), searchPattern).Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
+        }
+
+        /// <summary>
+        /// Get the full path of all directories that match the search pattern inside the specified directory.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string [] GetDirectories(string path = "", string searchPattern = "*")
+        {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
+            return System.IO.Directory.GetDirectories(Path.Combine(Directory, path), searchPattern);
+        }
+
+        /// <summary>
+        /// Get the names without the path of all directories that match the search pattern inside the specified directory.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="searchPattern"></param>
+        /// <returns></returns>
+        public string[] GetDirectoriesWithoutPath(string path = "", string searchPattern = "*")
+        {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
+            return System.IO.Directory.GetDirectories(Path.Combine(Directory, path), searchPattern).Select(x => Path.GetDirectoryName(x)).ToArray();
+        }
+
+        /// <summary>
+        /// Create a folder inside the data directory. If the folder already exists, do nothing
+        /// </summary>
+        /// <param name="path"></param>
+        public void CreateDirectory(string path)
+        {
+            if (path.Contains(".."))
+            {
+                throw new AccessViolationException("Not allowed to traverse up folders!");
+            }
+            System.IO.Directory.CreateDirectory(path);
         }
 
         /// <summary>
