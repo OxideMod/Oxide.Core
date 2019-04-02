@@ -222,7 +222,7 @@ namespace uMod.Plugins
         }
 
         private Process process;
-        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+): \(\d+\,\d+\+?\)-\(\d+\,\d+\+?\): error \w+: .*");
+        private readonly Regex fileErrorRegex = new Regex(@"([\w\.]+): \(\d+\,\d+\+?\): error \w+: .*");
         private ObjectStreamClient<CompilerMessage> client;
         private Hash<int, Compilation> compilations;
         private Queue<CompilerMessage> messageQueue;
