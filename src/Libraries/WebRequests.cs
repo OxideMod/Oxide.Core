@@ -369,7 +369,8 @@ namespace uMod.Libraries
             private void OnComplete()
             {
                 Event.Remove(ref removedFromManager);
-                Interface.uMod.NextTick(() =>
+
+                Action onComplete = delegate ()
                 {
                     Owner?.TrackStart();
                     try
@@ -393,7 +394,16 @@ namespace uMod.Libraries
 
                     Owner?.TrackEnd();
                     Owner = null;
-                });
+                };
+
+                if (Async)
+                {
+                    Interface.uMod.NextTick(onComplete);
+                }
+                else
+                {
+                    onComplete.Invoke();
+                }
             }
 
             /// <summary>

@@ -191,7 +191,7 @@ namespace uMod
 
     public class Utility
     {
-        public static Utilities.Plugins Plugins = new Utilities.Plugins(Interface.uMod.RootPluginManager);
+        public static Utilities.Plugins Plugins = new Utilities.Plugins();
         public static Utilities.Random Random = new Utilities.Random();
         public static Utilities.Time Time = new Utilities.Time();
 
