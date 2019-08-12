@@ -4,6 +4,8 @@ namespace uMod.Utilities
 {
     public static class ArrayPool
     {
+        public static readonly object[] Empty;
+        
         private static readonly List<Queue<object[]>> _pooledArrays = new List<Queue<object[]>>();
 
         private const int MaxArrayLength = 50;
@@ -12,6 +14,7 @@ namespace uMod.Utilities
 
         static ArrayPool()
         {
+            Empty = new object[0];
             for (int i = 0; i < MaxArrayLength; i++)
             {
                 _pooledArrays.Add(new Queue<object[]>());
@@ -21,7 +24,12 @@ namespace uMod.Utilities
 
         public static object[] Get(int length)
         {
-            if (length == 0 || length > MaxArrayLength)
+            if (length == 0)
+            {
+                return Empty;
+            }
+            
+            if (length > MaxArrayLength)
             {
                 return new object[length];
             }
