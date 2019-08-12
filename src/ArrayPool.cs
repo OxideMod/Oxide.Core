@@ -8,10 +8,13 @@ namespace Oxide.Core
         private const int InitialPoolAmount = 64;
         private const int MaxPoolAmount = 256;
 
+        public readonly static object[] Empty;
+        
         private static List<Queue<object[]>> _pooledArrays = new List<Queue<object[]>>();
 
         static ArrayPool()
         {
+            Empty = new object[0];
             for (int i = 0; i < MaxArrayLength; i++)
             {
                 _pooledArrays.Add(new Queue<object[]>());
@@ -21,7 +24,12 @@ namespace Oxide.Core
 
         public static object[] Get(int length)
         {
-            if (length == 0 || length > MaxArrayLength)
+            if (length == 0)
+            {
+                return Empty;
+            }
+            
+            if (length > MaxArrayLength)
             {
                 return new object[length];
             }
