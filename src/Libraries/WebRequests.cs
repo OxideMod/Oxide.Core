@@ -175,8 +175,8 @@ namespace Oxide.Core.Libraries
                                 OnComplete();
                                 return;
                             }
-                            WaitForResponse();
                         }, null);
+                        WaitForResponse();
                     }
                     else
                     {
