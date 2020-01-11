@@ -1,4 +1,7 @@
-﻿using Oxide.Core.Libraries;
+﻿extern alias References;
+
+using Oxide.Core.Libraries;
+using References::Mono.Posix;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +34,8 @@ namespace Oxide.Core.Plugins.Watchers
 
         private Timer timers;
 
+        private Dictionary<string, FileSystemWatcher> m_symlinkWatchers = new Dictionary<string, FileSystemWatcher>();
+
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
         /// </summary>
@@ -45,11 +50,51 @@ namespace Oxide.Core.Plugins.Watchers
             if (Interface.Oxide.Config.Options.PluginWatchers)
             {
                 LoadWatcher(directory, filter);
+
+                // Watch symlinked files
+                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                {
+                    foreach (FileInfo fileInfo in new DirectoryInfo(directory).GetFiles(filter))
+                    {
+                        if (IsFileSymlink(fileInfo.FullName))
+                        {
+                            LoadWatcherSymlink(fileInfo.FullName);
+                        }
+                    }
+                }
             }
             else
             {
                 Interface.Oxide.LogWarning("Automatic plugin reloading and unloading has been disabled");
             }
+        }
+
+        private bool IsFileSymlink(string path)
+        {
+            return (File.GetAttributes(path) & FileAttributes.ReparsePoint) > 0;
+        }
+
+
+#if !NETSTANDARD
+        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+#endif
+        private void LoadWatcherSymlink(string path)
+        {
+            string realPath = Syscall.readlink(path);
+            string realDirName = Path.GetDirectoryName(realPath);
+            string realFileName = Path.GetFileName(realPath);
+
+            void symlinkTarget_Changed(object sender, FileSystemEventArgs e) => watcher_Changed(sender, e);
+
+            FileSystemWatcher watcher = new FileSystemWatcher(realDirName, realFileName);
+            m_symlinkWatchers[path] = watcher;
+            watcher.Changed += symlinkTarget_Changed;
+            watcher.Created += symlinkTarget_Changed;
+            watcher.Deleted += symlinkTarget_Changed;
+            watcher.Error += watcher_Error;
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.IncludeSubdirectories = false;
+            watcher.EnableRaisingEvents = true;
         }
 
         /// <summary>
@@ -95,14 +140,16 @@ namespace Oxide.Core.Plugins.Watchers
         {
             FileSystemWatcher watcher = (FileSystemWatcher)sender;
             int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
-            string sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
-            if (!changeQueue.TryGetValue(sub_path, out QueuedChange change))
+            string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
+
+            if (!changeQueue.TryGetValue(subPath, out QueuedChange change))
             {
                 change = new QueuedChange();
-                changeQueue[sub_path] = change;
+                changeQueue[subPath] = change;
             }
             change.timer?.Destroy();
             change.timer = null;
+
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Changed:
@@ -110,7 +157,6 @@ namespace Oxide.Core.Plugins.Watchers
                     {
                         change.type = WatcherChangeTypes.Changed;
                     }
-
                     break;
 
                 case WatcherChangeTypes.Created:
@@ -122,58 +168,81 @@ namespace Oxide.Core.Plugins.Watchers
                     {
                         change.type = WatcherChangeTypes.Created;
                     }
-
                     break;
 
                 case WatcherChangeTypes.Deleted:
                     if (change.type == WatcherChangeTypes.Created)
                     {
-                        changeQueue.Remove(sub_path);
+                        changeQueue.Remove(subPath);
                         return;
                     }
+
                     change.type = WatcherChangeTypes.Deleted;
                     break;
             }
+
             Interface.Oxide.NextTick(() =>
             {
+                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                {
+                    switch (e.ChangeType)
+                    {
+                        case WatcherChangeTypes.Created:
+                            if (IsFileSymlink(e.FullPath))
+                            {
+                                LoadWatcherSymlink(e.FullPath);
+                            }
+                            break;
+
+                        case WatcherChangeTypes.Deleted:
+                            if (m_symlinkWatchers.ContainsKey(e.FullPath))
+                            {
+                                m_symlinkWatchers.TryGetValue(e.FullPath, out FileSystemWatcher symlinkWatcher);
+                                symlinkWatcher?.Dispose();
+                                m_symlinkWatchers.Remove(e.FullPath);
+                            }
+                            break;
+                    }
+                }
+
                 change.timer?.Destroy();
                 change.timer = timers.Once(.2f, () =>
                 {
                     change.timer = null;
-                    changeQueue.Remove(sub_path);
-                    if (Regex.Match(sub_path, @"include\\", RegexOptions.IgnoreCase).Success)
+                    changeQueue.Remove(subPath);
+
+                    if (Regex.Match(subPath, @"include\\", RegexOptions.IgnoreCase).Success)
                     {
                         if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
                         {
-                            FirePluginSourceChanged(sub_path);
+                            FirePluginSourceChanged(subPath);
                         }
 
                         return;
                     }
+
                     switch (change.type)
                     {
                         case WatcherChangeTypes.Changed:
-                            if (watchedPlugins.Contains(sub_path))
+                            if (watchedPlugins.Contains(subPath))
                             {
-                                FirePluginSourceChanged(sub_path);
+                                FirePluginSourceChanged(subPath);
                             }
                             else
                             {
-                                FirePluginAdded(sub_path);
+                                FirePluginAdded(subPath);
                             }
-
                             break;
 
                         case WatcherChangeTypes.Created:
-                            FirePluginAdded(sub_path);
+                            FirePluginAdded(subPath);
                             break;
 
                         case WatcherChangeTypes.Deleted:
-                            if (watchedPlugins.Contains(sub_path))
+                            if (watchedPlugins.Contains(subPath))
                             {
-                                FirePluginRemoved(sub_path);
+                                FirePluginRemoved(subPath);
                             }
-
                             break;
                     }
                 });
