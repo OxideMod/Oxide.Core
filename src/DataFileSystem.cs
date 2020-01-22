@@ -35,6 +35,23 @@ namespace Oxide.Core
             settings.Converters.Add(converter);
         }
 
+        /// <summary>
+        /// Read file as string from Data directory
+        /// </summary>
+        /// <param name="fileName">Name of file (eg. MyData.json)</param>
+        /// <returns>Content string or null if file wasn't found</returns>
+        public string GetFileString(string fileName)
+        {
+            fileName = DynamicConfigFile.SanitizeName(fileName);
+            var filePath = Path.Combine(Directory, fileName);
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"File '{filePath}' not found");
+
+            var result = File.ReadAllText(filePath);
+            return result;
+        }
+
         public DynamicConfigFile GetFile(string name)
         {
             name = DynamicConfigFile.SanitizeName(name);
