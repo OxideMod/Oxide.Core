@@ -42,9 +42,15 @@ namespace Oxide.Core
         /// <returns>Content string or null if file wasn't found</returns>
         public string GetFileString(string fileName)
         {
+            // prepare path to file
             fileName = DynamicConfigFile.SanitizeName(fileName);
-            var filePath = Path.Combine(Directory, fileName);
+            var filePath = Path.GetFullPath(Path.Combine(Directory, fileName));
 
+            // check if path is correct
+            if (!filePath.StartsWith(Directory))
+                throw new FileLoadException($"Only access to directory: {Directory}");
+
+            // check if file exists
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"File '{filePath}' not found");
 
