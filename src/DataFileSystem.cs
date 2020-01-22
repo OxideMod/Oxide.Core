@@ -39,7 +39,7 @@ namespace Oxide.Core
         /// Read file as string from Data directory
         /// </summary>
         /// <param name="fileName">Name of file (eg. MyData.json)</param>
-        /// <returns>Content string or null if file wasn't found</returns>
+        /// <returns>Content string</returns>
         public string GetFileString(string fileName)
         {
             // prepare path to file
