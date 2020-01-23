@@ -158,8 +158,7 @@ namespace Oxide.Core
 
         public static string GetTag(string name)
         {
-            string value;
-            return Tags.TryGetValue(name, out value) ? value : "unknown";
+            return Tags.TryGetValue(name, out string value) ? value : "unknown";
         }
 
         public static void Debug(string message) => EnqueueReport("debug", Assembly.GetCallingAssembly(), GetCurrentMethod(), message);

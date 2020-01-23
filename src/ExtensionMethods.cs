@@ -74,8 +74,7 @@ namespace Oxide.Core
         /// </summary>
         public static bool IsSteamId(this string id)
         {
-            ulong targetId;
-            return ulong.TryParse(id, out targetId) && targetId > 76561197960265728ul;
+            return ulong.TryParse(id, out ulong targetId) && targetId > 76561197960265728ul;
         }
 
         /// <summary>
@@ -248,8 +247,7 @@ namespace Oxide.Plugins
         /// </summary>
         public static bool IsSteamId(this string id)
         {
-            ulong targetId;
-            return ulong.TryParse(id, out targetId) && targetId > 76561197960265728ul;
+            return ulong.TryParse(id, out ulong targetId) && targetId > 76561197960265728ul;
         }
 
         /// <summary>

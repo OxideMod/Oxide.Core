@@ -184,8 +184,7 @@ namespace Oxide.Core.Configuration
         {
             get
             {
-                object val;
-                return _keyvalues.TryGetValue(key, out val) ? val : null;
+                return _keyvalues.TryGetValue(key, out object val) ? val : null;
             }
             set
             {
@@ -277,8 +276,7 @@ namespace Oxide.Core.Configuration
                 throw new ArgumentException("path must not be empty");
             }
 
-            object val;
-            if (!_keyvalues.TryGetValue(path[0], out val))
+            if (!_keyvalues.TryGetValue(path[0], out object val))
             {
                 return null;
             }
@@ -325,8 +323,7 @@ namespace Oxide.Core.Configuration
                 _keyvalues[path[0]] = value;
                 return;
             }
-            object val;
-            if (!_keyvalues.TryGetValue(path[0], out val))
+            if (!_keyvalues.TryGetValue(path[0], out object val))
             {
                 _keyvalues[path[0]] = val = new Dictionary<string, object>();
             }

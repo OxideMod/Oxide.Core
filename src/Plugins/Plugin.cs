@@ -512,8 +512,7 @@ namespace Oxide.Core.Plugins
 
         private bool CovalenceCommandCallback(IPlayer caller, string cmd, string[] args)
         {
-            CommandInfo cmdInfo;
-            if (!commandInfos.TryGetValue(cmd, out cmdInfo))
+            if (!commandInfos.TryGetValue(cmd, out CommandInfo cmdInfo))
             {
                 return false;
             }

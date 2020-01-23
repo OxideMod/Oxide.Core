@@ -400,8 +400,7 @@ namespace Oxide.Core.Libraries
             {
                 while (!shutdown)
                 {
-                    int workerThreads, completionPortThreads;
-                    ThreadPool.GetAvailableThreads(out workerThreads, out completionPortThreads);
+                    ThreadPool.GetAvailableThreads(out int workerThreads, out int completionPortThreads);
                     if (workerThreads <= maxWorkerThreads || completionPortThreads <= maxCompletionPortThreads)
                     {
                         Thread.Sleep(100);

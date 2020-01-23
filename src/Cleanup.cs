@@ -25,12 +25,12 @@ namespace Oxide.Core
                         continue;
                     }
 
-                    Interface.Oxide.LogDebug("Cleanup file: {0}", file);
+                    Interface.Oxide.LogDebug("Clean up file: {0}", file);
                     File.Delete(file);
                 }
                 catch (Exception)
                 {
-                    Interface.Oxide.LogWarning("Failed to cleanup file: {0}", file);
+                    Interface.Oxide.LogWarning("Failed to clean up file: {0}", file);
                 }
             }
             files = null;

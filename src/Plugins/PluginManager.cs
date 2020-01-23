@@ -104,8 +104,7 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public Plugin GetPlugin(string name)
         {
-            Plugin plugin;
-            return loadedPlugins.TryGetValue(name, out plugin) ? plugin : null;
+            return loadedPlugins.TryGetValue(name, out Plugin plugin) ? plugin : null;
         }
 
         /// <summary>
@@ -126,8 +125,7 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            IList<Plugin> sublist;
-            if (!hookSubscriptions.TryGetValue(hook, out sublist))
+            if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist))
             {
                 sublist = new List<Plugin>();
                 hookSubscriptions.Add(hook, sublist);
@@ -151,8 +149,7 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            IList<Plugin> sublist;
-            if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
+            if (hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist) && sublist.Contains(plugin))
             {
                 sublist.Remove(plugin);
             }
@@ -168,8 +165,7 @@ namespace Oxide.Core.Plugins
         public object CallHook(string hook, params object[] args)
         {
             // Locate the sublist
-            IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(hook, out plugins))
+            if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> plugins))
             {
                 return null;
             }
@@ -252,8 +248,7 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
-            IList<Plugin> plugins;
-            if (!hookSubscriptions.TryGetValue(oldHook, out plugins))
+            if (!hookSubscriptions.TryGetValue(oldHook, out IList<Plugin> plugins))
             {
                 return null;
             }
@@ -269,8 +264,7 @@ namespace Oxide.Core.Plugins
             }
 
             float now = Interface.Oxide.Now;
-            float lastWarningAt;
-            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out lastWarningAt) || now - lastWarningAt > 300f)
+            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 300f)
             {
                 lastDeprecatedWarningAt[oldHook] = now;
                 Interface.Oxide.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");

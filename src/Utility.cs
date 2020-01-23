@@ -315,8 +315,7 @@ namespace Oxide.Core
 
         public static int GetNumbers(string input)
         {
-            int numbers;
-            int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out numbers);
+            int.TryParse(Regex.Replace(input, "[^.0-9]", ""), out int numbers);
             return numbers;
         }
     }

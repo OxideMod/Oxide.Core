@@ -12,9 +12,8 @@ namespace Oxide.Core.Plugins
 
         public List<HookMethod> GetHookMethod(string hookName, object[] args, out HookCache cache)
         {
-            HookCache nextCache;
             //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {hookName}");
-            if (!_cache.TryGetValue(hookName, out nextCache))
+            if (!_cache.TryGetValue(hookName, out HookCache nextCache))
             {
                 nextCache = new HookCache();
                 _cache.Add(hookName, nextCache);

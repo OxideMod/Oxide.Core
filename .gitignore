@@ -63,3 +63,8 @@ _ReSharper*/
 *.DotSettings.user
 ## TeamCity add-in
 _TeamCity*
+
+# Other files
+.deploy
+
+src/Debug.cs

@@ -1,35 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="..\netfx.props" />
   <PropertyGroup>
     <Version>2.0.0</Version>
     <AssemblyName>Oxide.Core</AssemblyName>
     <Authors>Oxide and Contributors</Authors>
+    <Copyright>(c) 2013-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
     <Description>Core component for the Oxide modding framework</Description>
-    <RepositoryUrl>https://github.com/OxideMod/Oxide.Core</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/OxideMod/Oxide.Core/blob/develop/LICENSE.md</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/OxideMod/Oxide.Core</PackageProjectUrl>
-    <PackageIconUrl>https://avatars1.githubusercontent.com/u/10712027?s=64</PackageIconUrl>
-    <Copyright>Copyright (c) 2014-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
-    <PackageTags>api framework gaming modding plugins</PackageTags>
-    <TargetFrameworks>net46;net45;net40;net35</TargetFrameworks>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <!--
-      Workaround for targeting net35 with dotnet CLI
-      https://github.com/Microsoft/msbuild/issues/1333#issuecomment-296346352
-    -->
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' And '$(OS)' == 'Windows_NT'">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
-    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35' And '$(OS)' == 'OSX'">/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0-api</FrameworkPathOverride>
-    <ThisAssemblyNamespace>Oxide.Core</ThisAssemblyNamespace>
+    <RepositoryUrl>https://github.com/OxideMod/Oxide.CSharp</RepositoryUrl>
+    <PackageIconUrl>icon.png</PackageIconUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <TargetFrameworks>net35;net40;net45;net46</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="GitInfo" Version="2.0.*">
-      <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Oxide.References" Version="2.0.*">
       <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
     </PackageReference>
-    <Compile Remove="Commands.cs" /> <!-- Remove when ready -->
+    <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">

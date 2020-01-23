@@ -173,8 +173,7 @@ namespace Oxide.Core.Database
 
                 object argVal;
 
-                int paramIndex;
-                if (int.TryParse(param, out paramIndex))
+                if (int.TryParse(param, out int paramIndex))
                 {
                     if (paramIndex < 0 || paramIndex >= argsSrc.Length)
                     {

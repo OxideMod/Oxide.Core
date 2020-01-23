@@ -106,8 +106,7 @@ namespace Oxide.Core.Plugins
 
         protected void AddHookMethod(string name, MethodInfo method)
         {
-            List<HookMethod> hookMethods;
-            if (!Hooks.TryGetValue(name, out hookMethods))
+            if (!Hooks.TryGetValue(name, out List<HookMethod> hookMethods))
             {
                 hookMethods = new List<HookMethod>();
                 Hooks[name] = hookMethods;
@@ -209,8 +208,7 @@ namespace Oxide.Core.Plugins
             // Get the full name of the hook `name(argument type 1, argument type 2, ..., argument type x)`
 
             // Check the cache if we already found a match for this hook
-            HookCache cache;
-            List<HookMethod> methods = HooksCache.GetHookMethod(name, args, out cache);
+            List<HookMethod> methods = HooksCache.GetHookMethod(name, args, out HookCache cache);
             if (methods != null)
             {
                 return methods;
@@ -278,8 +276,7 @@ namespace Oxide.Core.Plugins
                     hookArgs = args;
                 }
 
-                bool isExactMatch;
-                if (h.HasMatchingSignature(hookArgs, out isExactMatch))
+                if (h.HasMatchingSignature(hookArgs, out bool isExactMatch))
                 {
                     if (isExactMatch)
                     {

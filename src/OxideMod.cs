@@ -135,8 +135,7 @@ namespace Oxide.Core
 
             if (CommandLine.HasVariable("oxide.directory"))
             {
-                string var, format;
-                CommandLine.GetArgument("oxide.directory", out var, out format);
+                CommandLine.GetArgument("oxide.directory", out string var, out string format);
                 if (string.IsNullOrEmpty(var) || CommandLine.HasVariable(var))
                 {
                     InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(var))));

@@ -92,8 +92,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GetLanguage")]
         public string GetLanguage(string userId)
         {
-            string lang;
-            if (!string.IsNullOrEmpty(userId) && langData.UserData.TryGetValue(userId, out lang))
+            if (!string.IsNullOrEmpty(userId) && langData.UserData.TryGetValue(userId, out string lang))
             {
                 return lang;
             }
@@ -157,8 +156,7 @@ namespace Oxide.Core.Libraries
 
             string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
 
-            Dictionary<string, string> langFile;
-            if (!langFiles.TryGetValue(file, out langFile))
+            if (!langFiles.TryGetValue(file, out Dictionary<string, string> langFile))
             {
                 langFile = GetMessageFile(plugin.Name, lang);
                 if (langFile == null)
@@ -191,8 +189,7 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            string currentLang;
-            if (langData.UserData.TryGetValue(userId, out currentLang) && lang.Equals(currentLang))
+            if (langData.UserData.TryGetValue(userId, out string currentLang) && lang.Equals(currentLang))
             {
                 return;
             }
@@ -270,8 +267,7 @@ namespace Oxide.Core.Libraries
         {
             string file = $"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json";
 
-            Dictionary<string, string> langFile;
-            if (!langFiles.TryGetValue(file, out langFile))
+            if (!langFiles.TryGetValue(file, out Dictionary<string, string> langFile))
             {
                 langFile = GetMessageFile(plugin.Name, lang) ?? (GetMessageFile(plugin.Name, langData.Lang) ?? GetMessageFile(plugin.Name));
                 if (langFile == null)
@@ -289,8 +285,7 @@ namespace Oxide.Core.Libraries
                 AddLangFile(file, langFile, plugin);
             }
 
-            string message;
-            return langFile.TryGetValue(key, out message) ? message : key;
+            return langFile.TryGetValue(key, out string message) ? message : key;
         }
 
         /// <summary>
@@ -343,8 +338,7 @@ namespace Oxide.Core.Libraries
         /// <param name="manager"></param>
         private void plugin_OnRemovedFromManager(Plugin sender, PluginManager manager)
         {
-            Event.Callback<Plugin, PluginManager> callback;
-            if (pluginRemovedFromManager.TryGetValue(sender, out callback))
+            if (pluginRemovedFromManager.TryGetValue(sender, out Event.Callback<Plugin, PluginManager> callback))
             {
                 callback.Remove();
                 pluginRemovedFromManager.Remove(sender);

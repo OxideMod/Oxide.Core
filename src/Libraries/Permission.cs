@@ -229,8 +229,7 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            HashSet<string> set;
-            if (!permset.TryGetValue(owner, out set))
+            if (!permset.TryGetValue(owner, out HashSet<string> set))
             {
                 set = new HashSet<string>();
                 permset.Add(owner, set);
@@ -281,8 +280,7 @@ namespace Oxide.Core.Libraries
                 return permset.Values.Any(v => v.Contains(name));
             }
 
-            HashSet<string> set;
-            if (!permset.TryGetValue(owner, out set))
+            if (!permset.TryGetValue(owner, out HashSet<string> set))
             {
                 return false;
             }
@@ -337,8 +335,7 @@ namespace Oxide.Core.Libraries
         /// <returns></returns>
         public UserData GetUserData(string id)
         {
-            UserData data;
-            if (!userdata.TryGetValue(id, out data))
+            if (!userdata.TryGetValue(id, out UserData data))
             {
                 userdata.Add(id, data = new UserData());
             }
@@ -397,8 +394,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Check if the group has the perm
-            GroupData group;
-            if (!groupdata.TryGetValue(name.ToLower(), out group))
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
             {
                 return false;
             }
@@ -481,8 +477,7 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            GroupData group;
-            if (!groupdata.TryGetValue(name.ToLower(), out group))
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
             {
                 return new string[0];
             }
@@ -678,8 +673,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(group.ToLower(), out data))
+            if (!groupdata.TryGetValue(group.ToLower(), out GroupData data))
             {
                 return string.Empty;
             }
@@ -702,8 +696,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(group.ToLower(), out data))
+            if (!groupdata.TryGetValue(group.ToLower(), out GroupData data))
             {
                 return 0;
             }
@@ -846,8 +839,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(name.ToLower(), out data))
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData data))
             {
                 return;
             }
@@ -908,8 +900,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(name.ToLower(), out data))
+            if (!groupdata.TryGetValue(name.ToLower(), out GroupData data))
             {
                 return;
             }
@@ -1029,8 +1020,7 @@ namespace Oxide.Core.Libraries
             group = group.ToLower();
 
             // First, get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(group, out data))
+            if (!groupdata.TryGetValue(group, out GroupData data))
             {
                 return false;
             }
@@ -1063,8 +1053,7 @@ namespace Oxide.Core.Libraries
 
             group = group.ToLower();
             // First, get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(group, out data))
+            if (!groupdata.TryGetValue(group, out GroupData data))
             {
                 return false;
             }
@@ -1096,8 +1085,7 @@ namespace Oxide.Core.Libraries
 
             group = group.ToLower();
 
-            GroupData data;
-            return !groupdata.TryGetValue(group, out data) ? string.Empty : data.ParentGroup;
+            return !groupdata.TryGetValue(group, out GroupData data) ? string.Empty : data.ParentGroup;
         }
 
         /// <summary>
@@ -1116,8 +1104,7 @@ namespace Oxide.Core.Libraries
             group = group.ToLower();
 
             // First, get the group data
-            GroupData data;
-            if (!groupdata.TryGetValue(group, out data))
+            if (!groupdata.TryGetValue(group, out GroupData data))
             {
                 return false;
             }
@@ -1156,9 +1143,8 @@ namespace Oxide.Core.Libraries
         private bool HasCircularParent(string group, string parent)
         {
             // Get parent data
-            GroupData parentData;
 
-            if (!groupdata.TryGetValue(parent, out parentData))
+            if (!groupdata.TryGetValue(parent, out GroupData parentData))
             {
                 return false;
             }

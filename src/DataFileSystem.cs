@@ -38,8 +38,7 @@ namespace Oxide.Core
         public DynamicConfigFile GetFile(string name)
         {
             name = DynamicConfigFile.SanitizeName(name);
-            DynamicConfigFile datafile;
-            if (_datafiles.TryGetValue(name, out datafile))
+            if (_datafiles.TryGetValue(name, out DynamicConfigFile datafile))
             {
                 return datafile;
             }

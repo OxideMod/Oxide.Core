@@ -49,9 +49,7 @@ namespace Oxide.Core.Libraries.Covalence
             message = message.Substring(1);
 
             // Parse the command
-            string command;
-            string[] args;
-            ParseCommand(message, out command, out args);
+            ParseCommand(message, out string command, out string[] args);
 
             // Set command type for the player
             player.LastCommand = CommandType.Chat;
@@ -74,9 +72,7 @@ namespace Oxide.Core.Libraries.Covalence
             }
 
             // Parse the command
-            string command;
-            string[] args;
-            ParseCommand(message, out command, out args);
+            ParseCommand(message, out string command, out string[] args);
 
             // Set command type for the player
             player.LastCommand = CommandType.Console;

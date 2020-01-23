@@ -92,8 +92,7 @@ namespace Oxide.Core.Plugins.Watchers
             FileSystemWatcher watcher = (FileSystemWatcher)sender;
             int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
             string sub_path = e.FullPath.Substring(watcher.Path.Length + 1, length);
-            QueuedChange change;
-            if (!changeQueue.TryGetValue(sub_path, out change))
+            if (!changeQueue.TryGetValue(sub_path, out QueuedChange change))
             {
                 change = new QueuedChange();
                 changeQueue[sub_path] = change;
