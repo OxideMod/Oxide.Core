@@ -253,18 +253,13 @@ namespace Oxide.Core.Plugins
                 return null;
             }
 
-            if (plugins.Count == 0)
-            {
-                return null;
-            }
-
-            if (expireDate < DateTime.Now)
+            if (plugins.Count == 0 || expireDate < DateTime.Now)
             {
                 return null;
             }
 
             float now = Interface.Oxide.Now;
-            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 300f)
+            if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 3600f)
             {
                 lastDeprecatedWarningAt[oldHook] = now;
                 Interface.Oxide.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
