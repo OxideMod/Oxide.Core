@@ -125,6 +125,7 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
+                    request.UserAgent = $"Oxide Mod (v{OxideMod.Version}; https://umod.org)";
 
                     // Exclude loopback requests and Linux from IP binding for now
                     if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
