@@ -532,7 +532,7 @@ namespace Oxide.Core.Plugins
                         continue;
                     }
 
-                    caller.Message($"You don't have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
+                    caller.Message($"You do not have permission to use the command '{cmd}'!"); // TODO: Use Lang API for this message
                     return true;
                 }
             }

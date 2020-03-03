@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+#if !NETSTANDARD
 using System.Security.Permissions;
+#endif
 using System.Text.RegularExpressions;
 
 namespace Oxide.Core.Plugins.Watchers
@@ -55,7 +57,9 @@ namespace Oxide.Core.Plugins.Watchers
         /// </summary>
         /// <param name="directory"></param>
         /// <param name="filter"></param>
+#if !NETSTANDARD
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+#endif
         private void LoadWatcher(string directory, string filter)
         {
             // Create the watcher

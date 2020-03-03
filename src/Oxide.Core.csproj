@@ -5,15 +5,16 @@
   <PropertyGroup>
     <Version>2.0.0</Version>
     <AssemblyName>Oxide.Core</AssemblyName>
-    <Authors>Oxide and Contributors</Authors>
+    <Authors>Oxide Team and Contributors</Authors>
     <Copyright>(c) 2013-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
     <Description>Core component for the Oxide modding framework</Description>
     <RepositoryUrl>https://github.com/OxideMod/Oxide.CSharp</RepositoryUrl>
     <PackageIconUrl>icon.png</PackageIconUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
-    <TargetFrameworks>net35;net40;net45;net46</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Oxide.References" Version="2.0.*">
