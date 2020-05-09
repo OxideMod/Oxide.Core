@@ -228,11 +228,6 @@ namespace Oxide.Core
 
             foreach (NetworkInterface network in networkInterfaces)
             {
-#if DEBUG
-                StringBuilder debugOutput = new StringBuilder();
-                debugOutput.AppendLine(string.Empty);
-#endif
-
                 if (network.OperationalStatus == OperationalStatus.Up)
                 {
                     IPInterfaceProperties properties = network.GetIPProperties();
@@ -244,12 +239,8 @@ namespace Oxide.Core
 
                     foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses)
                     {
-                        if (ip.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(ip.Address))
-                        {
-                            continue;
-                        }
-
 #if DEBUG
+                        StringBuilder debugOutput = new StringBuilder();
                         debugOutput.AppendLine($"IP address: {ip.Address}");
                         debugOutput.AppendLine($"Is DNS eligible: {ip.IsDnsEligible}");
                         debugOutput.AppendLine($"Is lookback: {IPAddress.IsLoopback(ip.Address)}");
@@ -257,6 +248,11 @@ namespace Oxide.Core
                         debugOutput.AppendLine($"Address family: {ip.Address.AddressFamily}");
                         debugOutput.AppendLine($"Gateway address: {properties.GatewayAddresses[0].Address}");
 #endif
+
+                        if (ip.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(ip.Address))
+                        {
+                            continue;
+                        }
 
                         if (!ip.IsDnsEligible)
                         {
@@ -279,6 +275,7 @@ namespace Oxide.Core
                         }
 
 #if DEBUG
+                        debugOutput.AppendLine();
                         debugOutput.AppendLine($"Resulting IP address: {ip.Address}");
                         Interface.Oxide.LogDebug(debugOutput.ToString());
 #endif

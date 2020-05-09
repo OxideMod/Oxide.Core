@@ -133,7 +133,7 @@ namespace Oxide.Core.Libraries
                         request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
                         {
                             // Try to assign server's assigned IP address, not primary network adapter address
-                            return new IPEndPoint(covalence.Server.LocalAddress ?? covalence.Server.Address, 0); // TODO: Figure out why this doesn't work on Linux
+                            return new IPEndPoint(covalence.Server.Address, 0); // TODO: Figure out why this does not work on Linux
                         };
                     }
 
