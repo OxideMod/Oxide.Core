@@ -205,7 +205,7 @@ namespace Oxide.Core
                         }
                 }
             }
-            End:
+        End:
             return value.Substring(firstIndex, (lastIndex - firstIndex + 1));
         }
 
@@ -299,7 +299,7 @@ namespace Oxide.Core
         {
             string[] split = ipAddress.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
             int[] ip = { int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]), int.Parse(split[3]) };
-            return ip[0] == 0 || ip[0] == 10 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
+            return ip[0] == 0 || ip[0] == 10 || ip[0] == 100 && ip[1] == 64 || ip[0] == 127 || ip[0] == 192 && ip[1] == 168 || ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31;
         }
 
         public static bool ValidateIPv4(string ipAddress)
