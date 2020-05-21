@@ -127,13 +127,12 @@ namespace Oxide.Core.Libraries
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
                     request.UserAgent = $"Oxide Mod (v{OxideMod.Version}; https://umod.org)";
 
-                    // Exclude loopback requests and Linux from IP binding for now
-                    if (!request.RequestUri.IsLoopback && Environment.OSVersion.Platform != PlatformID.Unix)
+                    // Set webrequest to use assigned IP address
+                    if (!request.RequestUri.IsLoopback && IPAddress.TryParse(Interface.Oxide.Config.Options.WebRequestIP, out IPAddress address))
                     {
                         request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
                         {
-                            // Try to assign server's assigned IP address, not primary network adapter address
-                            return new IPEndPoint(covalence.Server.Address, 0); // TODO: Figure out why this does not work on Linux
+                            return new IPEndPoint(address, 0);
                         };
                     }
 

@@ -196,6 +196,11 @@ namespace Oxide.Core
                 Config.Save();
             }
 
+            if (CommandLine.HasVariable("web.ip"))
+            {
+                Config.Options.WebRequestIP = CommandLine.GetVariable("web.ip");
+            }
+
             if (CommandLine.HasVariable("rcon.port"))
             {
                 Config.Rcon.Port = Utility.GetNumbers(CommandLine.GetVariable("rcon.port"));
