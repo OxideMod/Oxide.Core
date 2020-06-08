@@ -719,7 +719,6 @@ namespace Oxide.Core
         {
             if (!IsShuttingDown)
             {
-                libperm.SaveData();
                 IsShuttingDown = true;
                 UnloadAllPlugins();
 
@@ -732,6 +731,8 @@ namespace Oxide.Core
                 {
                     extensionManager.GetLibrary(name).Shutdown();
                 }
+
+                libperm.SaveData();
 
                 RemoteConsole?.Shutdown();
                 ServerConsole?.OnDisable();
