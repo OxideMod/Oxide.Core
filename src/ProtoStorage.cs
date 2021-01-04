@@ -58,8 +58,10 @@ namespace Oxide.Core
                 {
                     Directory.CreateDirectory(directory);
                 }
+                
+                FileMode saveMode = File.Exists(path) ? FileMode.Truncate : FileMode.Create;
 
-                using (FileStream file = File.Open(path, FileMode.Create))
+                using (FileStream file = File.Open(path, saveMode))
                 {
                     Serializer.Serialize(file, data);
                 }
