@@ -1,9 +1,10 @@
-﻿extern alias References;
+extern alias References;
 
 using Oxide.Core.Plugins;
 using References::ProtoBuf;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 
@@ -987,6 +988,14 @@ namespace Oxide.Core.Libraries
 
             // Remove the group
             bool removed = groupdata.Remove(group);
+            if (removed)
+            {
+                // Set children to having no parent group
+                foreach (GroupData child in groupdata.Values.Where(x => x.ParentGroup == group))
+                {
+                    child.ParentGroup = String.Empty;
+                }
+            }
 
             // Remove group from users
             bool changed = userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group));
