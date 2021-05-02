@@ -14,6 +14,8 @@ namespace Oxide.Core.Logging
         private readonly List<LogMessage> messagecache;
         private bool usecache;
 
+        private readonly object Lock = new object();
+
         /// <summary>
         /// Initializes a new instance of the CompoundLogger class
         /// </summary>
@@ -34,10 +36,13 @@ namespace Oxide.Core.Logging
             // Register it
             subloggers.Add(logger);
 
-            // Write the message cache to it
-            foreach (LogMessage t in messagecache)
+            lock (Lock)
             {
-                logger.Write(t);
+                // Write the message cache to it
+                foreach (LogMessage t in messagecache)
+                {
+                    logger.Write(t);
+                }
             }
         }
 
@@ -82,7 +87,10 @@ namespace Oxide.Core.Logging
             // Cache it for any loggers added late
             if (usecache)
             {
-                messagecache.Add(CreateLogMessage(type, format, args));
+                lock (Lock)
+                {
+                    messagecache.Add(CreateLogMessage(type, format, args));
+                }
             }
         }
 
@@ -92,7 +100,10 @@ namespace Oxide.Core.Logging
         public void DisableCache()
         {
             usecache = false;
-            messagecache.Clear();
+            lock (Lock)
+            {
+                messagecache.Clear();
+            }
         }
     }
 }
