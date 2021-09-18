@@ -378,5 +378,15 @@ namespace Oxide.Core.Extensions
                 return null;
             }
         }
+
+        /// <summary>
+        /// Gets the extension by the given type
+        /// </summary>
+        /// <typeparam name="T">Extension type</typeparam>
+        /// <returns>Extension of type <typeparamref name="T"/> if it's present, otherwise <see langword="null"/></returns>
+        public T GetExtension<T>() where T : Extension
+        {
+            return (T)extensions.FirstOrDefault(e => e is T);
+        }
     }
 }
