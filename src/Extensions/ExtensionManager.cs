@@ -363,6 +363,13 @@ namespace Oxide.Core.Extensions
         public bool IsExtensionPresent(string name) => extensions.Any(e => e.Name == name);
 
         /// <summary>
+        /// Returns if an extension of the given type is present
+        /// </summary>
+        /// <typeparam name="T">Extension type</typeparam>
+        /// <returns></returns>
+        public bool IsExtensionPresent<T>() where T : Extension => extensions.Any(e => e is T);
+
+        /// <summary>
         /// Gets the extension by the given name
         /// </summary>
         /// <param name="name"></param>
