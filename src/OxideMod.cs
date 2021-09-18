@@ -284,7 +284,7 @@ namespace Oxide.Core
         public IEnumerable<Extension> GetAllExtensions() => extensionManager.GetAllExtensions();
 
         /// <summary>
-        /// Gets all loaded extensions
+        /// Gets all present plugin loaders
         /// </summary>
         /// <returns></returns>
         public IEnumerable<PluginLoader> GetPluginLoaders() => extensionManager.GetPluginLoaders();
