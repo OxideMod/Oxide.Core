@@ -284,6 +284,20 @@ namespace Oxide.Core
         public IEnumerable<Extension> GetAllExtensions() => extensionManager.GetAllExtensions();
 
         /// <summary>
+        /// Gets an extension by name if it's loaded
+        /// </summary>
+        /// <param name="name">Extension name</param>
+        /// <returns></returns>
+        public Extension GetExtension(string name) => extensionManager.GetExtension(name);
+
+        /// <summary>
+        /// Gets an extension by type if it's present
+        /// </summary>
+        /// <typeparam name="T">Extension type</typeparam>
+        /// <returns></returns>
+        public T GetExtension<T>() where T : Extension => extensionManager.GetExtension<T>();
+
+        /// <summary>
         /// Gets all present plugin loaders
         /// </summary>
         /// <returns></returns>
