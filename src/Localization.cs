@@ -17,7 +17,7 @@ namespace Oxide.Core
                 ["CommandUsageGroup"] = "Usage: oxide.group <add|set> <name> [title] [rank]",
                 ["CommandUsageGroupParent"] = "Usage: oxide.group <parent> <name> <parentName>",
                 ["CommandUsageGroupRemove"] = "Usage: oxide.group <remove> <name>",
-                ["CommandUsageLang"] = "Usage: oxide.lang <two-digit language code>",
+                ["CommandUsageLang"] = "Usage: oxide.lang <two-letter language code>",
                 ["CommandUsageLoad"] = "Usage: oxide.load *|<pluginname>+",
                 ["CommandUsageReload"] = "Usage: oxide.reload *|<pluginname>+",
                 ["CommandUsageRevoke"] = "Usage: oxide.revoke <group|user> <name|id> <permission>",
