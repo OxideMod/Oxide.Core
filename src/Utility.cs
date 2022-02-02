@@ -39,6 +39,7 @@ namespace Oxide.Core
 
         public bool IsReadOnly => false;
         public int Count { get { lock (syncRoot) { return collection.Count; } } }
+
         public bool Contains(T value)
         {
             lock (syncRoot)
@@ -46,6 +47,7 @@ namespace Oxide.Core
                 return collection.Contains(value);
             }
         }
+
         public bool Add(T value)
         {
             lock (syncRoot)
@@ -53,6 +55,7 @@ namespace Oxide.Core
                 return collection.Add(value);
             }
         }
+
         public bool Remove(T value)
         {
             lock (syncRoot)
@@ -60,6 +63,7 @@ namespace Oxide.Core
                 return collection.Remove(value);
             }
         }
+
         public void Clear()
         {
             lock (syncRoot)
@@ -67,6 +71,7 @@ namespace Oxide.Core
                 collection.Clear();
             }
         }
+
         public void CopyTo(T[] array, int index)
         {
             lock (syncRoot)
@@ -74,7 +79,9 @@ namespace Oxide.Core
                 collection.CopyTo(array, index);
             }
         }
+
         public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
+
         public bool Any(Func<T, bool> callback)
         {
             lock (syncRoot)
@@ -82,6 +89,7 @@ namespace Oxide.Core
                 return collection.Any(callback);
             }
         }
+
         public T[] ToArray()
         {
             lock (syncRoot)
@@ -105,6 +113,7 @@ namespace Oxide.Core
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
         void ICollection<T>.Add(T value) => Add(value);
     }
 
@@ -264,14 +273,21 @@ namespace Oxide.Core
                             continue;
                         }
 
-                        if (ip.PrefixOrigin != PrefixOrigin.Dhcp)
+                        try
                         {
-                            if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
+                            if (ip.PrefixOrigin != PrefixOrigin.Dhcp)
                             {
-                                mostSuitableIp = ip;
-                            }
+                                if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
+                                {
+                                    mostSuitableIp = ip;
+                                }
 
-                            continue;
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+                            // Ignored
                         }
 
 #if DEBUG
