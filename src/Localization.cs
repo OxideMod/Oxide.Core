@@ -42,6 +42,7 @@ namespace Oxide.Core
                 ["GroupPermissions"] = "Group '{0}' permissions",
                 ["GroupPlayers"] = "Group '{0}' players",
                 ["Groups"] = "Groups",
+                ["InvalidLanguageName"] = "Invalid language name: '{0}'",
                 ["NoGroupPermissions"] = "No permissions currently granted",
                 ["NoPermissionGroups"] = "No groups with this permission",
                 ["NoPermissionPlayers"] = "No players with this permission",
