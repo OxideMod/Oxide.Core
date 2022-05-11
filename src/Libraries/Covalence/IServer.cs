@@ -57,9 +57,14 @@ namespace Oxide.Core.Libraries.Covalence
         int MaxPlayers { get; set; }
 
         /// <summary>
+        /// Gets/sets the current in-game date on the server
+        /// </summary>
+        DateTime Date { get; set; }
+
+        /// <summary>
         /// Gets/sets the current in-game time on the server
         /// </summary>
-        DateTime Time { get; set; }
+        TimeSpan Time { get; set; }
 
         /// <summary>
         /// Gets information on the currently loaded save file
