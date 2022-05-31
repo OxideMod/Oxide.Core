@@ -115,6 +115,7 @@ namespace Oxide.Core.Libraries
                 Interface.Oxide.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
                 pair.Value.ParentGroup = null;
             }
+
             IsLoaded = true;
         }
 
@@ -719,7 +720,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GrantUserPermission")]
         public void GrantUserPermission(string id, string perm, Plugin owner)
         {
-            // Check it's even a perm
+            // Check it is even a perm
             if (!PermissionExists(perm, owner))
             {
                 return;
@@ -833,7 +834,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GrantGroupPermission")]
         public void GrantGroupPermission(string name, string perm, Plugin owner)
         {
-            // Check it's even a perm
+            // Check it is even a perm
             if (!PermissionExists(perm, owner) || !GroupExists(name))
             {
                 return;
@@ -874,6 +875,7 @@ namespace Oxide.Core.Libraries
                         return;
                     }
                 }
+
                 return;
             }
 
@@ -1174,6 +1176,7 @@ namespace Oxide.Core.Libraries
                     return false;
                 }
             }
+
             return false;
         }
 

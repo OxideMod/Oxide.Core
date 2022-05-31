@@ -76,7 +76,7 @@ namespace Oxide.Core.Logging
         /// </summary>
         private void Worker()
         {
-            // Loop until it's time to exit
+            // Loop until it is time to exit
             while (!exit)
             {
                 // Wait for signal

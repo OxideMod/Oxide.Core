@@ -1,4 +1,5 @@
-﻿extern alias References;
+extern alias References;
+
 using System;
 using System.Globalization;
 
@@ -9,11 +10,11 @@ namespace Oxide.Core
     public class VersionNumberShortConverter : JsonConverter
     {
         // Cache some constant values
-        private static readonly char[] separators  = new char[1] { '.' };
+        private static readonly char[] separators = new char[1] { '.' };
         private static readonly Type vNumberType = typeof(VersionNumber);
 
         /// <summary>
-        /// Serialize object if it is a <see cref="VersionNumber"/>, throw an exception if it's not
+        /// Serialize object if it is a <see cref="VersionNumber"/>, throw an exception if it is not
         /// </summary>
         /// <param name="writer"></param>
         /// <param name="value"></param>

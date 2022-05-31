@@ -284,14 +284,14 @@ namespace Oxide.Core
         public IEnumerable<Extension> GetAllExtensions() => extensionManager.GetAllExtensions();
 
         /// <summary>
-        /// Gets an extension by name if it's loaded
+        /// Gets an extension by name if it is loaded
         /// </summary>
         /// <param name="name">Extension name</param>
         /// <returns></returns>
         public Extension GetExtension(string name) => extensionManager.GetExtension(name);
 
         /// <summary>
-        /// Gets an extension by type if it's present
+        /// Gets an extension by type if it is present
         /// </summary>
         /// <typeparam name="T">Extension type</typeparam>
         /// <returns></returns>

@@ -204,7 +204,7 @@ namespace Oxide.Core.Extensions
                 return;
             }
 
-            // Check if it's a Core or Game extension
+            // Check if it is a Core or Game extension
             if (extension.IsCoreExtension || extension.IsGameExtension)
             {
                 Logger.Write(LogType.Error, $"Failed to unload extension '{name}': you may not unload Core or Game extensions.");
@@ -246,7 +246,7 @@ namespace Oxide.Core.Extensions
                 return;
             }
 
-            // Check if it's a Core or Game extension
+            // Check if it is a Core or Game extension
             if (extension.IsCoreExtension || extension.IsGameExtension)
             {
                 Logger.Write(LogType.Error, $"Failed to unload extension '{name}': you may not unload Core or Game extensions.");
@@ -390,7 +390,7 @@ namespace Oxide.Core.Extensions
         /// Gets the extension by the given type
         /// </summary>
         /// <typeparam name="T">Extension type</typeparam>
-        /// <returns>Extension of type <typeparamref name="T"/> if it's present, otherwise <see langword="null"/></returns>
+        /// <returns>Extension of type <typeparamref name="T"/> if it is present, otherwise <see langword="null"/></returns>
         public T GetExtension<T>() where T : Extension
         {
             return (T)extensions.FirstOrDefault(e => e is T);

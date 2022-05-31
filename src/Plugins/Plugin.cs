@@ -320,7 +320,7 @@ namespace Oxide.Core.Plugins
         public T Call<T>(string hook, params object[] args) => (T)Convert.ChangeType(CallHook(hook, args), typeof(T));
 
         /// <summary>
-        /// Called when it's time to run a hook on this plugin
+        /// Called when it is time to run a hook on this plugin
         /// </summary>
         /// <param name="hook"></param>
         /// <param name="args"></param>
