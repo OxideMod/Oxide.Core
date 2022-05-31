@@ -190,6 +190,13 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
+            // Now forcing plugins to register in lowercase only
+            if (!newGroup.Equals(newGroup.ToLower()))
+            {
+                Interface.Oxide.LogWarning("newGroup name must be lowercase! '{0}'", newGroup);
+                return;
+            }
+
             if (GroupExists(oldGroup))
             {
                 string groups = ProtoStorage.GetFileDataPath("oxide.groups.data");
@@ -222,7 +229,12 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            name = name.ToLower();
+            // Now forcing plugins to register in lowercase only
+            if (!name.Equals(name.ToLower()))
+            {
+                Interface.Oxide.LogWarning("Permission name must be lowercase! '{0}' (by plugin '{1}')", name, owner.Title);
+                return;
+            }
 
             if (PermissionExists(name))
             {
@@ -240,8 +252,8 @@ namespace Oxide.Core.Libraries
 
             Interface.CallHook("OnPermissionRegistered", name, owner);
 
-            string prefix = owner.Name.ToLower() + ".";
-            if (!name.StartsWith(prefix) && !owner.IsCorePlugin)
+            string prefix = owner.Name + ".";
+            if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && !owner.IsCorePlugin)
             {
                 Interface.Oxide.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
             }
@@ -260,8 +272,6 @@ namespace Oxide.Core.Libraries
             {
                 return false;
             }
-
-            name = name.ToLower();
 
             if (owner == null)
             {
@@ -395,12 +405,12 @@ namespace Oxide.Core.Libraries
             }
 
             // Check if the group has the perm
-            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
+            if (!groupdata.TryGetValue(name, out GroupData group))
             {
                 return false;
             }
 
-            return group.Perms.Contains(perm.ToLower()) || GroupHasPermission(group.ParentGroup, perm);
+            return group.Perms.Contains(perm) || GroupHasPermission(group.ParentGroup, perm);
         }
 
         /// <summary>
@@ -422,8 +432,6 @@ namespace Oxide.Core.Libraries
             {
                 return true;
             }
-
-            perm = perm.ToLower();
 
             // First, get the player data
             UserData data = GetUserData(id);
@@ -478,7 +486,7 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            if (!groupdata.TryGetValue(name.ToLower(), out GroupData group))
+            if (!groupdata.TryGetValue(name, out GroupData group))
             {
                 return new string[0];
             }
@@ -511,7 +519,6 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            perm = perm.ToLower();
             HashSet<string> users = new HashSet<string>();
             foreach (KeyValuePair<string, UserData> data in userdata)
             {
@@ -536,7 +543,6 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            perm = perm.ToLower();
             HashSet<string> groups = new HashSet<string>();
             foreach (KeyValuePair<string, GroupData> data in groupdata)
             {
@@ -564,7 +570,7 @@ namespace Oxide.Core.Libraries
             }
 
             UserData data = GetUserData(id);
-            if (!data.Groups.Add(name.ToLower()))
+            if (!data.Groups.Add(name))
             {
                 return;
             }
@@ -599,7 +605,7 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            if (!data.Groups.Remove(name.ToLower()))
+            if (!data.Groups.Remove(name))
             {
                 return;
             }
@@ -623,7 +629,7 @@ namespace Oxide.Core.Libraries
             }
 
             UserData data = GetUserData(id);
-            return data.Groups.Contains(name.ToLower());
+            return data.Groups.Contains(name);
         }
 
         /// <summary>
@@ -634,7 +640,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GroupExists")]
         public bool GroupExists(string group)
         {
-            return !string.IsNullOrEmpty(group) && (group.Equals("*") || groupdata.ContainsKey(group.ToLower()));
+            return !string.IsNullOrEmpty(group) && (group.Equals("*") || groupdata.ContainsKey(group));
         }
 
         /// <summary>
@@ -657,7 +663,6 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            group = group.ToLower();
             return userdata.Where(u => u.Value.Groups.Contains(group)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
         }
 
@@ -674,7 +679,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group.ToLower(), out GroupData data))
+            if (!groupdata.TryGetValue(group, out GroupData data))
             {
                 return string.Empty;
             }
@@ -697,7 +702,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group.ToLower(), out GroupData data))
+            if (!groupdata.TryGetValue(group, out GroupData data))
             {
                 return 0;
             }
@@ -727,8 +732,6 @@ namespace Oxide.Core.Libraries
 
             // Get the player data
             UserData data = GetUserData(id);
-
-            perm = perm.ToLower();
 
             if (perm.EndsWith("*"))
             {
@@ -786,8 +789,6 @@ namespace Oxide.Core.Libraries
             // Get the player data
             UserData data = GetUserData(id);
 
-            perm = perm.ToLower();
-
             if (perm.EndsWith("*"))
             {
                 if (perm.Equals("*"))
@@ -840,12 +841,10 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            if (!groupdata.TryGetValue(name.ToLower(), out GroupData data))
+            if (!groupdata.TryGetValue(name, out GroupData data))
             {
                 return;
             }
-
-            perm = perm.ToLower();
 
             if (perm.EndsWith("*"))
             {
@@ -868,7 +867,7 @@ namespace Oxide.Core.Libraries
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*').ToLower();
+                    perm = perm.TrimEnd('*');
                     if (!perms.Where(s => s.StartsWith(perm)).Aggregate(false, (c, s) => c | data.Perms.Add(s)))
                     {
                         return;
@@ -901,12 +900,10 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            if (!groupdata.TryGetValue(name.ToLower(), out GroupData data))
+            if (!groupdata.TryGetValue(name, out GroupData data))
             {
                 return;
             }
-
-            perm = perm.ToLower();
 
             if (perm.EndsWith("*"))
             {
@@ -921,7 +918,7 @@ namespace Oxide.Core.Libraries
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*').ToLower();
+                    perm = perm.TrimEnd('*');
                     if (data.Perms.RemoveWhere(s => s.StartsWith(perm)) <= 0)
                     {
                         return;
@@ -953,6 +950,13 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("CreateGroup")]
         public bool CreateGroup(string group, string title, int rank)
         {
+            // Check if lowercased
+            if (!group.Equals(group.ToLower()))
+            {
+                Interface.Oxide.LogWarning("Group name must be lowercase! '{0}'", group);
+                return false;
+            }
+
             // Check if it already exists
             if (GroupExists(group) || string.IsNullOrEmpty(group))
             {
@@ -963,7 +967,6 @@ namespace Oxide.Core.Libraries
             GroupData data = new GroupData { Title = title, Rank = rank };
 
             // Add the group
-            group = group.ToLower();
             groupdata.Add(group, data);
 
             Interface.CallHook("OnGroupCreated", group, title, rank);
@@ -983,8 +986,6 @@ namespace Oxide.Core.Libraries
             {
                 return false;
             }
-
-            group = group.ToLower();
 
             // Remove the group
             bool removed = groupdata.Remove(group);
@@ -1026,8 +1027,6 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
-            group = group.ToLower();
-
             // First, get the group data
             if (!groupdata.TryGetValue(group, out GroupData data))
             {
@@ -1060,7 +1059,6 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
-            group = group.ToLower();
             // First, get the group data
             if (!groupdata.TryGetValue(group, out GroupData data))
             {
@@ -1092,8 +1090,6 @@ namespace Oxide.Core.Libraries
                 return string.Empty;
             }
 
-            group = group.ToLower();
-
             return !groupdata.TryGetValue(group, out GroupData data) ? string.Empty : data.ParentGroup;
         }
 
@@ -1110,8 +1106,6 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
-            group = group.ToLower();
-
             // First, get the group data
             if (!groupdata.TryGetValue(group, out GroupData data))
             {
@@ -1124,12 +1118,10 @@ namespace Oxide.Core.Libraries
                 return true;
             }
 
-            if (!GroupExists(parent) || group.Equals(parent.ToLower()))
+            if (!GroupExists(parent) || group.Equals(parent))
             {
                 return false;
             }
-
-            parent = parent.ToLower();
 
             if (!string.IsNullOrEmpty(data.ParentGroup) && data.ParentGroup.Equals(parent))
             {
