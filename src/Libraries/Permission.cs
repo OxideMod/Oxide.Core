@@ -809,20 +809,20 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Grant the specified permission to the specified group
         /// </summary>
-        /// <param name="groupName"></param>
+        /// <param name="name"></param>
         /// <param name="perm"></param>
         /// <param name="owner"></param>
         [LibraryFunction("GrantGroupPermission")]
-        public void GrantGroupPermission(string groupName, string perm, Plugin owner)
+        public void GrantGroupPermission(string name, string perm, Plugin owner)
         {
             // Check it is even a perm
-            if (!PermissionExists(perm, owner) || !GroupExists(groupName))
+            if (!PermissionExists(perm, owner) || !GroupExists(name))
             {
                 return;
             }
 
             // Get the group data
-            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(name, out GroupData groupData))
             {
                 return;
             }
@@ -865,7 +865,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Call hook for plugins
-            Interface.Call("OnGroupPermissionGranted", groupName, perm);
+            Interface.Call("OnGroupPermissionGranted", name, perm);
         }
 
         /// <summary>
