@@ -70,13 +70,13 @@ namespace Oxide.Core.Libraries
         public override bool IsGlobal => false;
 
         // All registered permissions
-        private readonly Dictionary<Plugin, HashSet<string>> registeredPermissions;
+        private readonly Dictionary<Plugin, HashSet<string>> permset;
 
         // All users data
-        private Dictionary<string, UserData> usersData;
+        private Dictionary<string, UserData> userdata;
 
         // All groups data
-        private Dictionary<string, GroupData> groupsData;
+        private Dictionary<string, GroupData> groupdata;
 
         private Func<string, bool> validate;
 
@@ -89,7 +89,7 @@ namespace Oxide.Core.Libraries
         public Permission()
         {
             // Initialize
-            registeredPermissions = new Dictionary<Plugin, HashSet<string>>();
+            permset = new Dictionary<Plugin, HashSet<string>>();
 
             // Load the datafile
             LoadFromDatafile();
@@ -102,11 +102,11 @@ namespace Oxide.Core.Libraries
         {
             Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
             Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
-            usersData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users")?.ToDictionary(x => x.Key, x => x.Value,
+            userdata = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users")?.ToDictionary(x => x.Key, x => x.Value,
                 StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
-            groupsData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups")?.ToDictionary(x => x.Key, x => x.Value,
+            groupdata = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups")?.ToDictionary(x => x.Key, x => x.Value,
                 StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
-            foreach (KeyValuePair<string, GroupData> pair in groupsData)
+            foreach (KeyValuePair<string, GroupData> pair in groupdata)
             {
                 if (string.IsNullOrEmpty(pair.Value.ParentGroup) || !HasCircularParent(pair.Key, pair.Value.ParentGroup))
                 {
@@ -128,8 +128,8 @@ namespace Oxide.Core.Libraries
         {
             if (IsLoaded)
             {
-                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".groups", groupsData);
-                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".users", usersData);
+                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
+                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".users", userdata);
             }
         }
 
@@ -145,12 +145,12 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Saves users permissions data to the data file
         /// </summary>
-        public void SaveUsers() => ProtoStorage.Save(usersData, "oxide.users");
+        public void SaveUsers() => ProtoStorage.Save(userdata, "oxide.users");
 
         /// <summary>
         /// Saves groups permissions data to the data file
         /// </summary>
-        public void SaveGroups() => ProtoStorage.Save(groupsData, "oxide.groups");
+        public void SaveGroups() => ProtoStorage.Save(groupdata, "oxide.groups");
 
         /// <summary>
         /// Register user ID validation
@@ -165,7 +165,7 @@ namespace Oxide.Core.Libraries
         {
             if (IsLoaded && validate != null)
             {
-                string[] invalidData = usersData.Keys.Where(i => !validate(i)).ToArray();
+                string[] invalidData = userdata.Keys.Where(i => !validate(i)).ToArray();
                 if (invalidData.Length <= 0)
                 {
                     return;
@@ -173,7 +173,7 @@ namespace Oxide.Core.Libraries
 
                 foreach (string i in invalidData)
                 {
-                    usersData.Remove(i);
+                    userdata.Remove(i);
                 }
             }
         }
@@ -221,10 +221,10 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            if (!registeredPermissions.TryGetValue(owner, out HashSet<string> set))
+            if (!permset.TryGetValue(owner, out HashSet<string> set))
             {
                 set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                registeredPermissions.Add(owner, set);
+                permset.Add(owner, set);
                 owner.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
             }
             set.Add(permission);
@@ -253,7 +253,7 @@ namespace Oxide.Core.Libraries
 
             if (owner == null)
             {
-                if (registeredPermissions.Count > 0)
+                if (permset.Count > 0)
                 {
                     if (permission.Equals("*"))
                     {
@@ -262,13 +262,13 @@ namespace Oxide.Core.Libraries
 
                     if (permission.EndsWith("*"))
                     {
-                        return registeredPermissions.Values.SelectMany(v => v).Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
+                        return permset.Values.SelectMany(v => v).Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
                     }
                 }
-                return registeredPermissions.Values.Any(v => v.Contains(permission));
+                return permset.Values.Any(v => v.Contains(permission));
             }
 
-            if (!registeredPermissions.TryGetValue(owner, out HashSet<string> set))
+            if (!permset.TryGetValue(owner, out HashSet<string> set))
             {
                 return false;
             }
@@ -295,7 +295,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="manager"></param>
-        private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager) => registeredPermissions.Remove(sender);
+        private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager) => permset.Remove(sender);
 
         #region Querying
 
@@ -313,7 +313,7 @@ namespace Oxide.Core.Libraries
         /// <param name="playerId"></param>
         /// <returns></returns>
         [LibraryFunction("UserExists")]
-        public bool UserExists(string playerId) => usersData.ContainsKey(playerId);
+        public bool UserExists(string playerId) => userdata.ContainsKey(playerId);
 
         /// <summary>
         /// Returns the data for the specified user
@@ -322,9 +322,9 @@ namespace Oxide.Core.Libraries
         /// <returns></returns>
         public UserData GetUserData(string playerId)
         {
-            if (!usersData.TryGetValue(playerId, out UserData userData))
+            if (!userdata.TryGetValue(playerId, out UserData userData))
             {
-                usersData.Add(playerId, userData = new UserData());
+                userdata.Add(playerId, userData = new UserData());
             }
 
             // Return the data
@@ -381,7 +381,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Check if the group has the permission
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
@@ -462,7 +462,7 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return new string[0];
             }
@@ -482,7 +482,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <returns></returns>
         [LibraryFunction("GetPermissions")]
-        public string[] GetPermissions() => new HashSet<string>(registeredPermissions.Values.SelectMany(v => v)).ToArray();
+        public string[] GetPermissions() => new HashSet<string>(permset.Values.SelectMany(v => v)).ToArray();
 
         /// <summary>
         /// Returns the players with given permission
@@ -499,7 +499,7 @@ namespace Oxide.Core.Libraries
 
             HashSet<string> permissionUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (KeyValuePair<string, UserData> data in usersData)
+            foreach (KeyValuePair<string, UserData> data in userdata)
             {
                 if (data.Value.Perms.Contains(permission))
                 {
@@ -525,7 +525,7 @@ namespace Oxide.Core.Libraries
 
             HashSet<string> permissionGroups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (KeyValuePair<string, GroupData> data in groupsData)
+            foreach (KeyValuePair<string, GroupData> data in groupdata)
             {
                 if (data.Value.Perms.Contains(permission))
                 {
@@ -622,7 +622,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GroupExists")]
         public bool GroupExists(string groupName)
         {
-            return !string.IsNullOrEmpty(groupName) && (groupName.Equals("*") || groupsData.ContainsKey(groupName));
+            return !string.IsNullOrEmpty(groupName) && (groupName.Equals("*") || groupdata.ContainsKey(groupName));
         }
 
         /// <summary>
@@ -630,7 +630,7 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <returns></returns>
         [LibraryFunction("GetGroups")]
-        public string[] GetGroups() => groupsData.Keys.ToArray();
+        public string[] GetGroups() => groupdata.Keys.ToArray();
 
         /// <summary>
         /// Returns users in that group
@@ -645,7 +645,7 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            return usersData.Where(u => u.Value.Groups.Contains(groupName)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
+            return userdata.Where(u => u.Value.Groups.Contains(groupName)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
         }
 
         /// <summary>
@@ -661,7 +661,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return string.Empty;
             }
@@ -684,7 +684,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return 0;
             }
@@ -721,9 +721,9 @@ namespace Oxide.Core.Libraries
 
                 if (owner == null)
                 {
-                    permissions = new HashSet<string>(registeredPermissions.Values.SelectMany(v => v));
+                    permissions = new HashSet<string>(permset.Values.SelectMany(v => v));
                 }
-                else if (!registeredPermissions.TryGetValue(owner, out permissions))
+                else if (!permset.TryGetValue(owner, out permissions))
                 {
                     return;
                 }
@@ -822,7 +822,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return;
             }
@@ -833,9 +833,9 @@ namespace Oxide.Core.Libraries
 
                 if (owner == null)
                 {
-                    permissions = new HashSet<string>(registeredPermissions.Values.SelectMany(v => v));
+                    permissions = new HashSet<string>(permset.Values.SelectMany(v => v));
                 }
-                else if (!registeredPermissions.TryGetValue(owner, out permissions))
+                else if (!permset.TryGetValue(owner, out permissions))
                 {
                     return;
                 }
@@ -882,7 +882,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return;
             }
@@ -941,7 +941,7 @@ namespace Oxide.Core.Libraries
             GroupData groupData = new GroupData { Title = groupTitle, Rank = groupRank };
 
             // Add the group
-            groupsData.Add(groupName, groupData);
+            groupdata.Add(groupName, groupData);
 
             Interface.CallHook("OnGroupCreated", groupName, groupTitle, groupRank);
 
@@ -962,11 +962,11 @@ namespace Oxide.Core.Libraries
             }
 
             // Remove the group
-            bool removed = groupsData.Remove(groupName);
+            bool removed = groupdata.Remove(groupName);
             if (removed)
             {
                 // Set children to having no parent group
-                foreach (GroupData child in groupsData.Values)
+                foreach (GroupData child in groupdata.Values)
                 {
                     if (child.ParentGroup == groupName)
                         child.ParentGroup = string.Empty;
@@ -974,7 +974,7 @@ namespace Oxide.Core.Libraries
             }
 
             // Remove group from users
-            bool changed = usersData.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(groupName));
+            bool changed = userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(groupName));
 
             if (changed)
             {
@@ -1003,7 +1003,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
@@ -1035,7 +1035,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
@@ -1065,7 +1065,7 @@ namespace Oxide.Core.Libraries
                 return string.Empty;
             }
 
-            return !groupsData.TryGetValue(groupName, out GroupData groupData) ? string.Empty : groupData.ParentGroup;
+            return !groupdata.TryGetValue(groupName, out GroupData groupData) ? string.Empty : groupData.ParentGroup;
         }
 
         /// <summary>
@@ -1082,7 +1082,7 @@ namespace Oxide.Core.Libraries
             }
 
             // First, get the group data
-            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            if (!groupdata.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
@@ -1119,7 +1119,7 @@ namespace Oxide.Core.Libraries
         private bool HasCircularParent(string groupName, string parentGroupName)
         {
             // Get parent data
-            if (!groupsData.TryGetValue(parentGroupName, out GroupData parentGroupData))
+            if (!groupdata.TryGetValue(parentGroupName, out GroupData parentGroupData))
             {
                 return false;
             }
@@ -1136,7 +1136,7 @@ namespace Oxide.Core.Libraries
                 }
 
                 // Get next parent
-                if (!groupsData.TryGetValue(parentGroupData.ParentGroup, out parentGroupData))
+                if (!groupdata.TryGetValue(parentGroupData.ParentGroup, out parentGroupData))
                 {
                     return false;
                 }
