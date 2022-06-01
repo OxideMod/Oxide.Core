@@ -24,12 +24,12 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Gets or sets the individual permissions for this player
         /// </summary>
-        public HashSet<string> Perms { get; set; } = new HashSet<string>();
+        public HashSet<string> Perms { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gets or sets the group for this player
         /// </summary>
-        public HashSet<string> Groups { get; set; } = new HashSet<string>();
+        public HashSet<string> Groups { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Gets or sets the individual permissions for this group
         /// </summary>
-        public HashSet<string> Perms { get; set; } = new HashSet<string>();
+        public HashSet<string> Perms { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gets or sets the parent for this group
@@ -70,13 +70,13 @@ namespace Oxide.Core.Libraries
         public override bool IsGlobal => false;
 
         // All registered permissions
-        private readonly Dictionary<Plugin, HashSet<string>> permset;
+        private readonly Dictionary<Plugin, HashSet<string>> registeredPermissions;
 
-        // All user data
-        private Dictionary<string, UserData> userdata;
+        // All users data
+        private Dictionary<string, UserData> usersData;
 
-        // All group data
-        private Dictionary<string, GroupData> groupdata;
+        // All groups data
+        private Dictionary<string, GroupData> groupsData;
 
         private Func<string, bool> validate;
 
@@ -89,7 +89,7 @@ namespace Oxide.Core.Libraries
         public Permission()
         {
             // Initialize
-            permset = new Dictionary<Plugin, HashSet<string>>();
+            registeredPermissions = new Dictionary<Plugin, HashSet<string>>();
 
             // Load the datafile
             LoadFromDatafile();
@@ -100,21 +100,23 @@ namespace Oxide.Core.Libraries
         /// </summary>
         private void LoadFromDatafile()
         {
-            // Initialize
             Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
             Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
-            userdata = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>();
-            groupdata = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups") ?? new Dictionary<string, GroupData>();
-            foreach (KeyValuePair<string, GroupData> pair in groupdata)
+            usersData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users")?.ToDictionary(x => x.Key, x => x.Value,
+                StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
+            groupsData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups")?.ToDictionary(x => x.Key, x => x.Value,
+                StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, GroupData> pair in groupsData)
             {
                 if (string.IsNullOrEmpty(pair.Value.ParentGroup) || !HasCircularParent(pair.Key, pair.Value.ParentGroup))
                 {
                     continue;
                 }
 
-                Interface.Oxide.LogWarning("Detected circular parent group for '{0}'! Removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
+                Interface.Oxide.LogWarning("Detected circular parent group for '{0}'; removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
                 pair.Value.ParentGroup = null;
             }
+
             IsLoaded = true;
         }
 
@@ -124,13 +126,11 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("Export")]
         public void Export(string prefix = "auth")
         {
-            if (!IsLoaded)
+            if (IsLoaded)
             {
-                return;
+                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".groups", groupsData);
+                Interface.Oxide.DataFileSystem.WriteObject(prefix + ".users", usersData);
             }
-
-            Interface.Oxide.DataFileSystem.WriteObject(prefix + ".groups", groupdata);
-            Interface.Oxide.DataFileSystem.WriteObject(prefix + ".users", userdata);
         }
 
         /// <summary>
@@ -145,12 +145,12 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Saves users permissions data to the data file
         /// </summary>
-        public void SaveUsers() => ProtoStorage.Save(userdata, "oxide.users");
+        public void SaveUsers() => ProtoStorage.Save(usersData, "oxide.users");
 
         /// <summary>
         /// Saves groups permissions data to the data file
         /// </summary>
-        public void SaveGroups() => ProtoStorage.Save(groupdata, "oxide.groups");
+        public void SaveGroups() => ProtoStorage.Save(groupsData, "oxide.groups");
 
         /// <summary>
         /// Register user ID validation
@@ -163,53 +163,39 @@ namespace Oxide.Core.Libraries
         /// </summary>
         public void CleanUp()
         {
-            if (!IsLoaded || validate == null)
+            if (IsLoaded && validate != null)
             {
-                return;
-            }
+                string[] invalidData = usersData.Keys.Where(i => !validate(i)).ToArray();
+                if (invalidData.Length <= 0)
+                {
+                    return;
+                }
 
-            string[] invalid = userdata.Keys.Where(k => !validate(k)).ToArray();
-            if (invalid.Length <= 0)
-            {
-                return;
-            }
-
-            foreach (string i in invalid)
-            {
-                userdata.Remove(i);
+                foreach (string i in invalidData)
+                {
+                    usersData.Remove(i);
+                }
             }
         }
 
         /// <summary>
         /// Migrate permissions from one group to another
         /// </summary>
-        public void MigrateGroup(string oldGroup, string newGroup)
+        public void MigrateGroup(string oldGroupName, string newGroupName)
         {
-            if (!IsLoaded)
-            {
-                return;
-            }
-
-            // Now forcing plugins to register in lowercase only
-            if (!newGroup.Equals(newGroup.ToLower()))
-            {
-                Interface.Oxide.LogWarning("newGroup name must be lowercase! '{0}'", newGroup);
-                return;
-            }
-
-            if (GroupExists(oldGroup))
+            if (IsLoaded && GroupExists(oldGroupName))
             {
                 string groups = ProtoStorage.GetFileDataPath("oxide.groups.data");
                 File.Copy(groups, groups + ".old", true);
 
-                foreach (string perm in GetGroupPermissions(oldGroup))
+                foreach (string permission in GetGroupPermissions(oldGroupName))
                 {
-                    GrantGroupPermission(newGroup, perm, null);
+                    GrantGroupPermission(newGroupName, permission, null);
                 }
 
-                if (GetUsersInGroup(oldGroup).Length == 0)
+                if (GetUsersInGroup(oldGroupName).Length == 0)
                 {
-                    RemoveGroup(oldGroup);
+                    RemoveGroup(oldGroupName);
                 }
             }
         }
@@ -219,97 +205,87 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Registers the specified permission
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="permission"></param>
         /// <param name="owner"></param>
         [LibraryFunction("RegisterPermission")]
-        public void RegisterPermission(string name, Plugin owner)
+        public void RegisterPermission(string permission, Plugin owner)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(permission))
             {
                 return;
             }
 
-            // Now forcing plugins to register in lowercase only
-            if (!name.Equals(name.ToLower()))
+            if (PermissionExists(permission))
             {
-                Interface.Oxide.LogWarning("Permission name must be lowercase! '{0}' (by plugin '{1}')", name, owner.Title);
+                Interface.Oxide.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", permission, owner.Title);
                 return;
             }
 
-            if (PermissionExists(name))
+            if (!registeredPermissions.TryGetValue(owner, out HashSet<string> set))
             {
-                Interface.Oxide.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", name, owner.Title);
-                return;
-            }
-
-            if (!permset.TryGetValue(owner, out HashSet<string> set))
-            {
-                set = new HashSet<string>();
-                permset.Add(owner, set);
+                set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                registeredPermissions.Add(owner, set);
                 owner.OnRemovedFromManager.Add(owner_OnRemovedFromManager);
             }
-            set.Add(name);
+            set.Add(permission);
 
-            Interface.CallHook("OnPermissionRegistered", name, owner);
+            Interface.CallHook("OnPermissionRegistered", permission, owner);
 
-            string prefix = owner.Name + ".";
-            if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && !owner.IsCorePlugin)
+            if (!permission.StartsWith($"{owner.Name}.", StringComparison.OrdinalIgnoreCase) && !owner.IsCorePlugin)
             {
-                Interface.Oxide.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", prefix, name, owner.Title);
+                Interface.Oxide.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", owner.Name, permission, owner.Title);
             }
         }
 
         /// <summary>
         /// Returns if the specified permission exists or not
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="permission"></param>
         /// <param name="owner"></param>
         /// <returns></returns>
         [LibraryFunction("PermissionExists")]
-        public bool PermissionExists(string name, Plugin owner = null)
+        public bool PermissionExists(string permission, Plugin owner = null)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(permission))
             {
                 return false;
             }
 
             if (owner == null)
             {
-                if (permset.Count > 0)
+                if (registeredPermissions.Count > 0)
                 {
-                    if (name.Equals("*"))
+                    if (permission.Equals("*"))
                     {
                         return true;
                     }
 
-                    if (name.EndsWith("*"))
+                    if (permission.EndsWith("*"))
                     {
-                        name = name.TrimEnd('*');
-                        return permset.Values.SelectMany(v => v).Any(p => p.StartsWith(name));
+                        return registeredPermissions.Values.SelectMany(v => v).Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
                     }
                 }
-                return permset.Values.Any(v => v.Contains(name));
+                return registeredPermissions.Values.Any(v => v.Contains(permission));
             }
 
-            if (!permset.TryGetValue(owner, out HashSet<string> set))
+            if (!registeredPermissions.TryGetValue(owner, out HashSet<string> set))
             {
                 return false;
             }
 
             if (set.Count > 0)
             {
-                if (name.Equals("*"))
+                if (permission.Equals("*"))
                 {
                     return true;
                 }
 
-                if (name.EndsWith("*"))
+                if (permission.EndsWith("*"))
                 {
-                    name = name.TrimEnd('*');
-                    return set.Any(p => p.StartsWith(name));
+                    return set.Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
                 }
             }
-            return set.Contains(name);
+            return set.Contains(permission);
         }
 
         #endregion Permission Management
@@ -319,185 +295,186 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="manager"></param>
-        private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager) => permset.Remove(sender);
+        private void owner_OnRemovedFromManager(Plugin sender, PluginManager manager) => registeredPermissions.Remove(sender);
 
         #region Querying
 
         /// <summary>
         /// Returns if the specified user id is valid
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         /// <returns></returns>
         [LibraryFunction("UserIdValid")]
-        public bool UserIdValid(string id) => validate == null || validate(id);
+        public bool UserIdValid(string playerId) => validate == null || validate(playerId);
 
         /// <summary>
         /// Returns if the specified user exists
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         /// <returns></returns>
         [LibraryFunction("UserExists")]
-        public bool UserExists(string id) => userdata.ContainsKey(id);
+        public bool UserExists(string playerId) => usersData.ContainsKey(playerId);
 
         /// <summary>
         /// Returns the data for the specified user
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         /// <returns></returns>
-        public UserData GetUserData(string id)
+        public UserData GetUserData(string playerId)
         {
-            if (!userdata.TryGetValue(id, out UserData data))
+            if (!usersData.TryGetValue(playerId, out UserData userData))
             {
-                userdata.Add(id, data = new UserData());
+                usersData.Add(playerId, userData = new UserData());
             }
 
             // Return the data
-            return data;
+            return userData;
         }
 
         /// <summary>
         /// Updates the nickname
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="nickname"></param>
+        /// <param name="playerId"></param>
+        /// <param name="playerName"></param>
         [LibraryFunction("UpdateNickname")]
-        public void UpdateNickname(string id, string nickname)
+        public void UpdateNickname(string playerId, string playerName)
         {
-            if (UserExists(id))
+            if (UserExists(playerId))
             {
-                UserData data = GetUserData(id);
-                string oldName = data.LastSeenNickname;
-                string newName = nickname.Sanitize();
-                data.LastSeenNickname = nickname.Sanitize();
+                UserData userData = GetUserData(playerId);
+                string oldName = userData.LastSeenNickname;
+                string newName = playerName.Sanitize();
+                userData.LastSeenNickname = playerName.Sanitize();
 
-                Interface.CallHook("OnUserNameUpdated", id, oldName, newName);
+                Interface.CallHook("OnUserNameUpdated", playerId, oldName, newName);
             }
         }
 
         /// <summary>
         /// Check if user has a group
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         [LibraryFunction("UserHasAnyGroup")]
-        public bool UserHasAnyGroup(string id) => UserExists(id) && GetUserData(id).Groups.Count > 0;
+        public bool UserHasAnyGroup(string playerId) => UserExists(playerId) && GetUserData(playerId).Groups.Count > 0;
 
         /// <summary>
         /// Returns if the specified group has the specified permission or not
         /// </summary>
-        /// <param name="groups"></param>
-        /// <param name="perm"></param>
+        /// <param name="groupNames"></param>
+        /// <param name="permission"></param>
         /// <returns></returns>
         [LibraryFunction("GroupsHavePermission")]
-        public bool GroupsHavePermission(HashSet<string> groups, string perm) => groups.Any(@group => GroupHasPermission(@group, perm));
+        public bool GroupsHavePermission(HashSet<string> groupNames, string permission) => groupNames.Any(g => GroupHasPermission(g, permission));
 
         /// <summary>
         /// Returns if the specified group has the specified permission or not
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="perm"></param>
+        /// <param name="groupName"></param>
+        /// <param name="permission"></param>
         /// <returns></returns>
         [LibraryFunction("GroupHasPermission")]
-        public bool GroupHasPermission(string name, string perm)
+        public bool GroupHasPermission(string groupName, string permission)
         {
-            if (!GroupExists(name) || string.IsNullOrEmpty(perm))
+            if (!GroupExists(groupName) || string.IsNullOrEmpty(permission))
             {
                 return false;
             }
 
-            // Check if the group has the perm
-            if (!groupdata.TryGetValue(name, out GroupData group))
+            // Check if the group has the permission
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
 
-            return group.Perms.Contains(perm) || GroupHasPermission(group.ParentGroup, perm);
+            return groupData.Perms.Contains(permission) || GroupHasPermission(groupData.ParentGroup, permission);
         }
 
         /// <summary>
         /// Returns if the specified user has the specified permission
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="perm"></param>
+        /// <param name="playerId"></param>
+        /// <param name="permission"></param>
         /// <returns></returns>
         [LibraryFunction("UserHasPermission")]
-        public bool UserHasPermission(string id, string perm)
+        public bool UserHasPermission(string playerId, string permission)
         {
-            if (string.IsNullOrEmpty(perm))
+            if (string.IsNullOrEmpty(permission))
             {
                 return false;
             }
 
             // Always allow the server console
-            if (id.Equals("server_console"))
+            if (playerId.Equals("server_console"))
             {
                 return true;
             }
 
             // First, get the player data
-            UserData data = GetUserData(id);
+            UserData userData = GetUserData(playerId);
 
-            // Check if they have the perm
-            if (data.Perms.Contains(perm))
+            // Check if they have the permission
+            if (userData.Perms.Contains(permission))
             {
                 return true;
             }
 
-            // Check if their group has the perm
-            return GroupsHavePermission(data.Groups, perm);
+            // Check if their group has the permission
+            return GroupsHavePermission(userData.Groups, permission);
         }
 
         /// <summary>
         /// Returns the group to which the specified user belongs
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         /// <returns></returns>
         [LibraryFunction("GetUserGroups")]
-        public string[] GetUserGroups(string id) => GetUserData(id).Groups.ToArray();
+        public string[] GetUserGroups(string playerId) => GetUserData(playerId).Groups.ToArray();
 
         /// <summary>
         /// Returns the permissions which the specified user has
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="playerId"></param>
         /// <returns></returns>
         [LibraryFunction("GetUserPermissions")]
-        public string[] GetUserPermissions(string id)
+        public string[] GetUserPermissions(string playerId)
         {
-            UserData data = GetUserData(id);
-            List<string> perms = data.Perms.ToList();
-            foreach (string group in data.Groups)
+            UserData userData = GetUserData(playerId);
+            List<string> permissions = userData.Perms.ToList();
+            foreach (string groupName in userData.Groups)
             {
-                perms.AddRange(GetGroupPermissions(group));
+                permissions.AddRange(GetGroupPermissions(groupName));
             }
 
-            return new HashSet<string>(perms).ToArray();
+            return new HashSet<string>(permissions).ToArray();
         }
 
         /// <summary>
         /// Returns the permissions which the specified group has, with optional transversing of parent groups
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="groupName"></param>
         /// <param name="parents"></param>
         /// <returns></returns>
         [LibraryFunction("GetGroupPermissions")]
-        public string[] GetGroupPermissions(string name, bool parents = false)
+        public string[] GetGroupPermissions(string groupName, bool parents = false)
         {
-            if (!GroupExists(name))
+            if (!GroupExists(groupName))
             {
                 return new string[0];
             }
 
-            if (!groupdata.TryGetValue(name, out GroupData group))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return new string[0];
             }
 
-            List<string> perms = group.Perms.ToList();
+            List<string> permissions = groupData.Perms.ToList();
+
             if (parents)
             {
-                perms.AddRange(GetGroupPermissions(group.ParentGroup));
+                permissions.AddRange(GetGroupPermissions(groupData.ParentGroup));
             }
 
-            return new HashSet<string>(perms).ToArray();
+            return new HashSet<string>(permissions).ToArray();
         }
 
         /// <summary>
@@ -505,142 +482,147 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <returns></returns>
         [LibraryFunction("GetPermissions")]
-        public string[] GetPermissions() => new HashSet<string>(permset.Values.SelectMany(v => v)).ToArray();
+        public string[] GetPermissions() => new HashSet<string>(registeredPermissions.Values.SelectMany(v => v)).ToArray();
 
         /// <summary>
         /// Returns the players with given permission
         /// </summary>
+        /// <param name="permission"></param>
         /// <returns></returns>
         [LibraryFunction("GetPermissionUsers")]
-        public string[] GetPermissionUsers(string perm)
+        public string[] GetPermissionUsers(string permission)
         {
-            if (string.IsNullOrEmpty(perm))
+            if (string.IsNullOrEmpty(permission))
             {
                 return new string[0];
             }
 
-            HashSet<string> users = new HashSet<string>();
-            foreach (KeyValuePair<string, UserData> data in userdata)
+            HashSet<string> permissionUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (KeyValuePair<string, UserData> data in usersData)
             {
-                if (data.Value.Perms.Contains(perm))
+                if (data.Value.Perms.Contains(permission))
                 {
-                    users.Add($"{data.Key}({data.Value.LastSeenNickname})");
+                    permissionUsers.Add($"{data.Key}({data.Value.LastSeenNickname})");
                 }
             }
 
-            return users.ToArray();
+            return permissionUsers.ToArray();
         }
 
         /// <summary>
         /// Returns the groups with given permission
         /// </summary>
+        /// <param name="permission"></param>
         /// <returns></returns>
         [LibraryFunction("GetPermissionGroups")]
-        public string[] GetPermissionGroups(string perm)
+        public string[] GetPermissionGroups(string permission)
         {
-            if (string.IsNullOrEmpty(perm))
+            if (string.IsNullOrEmpty(permission))
             {
                 return new string[0];
             }
 
-            HashSet<string> groups = new HashSet<string>();
-            foreach (KeyValuePair<string, GroupData> data in groupdata)
+            HashSet<string> permissionGroups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (KeyValuePair<string, GroupData> data in groupsData)
             {
-                if (data.Value.Perms.Contains(perm))
+                if (data.Value.Perms.Contains(permission))
                 {
-                    groups.Add(data.Key);
+                    permissionGroups.Add(data.Key);
                 }
             }
 
-            return groups.ToArray();
+            return permissionGroups.ToArray();
         }
 
         /// <summary>
         /// Set the group to which the specified user belongs
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="name"></param>
+        /// <param name="playerId"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("AddUserGroup")]
-        public void AddUserGroup(string id, string name)
+        public void AddUserGroup(string playerId, string groupName)
         {
-            if (!GroupExists(name))
+            if (!GroupExists(groupName))
             {
                 return;
             }
 
-            UserData data = GetUserData(id);
-            if (!data.Groups.Add(name))
+            UserData userData = GetUserData(playerId);
+
+            if (!userData.Groups.Add(groupName))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnUserGroupAdded", id, name);
+            Interface.Call("OnUserGroupAdded", playerId, groupName);
         }
 
         /// <summary>
         /// Set the group to which the specified user belongs
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="name"></param>
+        /// <param name="playerId"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("RemoveUserGroup")]
-        public void RemoveUserGroup(string id, string name)
+        public void RemoveUserGroup(string playerId, string groupName)
         {
-            if (!GroupExists(name))
+            if (!GroupExists(groupName))
             {
                 return;
             }
 
-            UserData data = GetUserData(id);
-            if (name.Equals("*"))
+            UserData userData = GetUserData(playerId);
+
+            if (groupName.Equals("*"))
             {
-                if (data.Groups.Count <= 0)
+                if (userData.Groups.Count <= 0)
                 {
                     return;
                 }
 
-                data.Groups.Clear();
+                userData.Groups.Clear();
                 return;
             }
 
-            if (!data.Groups.Remove(name))
+            if (!userData.Groups.Remove(groupName))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnUserGroupRemoved", id, name);
+            Interface.Call("OnUserGroupRemoved", playerId, groupName);
         }
 
         /// <summary>
         /// Get if the player belongs to given group
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="name"></param>
+        /// <param name="playerId"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("UserHasGroup")]
-        public bool UserHasGroup(string id, string name)
+        public bool UserHasGroup(string playerId, string groupName)
         {
-            if (!GroupExists(name))
+            if (!GroupExists(groupName))
             {
                 return false;
             }
 
-            UserData data = GetUserData(id);
-            return data.Groups.Contains(name);
+            return GetUserData(playerId).Groups.Contains(groupName);
         }
 
         /// <summary>
         /// Returns if the specified group exists or not
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("GroupExists")]
-        public bool GroupExists(string group)
+        public bool GroupExists(string groupName)
         {
-            return !string.IsNullOrEmpty(group) && (group.Equals("*") || groupdata.ContainsKey(group));
+            return !string.IsNullOrEmpty(groupName) && (groupName.Equals("*") || groupsData.ContainsKey(groupName));
         }
 
         /// <summary>
@@ -648,67 +630,67 @@ namespace Oxide.Core.Libraries
         /// </summary>
         /// <returns></returns>
         [LibraryFunction("GetGroups")]
-        public string[] GetGroups() => groupdata.Keys.ToArray();
+        public string[] GetGroups() => groupsData.Keys.ToArray();
 
         /// <summary>
         /// Returns users in that group
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("GetUsersInGroup")]
-        public string[] GetUsersInGroup(string group)
+        public string[] GetUsersInGroup(string groupName)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return new string[0];
             }
 
-            return userdata.Where(u => u.Value.Groups.Contains(group)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
+            return usersData.Where(u => u.Value.Groups.Contains(groupName)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
         }
 
         /// <summary>
         /// Returns the title of the specified group
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         [LibraryFunction("GetGroupTitle")]
-        public string GetGroupTitle(string group)
+        public string GetGroupTitle(string groupName)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return string.Empty;
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return string.Empty;
             }
 
             // Return the group title
-            return data.Title;
+            return groupData.Title;
         }
 
         /// <summary>
         /// Returns the rank of the specified group
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
         [LibraryFunction("GetGroupRank")]
-        public int GetGroupRank(string group)
+        public int GetGroupRank(string groupName)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return 0;
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return 0;
             }
 
             // Return the group rank
-            return data.Rank;
+            return groupData.Rank;
         }
 
         #endregion Querying
@@ -718,44 +700,44 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Grants the specified permission to the specified user
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="perm"></param>
+        /// <param name="playerId"></param>
+        /// <param name="permission"></param>
         /// <param name="owner"></param>
         [LibraryFunction("GrantUserPermission")]
-        public void GrantUserPermission(string id, string perm, Plugin owner)
+        public void GrantUserPermission(string playerId, string permission, Plugin owner)
         {
-            // Check it's even a perm
-            if (!PermissionExists(perm, owner))
+            // Check it is even a permission
+            if (!PermissionExists(permission, owner))
             {
                 return;
             }
 
             // Get the player data
-            UserData data = GetUserData(id);
+            UserData userData = GetUserData(playerId);
 
-            if (perm.EndsWith("*"))
+            if (permission.EndsWith("*"))
             {
-                HashSet<string> perms;
+                HashSet<string> permissions;
+
                 if (owner == null)
                 {
-                    perms = new HashSet<string>(permset.Values.SelectMany(v => v));
+                    permissions = new HashSet<string>(registeredPermissions.Values.SelectMany(v => v));
                 }
-                else if (!permset.TryGetValue(owner, out perms))
+                else if (!registeredPermissions.TryGetValue(owner, out permissions))
                 {
                     return;
                 }
 
-                if (perm.Equals("*"))
+                if (permission.Equals("*"))
                 {
-                    if (!perms.Aggregate(false, (c, s) => c | data.Perms.Add(s)))
+                    if (!permissions.Aggregate(false, (c, s) => c | userData.Perms.Add(s)))
                     {
                         return;
                     }
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*');
-                    if (!perms.Where(s => s.StartsWith(perm)).Aggregate(false, (c, s) => c | data.Perms.Add(s)))
+                    if (!permissions.Where(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | userData.Perms.Add(s)))
                     {
                         return;
                     }
@@ -764,46 +746,45 @@ namespace Oxide.Core.Libraries
             }
 
             // Add the permission
-            if (!data.Perms.Add(perm))
+            if (!userData.Perms.Add(permission))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnUserPermissionGranted", id, perm);
+            Interface.Call("OnUserPermissionGranted", playerId, permission);
         }
 
         /// <summary>
         /// Revokes the specified permission from the specified user
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="perm"></param>
+        /// <param name="playerId"></param>
+        /// <param name="permission"></param>
         [LibraryFunction("RevokeUserPermission")]
-        public void RevokeUserPermission(string id, string perm)
+        public void RevokeUserPermission(string playerId, string permission)
         {
-            if (string.IsNullOrEmpty(perm))
+            if (string.IsNullOrEmpty(permission))
             {
                 return;
             }
 
             // Get the player data
-            UserData data = GetUserData(id);
+            UserData userData = GetUserData(playerId);
 
-            if (perm.EndsWith("*"))
+            if (permission.EndsWith("*"))
             {
-                if (perm.Equals("*"))
+                if (permission.Equals("*"))
                 {
-                    if (data.Perms.Count <= 0)
+                    if (userData.Perms.Count <= 0)
                     {
                         return;
                     }
 
-                    data.Perms.Clear();
+                    userData.Perms.Clear();
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*');
-                    if (data.Perms.RemoveWhere(s => s.StartsWith(perm)) <= 0)
+                    if (userData.Perms.RemoveWhere(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)) <= 0)
                     {
                         return;
                     }
@@ -812,13 +793,13 @@ namespace Oxide.Core.Libraries
             }
 
             // Remove the permission
-            if (!data.Perms.Remove(perm))
+            if (!userData.Perms.Remove(permission))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnUserPermissionRevoked", id, perm);
+            Interface.Call("OnUserPermissionRevoked", playerId, permission);
         }
 
         #endregion User Permission
@@ -828,98 +809,98 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Grant the specified permission to the specified group
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="perm"></param>
+        /// <param name="groupName"></param>
+        /// <param name="permission"></param>
         /// <param name="owner"></param>
         [LibraryFunction("GrantGroupPermission")]
-        public void GrantGroupPermission(string name, string perm, Plugin owner)
+        public void GrantGroupPermission(string groupName, string permission, Plugin owner)
         {
-            // Check it's even a perm
-            if (!PermissionExists(perm, owner) || !GroupExists(name))
+            // Check it is even a permission
+            if (!PermissionExists(permission, owner) || !GroupExists(groupName))
             {
                 return;
             }
 
             // Get the group data
-            if (!groupdata.TryGetValue(name, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return;
             }
 
-            if (perm.EndsWith("*"))
+            if (permission.EndsWith("*"))
             {
-                HashSet<string> perms;
+                HashSet<string> permissions;
+
                 if (owner == null)
                 {
-                    perms = new HashSet<string>(permset.Values.SelectMany(v => v));
+                    permissions = new HashSet<string>(registeredPermissions.Values.SelectMany(v => v));
                 }
-                else if (!permset.TryGetValue(owner, out perms))
+                else if (!registeredPermissions.TryGetValue(owner, out permissions))
                 {
                     return;
                 }
 
-                if (perm.Equals("*"))
+                if (permission.Equals("*"))
                 {
-                    if (!perms.Aggregate(false, (c, s) => c | data.Perms.Add(s)))
+                    if (!permissions.Aggregate(false, (c, s) => c | groupData.Perms.Add(s)))
                     {
                         return;
                     }
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*');
-                    if (!perms.Where(s => s.StartsWith(perm)).Aggregate(false, (c, s) => c | data.Perms.Add(s)))
+                    if (!permissions.Where(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | groupData.Perms.Add(s)))
                     {
                         return;
                     }
                 }
+
                 return;
             }
 
             // Add the permission
-            if (!data.Perms.Add(perm))
+            if (!groupData.Perms.Add(permission))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnGroupPermissionGranted", name, perm);
+            Interface.Call("OnGroupPermissionGranted", groupName, permission);
         }
 
         /// <summary>
         /// Revokes the specified permission from the specified user
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="perm"></param>
+        /// <param name="groupName"></param>
+        /// <param name="permission"></param>
         [LibraryFunction("RevokeGroupPermission")]
-        public void RevokeGroupPermission(string name, string perm)
+        public void RevokeGroupPermission(string groupName, string permission)
         {
-            if (!GroupExists(name) || string.IsNullOrEmpty(perm))
+            if (!GroupExists(groupName) || string.IsNullOrEmpty(permission))
             {
                 return;
             }
 
             // Get the group data
-            if (!groupdata.TryGetValue(name, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return;
             }
 
-            if (perm.EndsWith("*"))
+            if (permission.EndsWith("*"))
             {
-                if (perm.Equals("*"))
+                if (permission.Equals("*"))
                 {
-                    if (data.Perms.Count <= 0)
+                    if (groupData.Perms.Count <= 0)
                     {
                         return;
                     }
 
-                    data.Perms.Clear();
+                    groupData.Perms.Clear();
                 }
                 else
                 {
-                    perm = perm.TrimEnd('*');
-                    if (data.Perms.RemoveWhere(s => s.StartsWith(perm)) <= 0)
+                    if (groupData.Perms.RemoveWhere(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)) <= 0)
                     {
                         return;
                     }
@@ -928,13 +909,13 @@ namespace Oxide.Core.Libraries
             }
 
             // Remove the permission
-            if (!data.Perms.Remove(perm))
+            if (!groupData.Perms.Remove(permission))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnGroupPermissionRevoked", name, perm);
+            Interface.Call("OnGroupPermissionRevoked", groupName, permission);
         }
 
         #endregion Group Permission
@@ -944,32 +925,25 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Creates the specified group
         /// </summary>
-        /// <param name="group"></param>
-        /// <param name="title"></param>
-        /// <param name="rank"></param>
+        /// <param name="groupName"></param>
+        /// <param name="groupTitle"></param>
+        /// <param name="groupRank"></param>
         [LibraryFunction("CreateGroup")]
-        public bool CreateGroup(string group, string title, int rank)
+        public bool CreateGroup(string groupName, string groupTitle, int groupRank)
         {
-            // Check if lowercased
-            if (!group.Equals(group.ToLower()))
-            {
-                Interface.Oxide.LogWarning("Group name must be lowercase! '{0}'", group);
-                return false;
-            }
-
             // Check if it already exists
-            if (GroupExists(group) || string.IsNullOrEmpty(group))
+            if (GroupExists(groupName) || string.IsNullOrEmpty(groupName))
             {
                 return false;
             }
 
             // Create the data
-            GroupData data = new GroupData { Title = title, Rank = rank };
+            GroupData groupData = new GroupData { Title = groupTitle, Rank = groupRank };
 
             // Add the group
-            groupdata.Add(group, data);
+            groupsData.Add(groupName, groupData);
 
-            Interface.CallHook("OnGroupCreated", group, title, rank);
+            Interface.CallHook("OnGroupCreated", groupName, groupTitle, groupRank);
 
             return true;
         }
@@ -977,29 +951,30 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Removes the specified group
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         [LibraryFunction("RemoveGroup")]
-        public bool RemoveGroup(string group)
+        public bool RemoveGroup(string groupName)
         {
             // Check if it even exists
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return false;
             }
 
             // Remove the group
-            bool removed = groupdata.Remove(group);
+            bool removed = groupsData.Remove(groupName);
             if (removed)
             {
                 // Set children to having no parent group
-                foreach (GroupData child in groupdata.Values.Where(x => x.ParentGroup == group))
+                foreach (GroupData child in groupsData.Values)
                 {
-                    child.ParentGroup = String.Empty;
+                    if (child.ParentGroup == groupName)
+                        child.ParentGroup = string.Empty;
                 }
             }
 
             // Remove group from users
-            bool changed = userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group));
+            bool changed = usersData.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(groupName));
 
             if (changed)
             {
@@ -1008,7 +983,7 @@ namespace Oxide.Core.Libraries
 
             if (removed)
             {
-                Interface.CallHook("OnGroupDeleted", group);
+                Interface.CallHook("OnGroupDeleted", groupName);
             }
 
             return true;
@@ -1017,31 +992,31 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Sets the title of the specified group
         /// </summary>
-        /// <param name="group"></param>
-        /// <param name="title"></param>
+        /// <param name="groupName"></param>
+        /// <param name="groupTitle"></param>
         [LibraryFunction("SetGroupTitle")]
-        public bool SetGroupTitle(string group, string title)
+        public bool SetGroupTitle(string groupName, string groupTitle)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return false;
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
 
             // Change the title
-            if (data.Title == title)
+            if (groupData.Title == groupTitle)
             {
                 return true;
             }
 
-            data.Title = title;
+            groupData.Title = groupTitle;
 
-            Interface.CallHook("OnGroupTitleSet", group, title);
+            Interface.CallHook("OnGroupTitleSet", groupName, groupTitle);
 
             return true;
         }
@@ -1049,31 +1024,31 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Sets the rank of the specified group
         /// </summary>
-        /// <param name="group"></param>
-        /// <param name="rank"></param>
+        /// <param name="groupName"></param>
+        /// <param name="groupRank"></param>
         [LibraryFunction("SetGroupRank")]
-        public bool SetGroupRank(string group, int rank)
+        public bool SetGroupRank(string groupName, int groupRank)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return false;
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
 
             // Change the rank
-            if (data.Rank == rank)
+            if (groupData.Rank == groupRank)
             {
                 return true;
             }
 
-            data.Rank = rank;
+            groupData.Rank = groupRank;
 
-            Interface.CallHook("OnGroupRankSet", group, rank);
+            Interface.CallHook("OnGroupRankSet", groupName, groupRank);
 
             return true;
         }
@@ -1081,91 +1056,92 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Gets the parent of the specified group
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="groupName"></param>
         [LibraryFunction("GetGroupParent")]
-        public string GetGroupParent(string group)
+        public string GetGroupParent(string groupName)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return string.Empty;
             }
 
-            return !groupdata.TryGetValue(group, out GroupData data) ? string.Empty : data.ParentGroup;
+            return !groupsData.TryGetValue(groupName, out GroupData groupData) ? string.Empty : groupData.ParentGroup;
         }
 
         /// <summary>
         /// Sets the parent of the specified group
         /// </summary>
-        /// <param name="group"></param>
-        /// <param name="parent"></param>
+        /// <param name="groupName"></param>
+        /// <param name="parentGroupName"></param>
         [LibraryFunction("SetGroupParent")]
-        public bool SetGroupParent(string group, string parent)
+        public bool SetGroupParent(string groupName, string parentGroupName)
         {
-            if (!GroupExists(group))
+            if (!GroupExists(groupName))
             {
                 return false;
             }
 
             // First, get the group data
-            if (!groupdata.TryGetValue(group, out GroupData data))
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
             {
                 return false;
             }
 
-            if (string.IsNullOrEmpty(parent))
+            if (string.IsNullOrEmpty(parentGroupName))
             {
-                data.ParentGroup = null;
+                groupData.ParentGroup = null;
                 return true;
             }
 
-            if (!GroupExists(parent) || group.Equals(parent))
+            if (!GroupExists(parentGroupName) || groupName.Equals(parentGroupName))
             {
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(data.ParentGroup) && data.ParentGroup.Equals(parent))
+            if (!string.IsNullOrEmpty(groupData.ParentGroup) && groupData.ParentGroup.Equals(parentGroupName))
             {
                 return true;
             }
 
-            if (HasCircularParent(group, parent))
+            if (HasCircularParent(groupName, parentGroupName))
             {
                 return false;
             }
 
             // Change the parent group
-            data.ParentGroup = parent;
+            groupData.ParentGroup = parentGroupName;
 
-            Interface.CallHook("OnGroupParentSet", group, parent);
+            Interface.CallHook("OnGroupParentSet", groupName, parentGroupName);
 
             return true;
         }
 
-        private bool HasCircularParent(string group, string parent)
+        private bool HasCircularParent(string groupName, string parentGroupName)
         {
             // Get parent data
-
-            if (!groupdata.TryGetValue(parent, out GroupData parentData))
+            if (!groupsData.TryGetValue(parentGroupName, out GroupData parentGroupData))
             {
                 return false;
             }
 
+            HashSet<string> groupNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { groupName, parentGroupName };
+
             // Check for circular reference
-            HashSet<string> groups = new HashSet<string> { group, parent };
-            while (!string.IsNullOrEmpty(parentData.ParentGroup))
+            while (!string.IsNullOrEmpty(parentGroupData.ParentGroup))
             {
                 // Found itself?
-                if (!groups.Add(parentData.ParentGroup))
+                if (!groupNames.Add(parentGroupData.ParentGroup))
                 {
                     return true;
                 }
 
                 // Get next parent
-                if (!groupdata.TryGetValue(parentData.ParentGroup, out parentData))
+                if (!groupsData.TryGetValue(parentGroupData.ParentGroup, out parentGroupData))
                 {
                     return false;
                 }
             }
+
             return false;
         }
 
