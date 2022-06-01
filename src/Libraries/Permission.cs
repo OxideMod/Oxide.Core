@@ -701,13 +701,13 @@ namespace Oxide.Core.Libraries
         /// Grants the specified permission to the specified user
         /// </summary>
         /// <param name="playerId"></param>
-        /// <param name="permission"></param>
+        /// <param name="perm"></param>
         /// <param name="owner"></param>
         [LibraryFunction("GrantUserPermission")]
-        public void GrantUserPermission(string playerId, string permission, Plugin owner)
+        public void GrantUserPermission(string playerId, string perm, Plugin owner)
         {
-            // Check it is even a permission
-            if (!PermissionExists(permission, owner))
+            // Check it is even a perm
+            if (!PermissionExists(perm, owner))
             {
                 return;
             }
@@ -715,7 +715,7 @@ namespace Oxide.Core.Libraries
             // Get the player data
             UserData userData = GetUserData(playerId);
 
-            if (permission.EndsWith("*"))
+            if (perm.EndsWith("*"))
             {
                 HashSet<string> permissions;
 
@@ -728,7 +728,7 @@ namespace Oxide.Core.Libraries
                     return;
                 }
 
-                if (permission.Equals("*"))
+                if (perm.Equals("*"))
                 {
                     if (!permissions.Aggregate(false, (c, s) => c | userData.Perms.Add(s)))
                     {
@@ -737,7 +737,7 @@ namespace Oxide.Core.Libraries
                 }
                 else
                 {
-                    if (!permissions.Where(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | userData.Perms.Add(s)))
+                    if (!permissions.Where(p => p.StartsWith(perm.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | userData.Perms.Add(s)))
                     {
                         return;
                     }
@@ -746,13 +746,13 @@ namespace Oxide.Core.Libraries
             }
 
             // Add the permission
-            if (!userData.Perms.Add(permission))
+            if (!userData.Perms.Add(perm))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnUserPermissionGranted", playerId, permission);
+            Interface.Call("OnUserPermissionGranted", playerId, perm);
         }
 
         /// <summary>
@@ -810,13 +810,13 @@ namespace Oxide.Core.Libraries
         /// Grant the specified permission to the specified group
         /// </summary>
         /// <param name="groupName"></param>
-        /// <param name="permission"></param>
+        /// <param name="perm"></param>
         /// <param name="owner"></param>
         [LibraryFunction("GrantGroupPermission")]
-        public void GrantGroupPermission(string groupName, string permission, Plugin owner)
+        public void GrantGroupPermission(string groupName, string perm, Plugin owner)
         {
-            // Check it is even a permission
-            if (!PermissionExists(permission, owner) || !GroupExists(groupName))
+            // Check it is even a perm
+            if (!PermissionExists(perm, owner) || !GroupExists(groupName))
             {
                 return;
             }
@@ -827,7 +827,7 @@ namespace Oxide.Core.Libraries
                 return;
             }
 
-            if (permission.EndsWith("*"))
+            if (perm.EndsWith("*"))
             {
                 HashSet<string> permissions;
 
@@ -840,7 +840,7 @@ namespace Oxide.Core.Libraries
                     return;
                 }
 
-                if (permission.Equals("*"))
+                if (perm.Equals("*"))
                 {
                     if (!permissions.Aggregate(false, (c, s) => c | groupData.Perms.Add(s)))
                     {
@@ -849,7 +849,7 @@ namespace Oxide.Core.Libraries
                 }
                 else
                 {
-                    if (!permissions.Where(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | groupData.Perms.Add(s)))
+                    if (!permissions.Where(p => p.StartsWith(perm.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)).Aggregate(false, (c, s) => c | groupData.Perms.Add(s)))
                     {
                         return;
                     }
@@ -859,13 +859,13 @@ namespace Oxide.Core.Libraries
             }
 
             // Add the permission
-            if (!groupData.Perms.Add(permission))
+            if (!groupData.Perms.Add(perm))
             {
                 return;
             }
 
             // Call hook for plugins
-            Interface.Call("OnGroupPermissionGranted", groupName, permission);
+            Interface.Call("OnGroupPermissionGranted", groupName, perm);
         }
 
         /// <summary>
