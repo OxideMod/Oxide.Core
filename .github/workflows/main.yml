@@ -26,13 +26,24 @@ jobs:
       # Restores project dependencies that are necessary for building it
       - name: Restore dependencies
         run: dotnet restore
-      # Set the project version in the .csproj before building
-      - name: Set project version
-        id: set_version
-        uses: vers-one/dotnet-project-version-updater@v1.0
+      # Get the project version from the .csproj
+      - name: Get project version
+        id: get_version
+        uses: KageKirin/get-csproj-version@v1.0.0
         with:
           file: "src/Oxide.Core.csproj"
-          version: ${{ steps.set_version.outputs.oldVersion.major }}.${{ steps.set_version.outputs.oldVersion.minor }}.${{ github.run_number }}
+      # Parse version from obtained version 
+      - name: Parse project version
+        id: version
+        uses: release-kit/semver@v1
+        with:
+          input: ${{ steps.get_version.outputs.version }}
+      # Set the project version in the .csproj
+      - name: Set project version
+        uses: KageKirin/set-csproj-version@v1.0.0
+        with:
+          file: "src/Oxide.Core.csproj"
+          version: "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.$GITHUB_RUN_NUMBER"
       # Builds the project using the specified arguments
       - name: Build with msbuild
         run: dotnet msbuild -property:Configuration=Release
