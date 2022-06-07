@@ -26,23 +26,28 @@ jobs:
       # Restores project dependencies that are necessary for building it
       - name: Restore dependencies
         run: dotnet restore
+      - name: Get project repository
+        id: project
+        run: |
+          echo "::set-output name=repository::$(echo ${{ github.repository }} | awk -F "/" '{print $NF}')"
+          echo "Repository name is ${{ steps.project.repository }}"
       # Gets the project version from the .csproj
       - name: Get project version
-        id: get_version
+        id: proj_version
         uses: KageKirin/get-csproj-version@v1.0.0
         with:
-          file: "src/Oxide.Core.csproj"
+          file: "src/${{ steps.project.repository }}.csproj"
       # Parses version from obtained version 
       - name: Parse project version
         id: version
         uses: release-kit/semver@v1.0.10
         with:
-          input: ${{ steps.get_version.outputs.version }}
+          input: ${{ steps.proj_version.outputs.version }}
       # Sets the project version in the .csproj
       - name: Set project version
         uses: vers-one/dotnet-project-version-updater@v1.0
         with:
-          file: "src/Oxide.Core.csproj"
+          file: "src/${{ steps.project.repository }}.csproj"
           version: "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}"
       # Builds the project using the specified arguments
       - name: Build with msbuild
@@ -55,6 +60,6 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           # Artifact name
-          name: Oxide.Core
+          name: ${{ steps.project.repository }}
           # A file, directory or wildcard pattern that describes what to upload
-          path: "src/bin/Release/**/Oxide.Core.dll"
+          path: "src/bin/Release/**/${{ steps.project.repository }}.dll"
