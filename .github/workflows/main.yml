@@ -29,8 +29,9 @@ jobs:
       - name: Get repository name
         id: get_repo
         run: |
-          echo "::set-output name=name::$(Split-Path ${{ github.repository }} -Leaf)"
-          echo "Repository name is ${{ steps.get_repo.outputs.name }}"
+          $repo = $(Split-Path ${{ github.repository }} -Leaf)
+          echo "::set-output name=name::$repo"
+          echo "Repository name is $repo"
       # Gets the project version from the .csproj
       - name: Get project version
         id: get_version
