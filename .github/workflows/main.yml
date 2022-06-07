@@ -29,13 +29,13 @@ jobs:
       # Get the project version from the .csproj
       - name: Get project version
         id: get_version
-        uses: KageKirin/get-csproj-version@v1
+        uses: KageKirin/get-csproj-version@v1.0.0
         with:
           file: "src/Oxide.Core.csproj"
       # Parse version from obtained version 
       - name: Parse project version
         id: version
-        uses: release-kit/semver@v1
+        uses: release-kit/semver@v1.0.10
         with:
           input: ${{ steps.get_version.outputs.version }}
       # Show parsed version from csproj
@@ -48,7 +48,7 @@ jobs:
           echo "${{ steps.version.outputs.full }}"
       # Set the project version in the .csproj
       - name: Set project version
-        uses: vers-one/dotnet-project-version-updater@v1
+        uses: vers-one/dotnet-project-version-updater@v1.0
         with:
           file: "src/Oxide.Core.csproj"
           version: "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.$GITHUB_RUN_NUMBER"
