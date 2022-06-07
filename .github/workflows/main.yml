@@ -1,0 +1,41 @@
+name: .NET
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  push:
+    branches: [ "actions" ]
+  pull_request:
+    branches: [ "actions" ]
+
+  # Allows running the workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: windows-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks out the repository under $GITHUB_WORKSPACE, so the job can access it
+      - name: Check out source
+        uses: actions/checkout@v2
+      # Restores project dependencies that are necessary for building it
+      - name: Restore dependencies
+        run: dotnet restore
+      # Set the project version in the .csproj before building
+      - name: Set project version
+        id: set_version
+        uses: vers-one/dotnet-project-version-updater@v1.0
+        with:
+          file: "src/Oxide.Core.csproj"
+          version: ${{ steps.set-version.outputs.oldVersion.major }}.${{ steps.set-version.outputs.oldVersion.minor }}.${{ github.run_number }}
+      # Builds the project using the specified arguments
+      - name: Build with msbuild
+        run: dotnet msbuild -property:Configuration=Release
+      # Packs the project into a nuget package
+      - name: Pack for nuget
+        run: dotnet pack --configuration Release --no-restore
