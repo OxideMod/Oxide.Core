@@ -16,7 +16,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: windows-2019 # .net 3.5 and 4.0 will not work with 2022 without reference assemblies
+    runs-on: windows-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -29,7 +29,7 @@ jobs:
       - name: Get project repository
         id: project
         run: |
-          echo "::set-output name=repository::$(echo ${{ github.repository }} | awk -F "/" '{print $NF}')"
+          echo "::set-output name=repository::$(Split-Path ${{ github.repository }} -Leaf)"
           echo "Repository name is ${{ steps.project.repository }}"
       # Gets the project version from the .csproj
       - name: Get project version
