@@ -26,28 +26,28 @@ jobs:
       # Restores project dependencies that are necessary for building it
       - name: Restore dependencies
         run: dotnet restore
-      - name: Get project repository
-        id: project
+      - name: Get repository name
+        id: get_repo
         run: |
-          echo "::set-output name=repository::$(Split-Path ${{ github.repository }} -Leaf)"
-          echo "Repository name is ${{ steps.project.repository }}"
+          echo "::set-output name=name::$(Split-Path ${{ github.repository }} -Leaf)"
+          echo "Repository name is ${{ steps.get_repo.outputs.name }}"
       # Gets the project version from the .csproj
       - name: Get project version
-        id: proj_version
+        id: get_version
         uses: KageKirin/get-csproj-version@v1.0.0
         with:
-          file: "src/${{ steps.project.repository }}.csproj"
+          file: "src/${{ steps.get_repo.outputs.name }}.csproj"
       # Parses version from obtained version 
       - name: Parse project version
         id: version
         uses: release-kit/semver@v1.0.10
         with:
-          input: ${{ steps.proj_version.outputs.version }}
+          input: ${{ steps.get_version.outputs.version }}
       # Sets the project version in the .csproj
       - name: Set project version
         uses: vers-one/dotnet-project-version-updater@v1.0
         with:
-          file: "src/${{ steps.project.repository }}.csproj"
+          file: "src/${{ steps.get_repo.outputs.name }}.csproj"
           version: "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}"
       # Builds the project using the specified arguments
       - name: Build with msbuild
@@ -60,6 +60,6 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           # Artifact name
-          name: ${{ steps.project.repository }}
+          name: ${{ steps.get_repo.outputs.name }}
           # A file, directory or wildcard pattern that describes what to upload
-          path: "src/bin/Release/**/${{ steps.project.repository }}.dll"
+          path: "src/bin/Release/**/${{ steps.get_repo.outputs.name }}.dll"
