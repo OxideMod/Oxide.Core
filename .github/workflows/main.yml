@@ -2,19 +2,13 @@ name: Main
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  # Triggers the workflow on push or pull request events
   push:
-    branches: [ "actions" ]
   pull_request:
-    branches: [ "actions" ]
 
   # Allows running the workflow manually from the Actions tab
   workflow_dispatch:
 
-# Set variables for environment
-env:
-  myget_source: https://www.myget.org/f/oxide/api/v2/package
-  
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -27,60 +21,15 @@ jobs:
       # Checks out the repository under $GITHUB_WORKSPACE, so the job can access it
       - name: Check out source
         uses: actions/checkout@v2
-      # Restores project dependencies that are necessary for building it
-      - name: Restore dependencies
-        run: dotnet restore
-      - name: Get repository name
-        id: get_repo
-        run: |
-          $repoName = $(Split-Path ${{ github.repository }} -Leaf)
-          echo "::set-output name=name::$repoName"
-          echo "Repository name is $repoName"
-      # Gets the project version from the .csproj
-      - name: Get project version
-        id: get_version
-        uses: KageKirin/get-csproj-version@v1.0.0
-        with:
-          file: "src/${{ steps.get_repo.outputs.name }}.csproj"
-      # Parses version from obtained version 
-      - name: Parse project version
-        id: sem_ver
-        uses: release-kit/semver@v1.0.10
-        with:
-          input: ${{ steps.get_version.outputs.version }}
-      # Formats the project version
-      - name: Format project version
-        id: version
-        run: |
-          $gitShaShort = "${{ github.sha }}".Substring(0,8)
-          $buildVersion = "${{ steps.sem_ver.outputs.major }}.${{ steps.sem_ver.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
-          $packageVersion = "$buildVersion-${{ github.ref_name }}" # ex. 1.0.1234-develop
-          $metaVersion = "$packageVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
-          echo "Git SHA: $gitShaShort - Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
-          echo "::set-output name=git_sha_short::$gitShaShort"
-          echo "::set-output name=build_version::$buildVersion"
-          echo "::set-output name=package_version::$packageVersion"
-          echo "::set-output name=meta_version::$metaVersion"
-      # Sets the project version in the .csproj
-      - name: Set project version
-        uses: vers-one/dotnet-project-version-updater@v1.0
-        with:
-          file: "src/${{ steps.get_repo.outputs.name }}.csproj"
-          version: ${{ steps.version.outputs.meta_version }}
-      # Builds the project using the specified arguments
-      - name: Build with msbuild
-        run: dotnet build --configuration Release -p:"Version=${{ steps.version.outputs.meta_version }};BranchName=${{ github.ref_name }}"
-      # Packs the project into a nuget package
-      - name: Pack for nuget
-        run: dotnet pack --configuration Release -p:PackageVersion=${{ steps.version.outputs.package_version }} --no-restore
-      # Publish nuget package
-      - name: Publish to nuget
-        run: dotnet nuget push **/*.nupkg --source ${{ env.myget_source }} --api-key ${{ secrets.MYGET_KEY }} --skip-duplicate
+      # Run common actions
+      - name: Run common actions
+        id: common
+        uses: OxideMod/Actions@v0
       # Uploads the build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3.1.0
         with:
           # Artifact name
-          name: ${{ steps.get_repo.outputs.name }}
+          name: ${{ steps.common.outputs.repo-name }}
           # File, directory, or wildcard pattern used to find files
-          path: "src/bin/Release/**/${{ steps.get_repo.outputs.name }}.dll"
+          path: "src/bin/${{ steps.common.outputs.configuration }}/**/${{ steps.common.outputs.repo-name }}.dll"
