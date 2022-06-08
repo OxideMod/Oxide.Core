@@ -20,7 +20,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: windows-2019 # newer versions will not find older .net assembly references
+    runs-on: windows-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -52,10 +52,12 @@ jobs:
       - name: Format project version
         id: version
         run: |
+          $gitShaShort = ${{ github.sha }}.Substring(0,8)
           $buildVersion = "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
-          $packageVersion = "$version-${{ github.base_ref }}" # ex. 1.0.1234-develop
-          $metaVersion = "$version+git.${{ github.sha }}.Substring(0,8)" # ex. 1.0.1234-develop+git.91ab23c4
-          echo "Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
+          $packageVersion = "$buildVersion-${{ github.base_ref }}" # ex. 1.0.1234-develop
+          $metaVersion = "$buildVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
+          echo "Git SHA: $gitShaShort - Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
+          echo "::set-output name=git_sha_short::$gitShaShort"
           echo "::set-output name=build_version::$buildVersion"
           echo "::set-output name=package_version::$packageVersion"
           echo "::set-output name=meta_version::$metaVersion"
