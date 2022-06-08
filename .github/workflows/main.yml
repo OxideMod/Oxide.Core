@@ -58,7 +58,7 @@ jobs:
         run: dotnet pack --configuration Release --no-restore
       # Publish nuget package
       - name: Publish to nuget
-        run: dotnet nuget push "src/bin/Release/*.nupkg" --source ${{ secrets.MYGET_SOURCE }} --api-key ${{ secrets.MYGET_KEY }} --skip-duplicate
+        run: dotnet nuget push src/bin/Release/**/*.nupkg --source ${{ secrets.MYGET_SOURCE }} --api-key ${{ secrets.MYGET_KEY }} --skip-duplicate
       # Uploads the build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3.1.0
