@@ -52,7 +52,7 @@ jobs:
       - name: Format project version
         id: version
         run: |
-          $gitShaShort = ${{ github.sha }}.Substring(0,8)
+          $gitShaShort = "${{ github.sha }}".Substring(0,8)
           $buildVersion = "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
           $packageVersion = "$buildVersion-${{ github.base_ref }}" # ex. 1.0.1234-develop
           $metaVersion = "$buildVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
