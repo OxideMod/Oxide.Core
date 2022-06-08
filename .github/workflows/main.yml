@@ -44,7 +44,7 @@ jobs:
           file: "src/${{ steps.get_repo.outputs.name }}.csproj"
       # Parses version from obtained version 
       - name: Parse project version
-        id: parse_version
+        id: sem_ver
         uses: release-kit/semver@v1.0.10
         with:
           input: ${{ steps.get_version.outputs.version }}
@@ -53,7 +53,7 @@ jobs:
         id: version
         run: |
           $gitShaShort = "${{ github.sha }}".Substring(0,8)
-          $buildVersion = "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
+          $buildVersion = "${{ steps.sem_ver.outputs.major }}.${{ steps.sem_ver.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
           $packageVersion = "$buildVersion-${{ github.base_ref }}" # ex. 1.0.1234-develop
           $metaVersion = "$buildVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
           echo "Git SHA: $gitShaShort - Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
