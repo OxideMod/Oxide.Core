@@ -24,7 +24,7 @@ jobs:
       # Run common actions
       - name: Run common actions
         id: common
-        uses: OxideMod/Actions@v1.0
+        uses: OxideMod/Actions@v1.1
       # Uploads the build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3.1.0
