@@ -11,6 +11,10 @@ on:
   # Allows running the workflow manually from the Actions tab
   workflow_dispatch:
 
+# Set variables for environment
+env:
+  myget_source: https://www.myget.org/f/oxide/api/v2/package
+  
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -29,9 +33,9 @@ jobs:
       - name: Get repository name
         id: get_repo
         run: |
-          $repo = $(Split-Path ${{ github.repository }} -Leaf)
-          echo "::set-output name=name::$repo"
-          echo "Repository name is $repo"
+          $repoName = $(Split-Path ${{ github.repository }} -Leaf)
+          echo "::set-output name=name::$repoName"
+          echo "Repository name is $repoName"
       # Gets the project version from the .csproj
       - name: Get project version
         id: get_version
@@ -40,25 +44,36 @@ jobs:
           file: "src/${{ steps.get_repo.outputs.name }}.csproj"
       # Parses version from obtained version 
       - name: Parse project version
-        id: version
+        id: parse_version
         uses: release-kit/semver@v1.0.10
         with:
           input: ${{ steps.get_version.outputs.version }}
+      # Formats the project version
+      - name: Format project version
+        id: version
+        run: |
+          $buildVersion = "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
+          $packageVersion = "$version-${{ github.base_ref }}" # ex. 1.0.1234-develop
+          $metaVersion = "$version+git.${{ github.sha }}.Substring(0,8)" # ex. 1.0.1234-develop+git.91ab23c4
+          echo "Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
+          echo "::set-output name=build_version::$buildVersion"
+          echo "::set-output name=package_version::$packageVersion"
+          echo "::set-output name=meta_version::$metaVersion"
       # Sets the project version in the .csproj
       - name: Set project version
         uses: vers-one/dotnet-project-version-updater@v1.0
         with:
           file: "src/${{ steps.get_repo.outputs.name }}.csproj"
-          version: "${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ github.run_number }}"
+          version: ${{ steps.version.outputs.meta_version }}
       # Builds the project using the specified arguments
       - name: Build with msbuild
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release -p:"Version=${{ steps.version.outputs.meta_version }};BranchName=${{ github.base_ref }}"
       # Packs the project into a nuget package
       - name: Pack for nuget
-        run: dotnet pack --configuration Release --no-restore
+        run: dotnet pack --configuration Release -p:PackageVersion=${{ steps.version.outputs.package_version }} --no-restore
       # Publish nuget package
       - name: Publish to nuget
-        run: dotnet nuget push src/bin/Release/**/*.nupkg --source ${{ secrets.MYGET_SOURCE }} --api-key ${{ secrets.MYGET_KEY }} --skip-duplicate
+        run: dotnet nuget push **/*.nupkg --source ${{ env.myget_source }} --api-key ${{ secrets.MYGET_KEY }} --skip-duplicate
       # Uploads the build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3.1.0
