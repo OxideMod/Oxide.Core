@@ -55,7 +55,7 @@ jobs:
           $gitShaShort = "${{ github.sha }}".Substring(0,8)
           $buildVersion = "${{ steps.sem_ver.outputs.major }}.${{ steps.sem_ver.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
           $packageVersion = "$buildVersion-${{ github.ref_name }}" # ex. 1.0.1234-develop
-          $metaVersion = "$buildVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
+          $metaVersion = "$packageVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
           echo "Git SHA: $gitShaShort - Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
           echo "::set-output name=git_sha_short::$gitShaShort"
           echo "::set-output name=build_version::$buildVersion"
