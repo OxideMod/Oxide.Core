@@ -54,7 +54,7 @@ jobs:
         run: |
           $gitShaShort = "${{ github.sha }}".Substring(0,8)
           $buildVersion = "${{ steps.sem_ver.outputs.major }}.${{ steps.sem_ver.outputs.minor }}.${{ github.run_number }}" # ex. 1.0.1234
-          $packageVersion = "$buildVersion-${{ github.base_ref }}" # ex. 1.0.1234-develop
+          $packageVersion = "$buildVersion-${{ github.ref_name }}" # ex. 1.0.1234-develop
           $metaVersion = "$buildVersion+git.$gitShaShort" # ex. 1.0.1234-develop+git.91ab23c4
           echo "Git SHA: $gitShaShort - Meta version: $metaVersion - Package version: $packageVersion - Build version: $buildVersion"
           echo "::set-output name=git_sha_short::$gitShaShort"
@@ -69,7 +69,7 @@ jobs:
           version: ${{ steps.version.outputs.meta_version }}
       # Builds the project using the specified arguments
       - name: Build with msbuild
-        run: dotnet build --configuration Release -p:"Version=${{ steps.version.outputs.meta_version }};BranchName=${{ github.base_ref }}"
+        run: dotnet build --configuration Release -p:"Version=${{ steps.version.outputs.meta_version }};BranchName=${{ github.ref_name }}"
       # Packs the project into a nuget package
       - name: Pack for nuget
         run: dotnet pack --configuration Release -p:PackageVersion=${{ steps.version.outputs.package_version }} --no-restore
