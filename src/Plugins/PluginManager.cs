@@ -120,7 +120,7 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         internal void SubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && hook.StartsWith("I"))
+            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && (hook.StartsWith("IOn") || hook.StartsWith("ICan")))
             {
                 return;
             }
