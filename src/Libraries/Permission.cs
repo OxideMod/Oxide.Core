@@ -265,7 +265,7 @@ namespace Oxide.Core.Libraries
                         return registeredPermissions.Values.SelectMany(v => v).Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
                     }
                 }
-                return registeredPermissions.Values.Any(v => v.Contains(permission));
+                return registeredPermissions.Values.Any(v => v.Contains(permission, StringComparer.OrdinalIgnoreCase));
             }
 
             if (!registeredPermissions.TryGetValue(owner, out HashSet<string> set))
@@ -285,7 +285,7 @@ namespace Oxide.Core.Libraries
                     return set.Any(p => p.StartsWith(permission.TrimEnd('*'), StringComparison.OrdinalIgnoreCase));
                 }
             }
-            return set.Contains(permission);
+            return set.Contains(permission, StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion Permission Management
@@ -386,7 +386,7 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
-            return groupData.Perms.Contains(permission) || GroupHasPermission(groupData.ParentGroup, permission);
+            return groupData.Perms.Contains(permission, StringComparer.OrdinalIgnoreCase) || GroupHasPermission(groupData.ParentGroup, permission);
         }
 
         /// <summary>
@@ -413,7 +413,7 @@ namespace Oxide.Core.Libraries
             UserData userData = GetUserData(playerId);
 
             // Check if they have the permission
-            if (userData.Perms.Contains(permission))
+            if (userData.Perms.Contains(permission, StringComparer.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -501,7 +501,7 @@ namespace Oxide.Core.Libraries
 
             foreach (KeyValuePair<string, UserData> data in usersData)
             {
-                if (data.Value.Perms.Contains(permission))
+                if (data.Value.Perms.Contains(permission, StringComparer.OrdinalIgnoreCase))
                 {
                     permissionUsers.Add($"{data.Key}({data.Value.LastSeenNickname})");
                 }
@@ -527,7 +527,7 @@ namespace Oxide.Core.Libraries
 
             foreach (KeyValuePair<string, GroupData> data in groupsData)
             {
-                if (data.Value.Perms.Contains(permission))
+                if (data.Value.Perms.Contains(permission, StringComparer.OrdinalIgnoreCase))
                 {
                     permissionGroups.Add(data.Key);
                 }
@@ -611,7 +611,7 @@ namespace Oxide.Core.Libraries
                 return false;
             }
 
-            return GetUserData(playerId).Groups.Contains(groupName);
+            return GetUserData(playerId).Groups.Contains(groupName, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -645,7 +645,7 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            return usersData.Where(u => u.Value.Groups.Contains(groupName)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
+            return usersData.Where(u => u.Value.Groups.Contains(groupName, StringComparer.OrdinalIgnoreCase)).Select(u => $"{u.Key} ({u.Value.LastSeenNickname})").ToArray();
         }
 
         /// <summary>
