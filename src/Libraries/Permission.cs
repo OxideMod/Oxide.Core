@@ -100,12 +100,10 @@ namespace Oxide.Core.Libraries
         /// </summary>
         private void LoadFromDatafile()
         {
-            Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
-            Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
+            VerifyAndLoadUsersData();
+            VerifyAndLoadGroupsData();
 
-            usersData = new Dictionary<string, UserData>(ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users"), StringComparer.OrdinalIgnoreCase);
-            groupsData = new Dictionary<string, GroupData>(ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups"), StringComparer.OrdinalIgnoreCase);
-
+            bool circularReference = false;
             foreach (KeyValuePair<string, GroupData> pair in groupsData)
             {
                 if (string.IsNullOrEmpty(pair.Value.ParentGroup) || !HasCircularParent(pair.Key, pair.Value.ParentGroup))
@@ -115,9 +113,147 @@ namespace Oxide.Core.Libraries
 
                 Interface.Oxide.LogWarning("Detected circular parent group for '{0}'; removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
                 pair.Value.ParentGroup = null;
+                circularReference = true;
+            }
+
+            if (circularReference)
+            {
+                SaveGroups();
             }
 
             IsLoaded = true;
+        }
+
+        private void VerifyAndLoadUsersData()
+        {
+            Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
+
+            Dictionary<string, UserData> storedUserData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users");
+            Dictionary<string, UserData> result = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> groups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> permissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            bool changed = false;
+
+            foreach (KeyValuePair<string, UserData> entry in storedUserData)
+            {
+                UserData user = entry.Value;
+
+                permissions.Clear();
+                groups.Clear();
+
+                foreach (string perm in user.Perms)
+                {
+                    permissions.Add(perm);
+                }
+
+                user.Perms = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
+
+                foreach (string group in user.Groups)
+                {
+                    groups.Add(group);
+                }
+
+                user.Groups = new HashSet<string>(groups, StringComparer.OrdinalIgnoreCase);
+
+                if (result.ContainsKey(entry.Key))
+                {
+                    UserData existing = result[entry.Key];
+                    existing.Perms.UnionWith(user.Perms);
+                    existing.Groups.UnionWith(user.Groups);
+
+                    changed = true;
+
+                    continue;
+                }
+
+                result.Add(entry.Key, user);
+            }
+
+            usersData = result;
+            if (changed)
+            {
+                SaveUsers();
+            }
+        }
+
+        private void VerifyAndLoadGroupsData()
+        {
+            Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
+
+            Dictionary<string, GroupData> storedGroupData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups");
+            Dictionary<string, GroupData> result = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> permissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            bool changed = false;
+
+            foreach (KeyValuePair<string, GroupData> entry in storedGroupData)
+            {
+                GroupData group = entry.Value;
+
+                permissions.Clear();
+
+                foreach (string perm in group.Perms)
+                {
+                    permissions.Add(perm);
+                }
+
+                group.Perms = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
+
+                if (result.ContainsKey(entry.Key))
+                {
+                    GroupData existing = result[entry.Key];
+                    existing.Perms.UnionWith(group.Perms);
+                    changed = true;
+
+                    continue;
+                }
+
+                result.Add(entry.Key, group);
+            }
+
+            groupsData = result;
+            if (changed)
+            {
+                SaveGroups();
+            }
+        }
+
+        private Dictionary<string, GroupData> VerifyGroupData(Dictionary<string, GroupData> data)
+        {
+            Dictionary<string, GroupData> result = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> permissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (KeyValuePair<string, GroupData> entry in data)
+            {
+                GroupData group = entry.Value;
+
+                permissions.Clear();
+
+                foreach (string perm in group.Perms)
+                {
+                    permissions.Add(perm);
+                }
+
+                group.Perms = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
+
+                if (result.ContainsKey(entry.Key))
+                {
+                    GroupData existing = result[entry.Key];
+                    // Get a matching entry.key from result.keys
+                    var existingKey = result.Keys.FirstOrDefault(x => x.Equals(entry.Key, StringComparison.OrdinalIgnoreCase));
+
+                    existing.Perms.UnionWith(group.Perms);
+
+                    Interface.Oxide.LogWarning("Duplicate group '{0}' found, merged entries with {1}", entry.Key, existingKey);
+
+                    continue;
+                }
+
+                result.Add(entry.Key, group);
+            }
+
+            return result;
         }
 
         /// <summary>
