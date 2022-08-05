@@ -439,13 +439,14 @@ namespace Oxide.Core.Libraries
         public string[] GetUserPermissions(string playerId)
         {
             UserData userData = GetUserData(playerId);
-            List<string> permissions = userData.Perms.ToList();
+            HashSet<string> permissions = new HashSet<string>(userData.Perms, StringComparer.OrdinalIgnoreCase);
+
             foreach (string groupName in userData.Groups)
             {
-                permissions.AddRange(GetGroupPermissions(groupName));
+                permissions.UnionWith(GetGroupPermissions(groupName));
             }
 
-            return new HashSet<string>(permissions).ToArray();
+            return permissions.ToArray();
         }
 
         /// <summary>
@@ -467,14 +468,14 @@ namespace Oxide.Core.Libraries
                 return new string[0];
             }
 
-            List<string> permissions = groupData.Perms.ToList();
+            HashSet<string> permissions = new HashSet<string>(groupData.Perms);
 
             if (parents)
             {
-                permissions.AddRange(GetGroupPermissions(groupData.ParentGroup));
+                permissions.UnionWith(GetGroupPermissions(groupData.ParentGroup));
             }
 
-            return new HashSet<string>(permissions).ToArray();
+            return permissions.ToArray();
         }
 
         /// <summary>
