@@ -128,7 +128,7 @@ namespace Oxide.Core.Libraries
         {
             Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
 
-            Dictionary<string, UserData> storedUserData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users");
+            Dictionary<string, UserData> storedUserData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, UserData> result = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
             HashSet<string> groups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             HashSet<string> permissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -181,7 +181,7 @@ namespace Oxide.Core.Libraries
         {
             Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
 
-            Dictionary<string, GroupData> storedGroupData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups");
+            Dictionary<string, GroupData> storedGroupData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups") ?? new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, GroupData> result = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
             HashSet<string> permissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
