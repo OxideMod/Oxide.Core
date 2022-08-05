@@ -103,8 +103,8 @@ namespace Oxide.Core.Libraries
             Utility.DatafileToProto<Dictionary<string, UserData>>("oxide.users");
             Utility.DatafileToProto<Dictionary<string, GroupData>>("oxide.groups");
 
-            usersData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
-            groupsData = ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups") ?? new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            usersData = new Dictionary<string, UserData>(ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users"), StringComparer.OrdinalIgnoreCase);
+            groupsData = new Dictionary<string, GroupData>(ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups"), StringComparer.OrdinalIgnoreCase);
 
             foreach (KeyValuePair<string, GroupData> pair in groupsData)
             {
