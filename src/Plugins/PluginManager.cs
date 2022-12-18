@@ -253,7 +253,7 @@ namespace Oxide.Core.Plugins
                 return null;
             }
 
-            if (plugins.Count == 0 || expireDate < DateTime.Now)
+            if (plugins.Count == 0)
             {
                 return null;
             }
