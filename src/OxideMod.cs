@@ -7,6 +7,7 @@ using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
+using Oxide.Core.Pooling;
 using Oxide.Core.ServerConsole;
 using References::Newtonsoft.Json;
 using System;
@@ -226,6 +227,7 @@ namespace Oxide.Core
             LogInfo("Loading Oxide Core v{0}...", Version);
 
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
+            RootPluginManager.OnPluginRemoved += Pool.OnPluginUnload;
             extensionManager = new ExtensionManager(RootLogger);
             DataFileSystem = new DataFileSystem(DataDirectory);
 
