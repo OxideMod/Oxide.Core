@@ -1,4 +1,5 @@
 ﻿using Oxide.Core.Libraries.Covalence;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -175,6 +176,45 @@ namespace Oxide.Core
         /// <param name="max"></param>
         /// <returns></returns>
         public static string Truncate(this string text, int max) => text.Length <= max ? text : text.Substring(0, max) + " ...";
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <typeparam name="TQuery"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo<TSource, TQuery>(this TSource source, TQuery query) => typeof(TSource).IsRelatedTo(query.GetType());
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <typeparam name="TQuery"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo<TQuery>(this Type source, TQuery query) => source.IsRelatedTo(query.GetType());
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo(this Type source, Type query)
+        {
+            if (query.IsAssignableFrom(source))
+            {
+                return true;
+            }
+            else if (source.DeclaringType != null)
+            {
+                return source.DeclaringType.IsRelatedTo(query);
+            }
+
+            return false;
+        }
     }
 }
 
@@ -348,5 +388,44 @@ namespace Oxide.Plugins
         /// <param name="max"></param>
         /// <returns></returns>
         public static string Truncate(this string text, int max) => text.Length <= max ? text : text.Substring(0, max) + " ...";
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <typeparam name="TQuery"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo<TSource, TQuery>(this TSource source, TQuery query) => typeof(TSource).IsRelatedTo(query.GetType());
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <typeparam name="TQuery"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo<TQuery>(this Type source, TQuery query) => source.IsRelatedTo(query.GetType());
+
+        /// <summary>
+        /// Checks if a obj is inherited from type or is a child type
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public static bool IsRelatedTo(this Type source, Type query)
+        {
+            if (query.IsAssignableFrom(source))
+            {
+                return true;
+            }
+            else if (source.DeclaringType != null)
+            {
+                return source.DeclaringType.IsRelatedTo(query);
+            }
+
+            return false;
+        }
     }
 }

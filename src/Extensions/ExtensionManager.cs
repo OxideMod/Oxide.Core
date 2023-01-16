@@ -2,6 +2,7 @@
 using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
+using Oxide.Core.Pooling;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -333,6 +334,8 @@ namespace Oxide.Core.Extensions
             {
                 LoadExtension(Path.Combine(directory, extPath), true);
             }
+
+            Pool.RegisterDefaultPools();
 
             foreach (Extension ext in extensions.ToArray())
             {
