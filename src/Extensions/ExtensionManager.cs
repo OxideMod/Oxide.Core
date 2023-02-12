@@ -80,9 +80,8 @@ namespace Oxide.Core.Extensions
             }
             else
             {
-                Type libType = library.GetType();
-                services.Singleton(libType, library);
-                libraries[name] = () => services.GetService(libType) as Library;
+                services.Singleton(library);
+                libraries[name] = () => services.GetService(library.GetType()) as Library;
             }
         }
 

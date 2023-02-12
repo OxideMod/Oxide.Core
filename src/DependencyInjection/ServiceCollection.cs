@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Oxide.Core;
+using System;
 using System.Collections.Generic;
 
 namespace Oxide.DependencyInjection
@@ -46,7 +47,6 @@ namespace Oxide.DependencyInjection
 
                     Func<IServiceProvider, object> factory = ActivationUtility.CreateFactory(this, descriptor.ImplementationType);
                     descriptor.Implementation = factory;
-
                     return factory?.Invoke(this);
                 }
 
@@ -59,17 +59,13 @@ namespace Oxide.DependencyInjection
             }
         }
 
-        private void AddService(ServiceDescriptor descriptor)
+        public IServiceCollection AddService(ServiceDescriptor descriptor)
         {
             lock (descriptor)
             {
-                descriptors.Add(descriptor.ServiceType, descriptor);
+                descriptors[descriptor.ServiceType] = descriptor;
             }
-        }
 
-        public IServiceCollection AddService(Type serviceType, Type implementationType, object implementation, bool transient)
-        {
-            AddService(new ServiceDescriptor(serviceType, implementationType, implementation, transient));
             return this;
         }
     }

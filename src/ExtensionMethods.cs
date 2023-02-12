@@ -13,85 +13,33 @@ namespace Oxide
     {
         #region Service Extensions
 
-        private static IServiceCollection Singleton(IServiceCollection collection, Type serviceType, Type implementationType, object implementation)
-        {
-            if (implementationType == null)
-            {
-                if (implementation != null)
-                {
-                    implementationType = implementation.GetType();
-                }
-                else
-                {
-                    throw new ArgumentNullException(nameof(implementationType));
-                }
-            }
-            else if (implementationType.IsInterface || implementationType.IsAbstract)
-            {
-                throw new ArgumentException("Service implementation can't be abstract");
-            }
+        public static TService GetService<TService>(this IServiceProvider provider) => (TService)provider.GetService(typeof(TService));
+        
+        public static IServiceCollection Singleton(this IServiceCollection collection, Type serviceType, Type implementationType) => collection.AddService(ServiceDescriptor.CreateSingleton(serviceType, implementationType));
 
-            if (serviceType == null)
-            {
-                serviceType = implementationType;
-            }
+        public static IServiceCollection Singleton(this IServiceCollection collection, Type serviceType, object implementation) => collection.AddService(ServiceDescriptor.CreateSingleton(serviceType, null, implementation));
 
-            if (!serviceType.IsAssignableFrom(implementationType))
-            {
-                throw new ArgumentException($"{nameof(implementationType)} does't inherit {nameof(serviceType)}");
-            }
+        public static IServiceCollection Singleton<TService, TImplementation>(this IServiceCollection collection) where TImplementation : TService => collection.Singleton(typeof(TService), typeof(TImplementation));
 
-            if (implementation != null && !implementationType.IsInstanceOfType(implementationType))
-            {
-                throw new ArgumentException($"{nameof(implementation)} does't inherit {nameof(serviceType)}");
-            }
+        public static IServiceCollection Singleton<TService, TImplementation>(this IServiceCollection collection, TImplementation implementation) where TImplementation : TService => collection.Singleton(typeof(TService), implementation);
 
-            return collection.AddService(serviceType, implementationType, implementation, false);
-        }
+        public static IServiceCollection Singleton<TImplementation>(this IServiceCollection collection, TImplementation implementation) => collection.Singleton(implementation.GetType(), implementation);
 
-        public static IServiceCollection Singleton(this IServiceCollection collection, Type serviceType, Type implementationType) => Singleton(collection, serviceType, implementationType, null);
+        public static IServiceCollection Transient(this IServiceCollection collection, Type serviceType, Type implementationType, Delegate factory) => collection.AddService(ServiceDescriptor.CreateTransient(serviceType, implementationType, factory));
 
-        public static IServiceCollection Singleton(this IServiceCollection collection, Type serviceType, object implementation) => Singleton(collection, serviceType, implementation.GetType(), implementation);
+        public static IServiceCollection Transient(this IServiceCollection collection, Type serviceType, Type implementationType) => collection.Transient(serviceType, implementationType, null);
 
-        public static IServiceCollection Singleton<TService, TImplementation>(this IServiceCollection collection) where TImplementation : TService => Singleton(collection, typeof(TService), typeof(TImplementation));
+        public static IServiceCollection Transient(this IServiceCollection collection, Type implementationType) => collection.Transient(implementationType, implementationType, null);
 
-        public static IServiceCollection Singleton<TService, TImplementation>(this IServiceCollection collection, TImplementation implementation) where TImplementation : TService => Singleton(collection, typeof(TService), typeof(TImplementation), implementation);
+        public static IServiceCollection Transient(this IServiceCollection collection, Type implementationType, Delegate factory) => collection.Transient(implementationType, implementationType, factory);
 
-        public static IServiceCollection Singleton<TImplementation>(this IServiceCollection collection, TImplementation implementation) => Singleton(collection, typeof(TImplementation), typeof(TImplementation), implementation);
+        public static IServiceCollection Transient<TService, TImplementation>(this IServiceCollection collection, Func<IServiceProvider, TImplementation> factory) where TImplementation : TService => collection.Transient(typeof(TService), typeof(TImplementation), factory);
 
-        private static IServiceCollection Transient(IServiceCollection collection, Type serviceType, Type implementationType, Delegate d)
-        {
-            if (implementationType == null)
-            {
-                throw new ArgumentNullException(nameof(implementationType));
-            }
-            else if (implementationType.IsInterface || implementationType.IsAbstract)
-            {
-                throw new ArgumentException("Service implementation can't be abstract");
-            }
+        public static IServiceCollection Transient<TService, TImplementation>(this IServiceCollection collection) where TImplementation : TService => collection.Transient(typeof(TService), typeof(TImplementation));
 
-            if (serviceType == null)
-            {
-                serviceType = implementationType;
-            }
+        public static IServiceCollection Transient<TImplementation>(this IServiceCollection collection, Func<IServiceProvider, TImplementation> factory) => collection.Transient(typeof(TImplementation), typeof(TImplementation), factory);
 
-            if (!serviceType.IsAssignableFrom(implementationType))
-            {
-                throw new ArgumentException($"{nameof(implementationType)} does't inherit {nameof(serviceType)}");
-            }
-
-            return collection.AddService(serviceType, implementationType, d, true);
-        }
-
-        public static IServiceCollection Transient(this IServiceCollection collection, Type implementationType) => Transient(collection, implementationType, implementationType, null);
-
-        public static IServiceCollection Transient<TService, TImplementation>(this IServiceCollection collection) where TImplementation : TService => Transient(collection, typeof(TService), typeof(TImplementation), null);
-
-        public static IServiceCollection Transient<TImplementation>(this IServiceCollection collection) => Transient(collection, typeof(TImplementation), typeof(TImplementation), null);
-
-        public static IServiceCollection Transient<TImplementation>(this IServiceCollection collection, Func<IServiceProvider, TImplementation> factory) => Transient(collection, typeof(TImplementation), typeof(TImplementation), factory);
-
-        public static IServiceCollection Transient<TService, TImplementation>(this IServiceCollection collection, Func<IServiceProvider, TImplementation> factory) where TImplementation : TService => Transient(collection, typeof(TService), typeof(TImplementation), factory);
+        public static IServiceCollection Transient<TImplementation>(this IServiceCollection collection) => collection.Transient(typeof(TImplementation), typeof(TImplementation));
 
         #endregion
     }
