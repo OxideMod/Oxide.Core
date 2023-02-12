@@ -1,5 +1,4 @@
-﻿using Oxide.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Oxide.DependencyInjection
