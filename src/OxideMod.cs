@@ -8,6 +8,7 @@ using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
 using Oxide.Core.ServerConsole;
+using Oxide.DependencyInjection;
 using References::Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,11 @@ namespace Oxide.Core
         /// Gets the data file system
         /// </summary>
         public DataFileSystem DataFileSystem { get; private set; }
+
+        /// <summary>
+        /// All registered services
+        /// </summary>
+        public IServiceProvider Services { get; }
 
         // Various directories
         public string RootDirectory { get; private set; }
@@ -110,6 +116,7 @@ namespace Oxide.Core
         public OxideMod(NativeDebugCallback debugCallback)
         {
             this.debugCallback = debugCallback;
+            Services = new ServiceCollection();
         }
 
         /// <summary>
@@ -226,9 +233,8 @@ namespace Oxide.Core
             LogInfo("Loading Oxide Core v{0}...", Version);
 
             RootPluginManager = new PluginManager(RootLogger) { ConfigPath = ConfigDirectory };
-            extensionManager = new ExtensionManager(RootLogger);
+            extensionManager = new ExtensionManager(RootLogger, (ServiceCollection)Services);
             DataFileSystem = new DataFileSystem(DataDirectory);
-
             extensionManager.RegisterLibrary("Covalence", covalence = new Covalence());
             extensionManager.RegisterLibrary("Global", new Global());
             extensionManager.RegisterLibrary("Lang", new Lang());
@@ -275,6 +281,7 @@ namespace Oxide.Core
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
+        [Obsolete("GetLibrary is outdated, use Oxide.Core.Interface.Oxide.Services.GetService")]
         public T GetLibrary<T>(string name = null) where T : Library => extensionManager.GetLibrary(name ?? typeof(T).Name) as T;
 
         /// <summary>

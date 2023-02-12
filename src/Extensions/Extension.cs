@@ -1,4 +1,6 @@
-﻿namespace Oxide.Core.Extensions
+﻿using Oxide.DependencyInjection;
+
+namespace Oxide.Core.Extensions
 {
     /// <summary>
     /// Represents a single binary extension
@@ -78,6 +80,14 @@
         /// Loads this extension
         /// </summary>
         public virtual void Load()
+        {
+        }
+
+        /// <summary>
+        /// Registers new services
+        /// </summary>
+        /// <param name="services"></param>
+        public virtual void ConfigureServices(IServiceCollection services)
         {
         }
 

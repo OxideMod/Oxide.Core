@@ -2,6 +2,7 @@
 using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
+using Oxide.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,8 +30,11 @@ namespace Oxide.Core.Extensions
         // All registered plugin loaders
         private IList<PluginLoader> pluginloaders;
 
+        // All registered services
+        private ServiceCollection services;
+
         // All registered libraries
-        private IDictionary<string, Library> libraries;
+        private IDictionary<string, Func<Library>> libraries;
 
         // All registered watchers
         private IList<PluginChangeWatcher> changewatchers;
@@ -38,13 +42,14 @@ namespace Oxide.Core.Extensions
         /// <summary>
         /// Initializes a new instance of the ExtensionManager class
         /// </summary>
-        public ExtensionManager(CompoundLogger logger)
+        public ExtensionManager(CompoundLogger logger, ServiceCollection services)
         {
             // Initialize
             Logger = logger;
             extensions = new List<Extension>();
             pluginloaders = new List<PluginLoader>();
-            libraries = new Dictionary<string, Library>();
+            this.services = services;
+            libraries = new Dictionary<string, Func<Library>>();
             changewatchers = new List<PluginChangeWatcher>();
         }
 
@@ -75,7 +80,9 @@ namespace Oxide.Core.Extensions
             }
             else
             {
-                libraries[name] = library;
+                Type libType = library.GetType();
+                services.Singleton(libType, library);
+                libraries[name] = () => services.GetService(libType) as Library;
             }
         }
 
@@ -90,9 +97,10 @@ namespace Oxide.Core.Extensions
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
+        [Obsolete("GetLibrary is outdated, use Oxide.Core.Interface.Oxide.Services.GetService")]
         public Library GetLibrary(string name)
         {
-            return !libraries.TryGetValue(name, out Library lib) ? null : lib;
+            return !libraries.TryGetValue(name, out Func<Library> lib) ? null : lib();
         }
 
         /// <summary>
@@ -176,6 +184,7 @@ namespace Oxide.Core.Extensions
 
                     extension.Load();
                     extensions.Add(extension);
+                    extension.ConfigureServices(services);
 
                     // Log extension loaded
                     Logger.Write(LogType.Info, "Loaded extension {0} v{1} by {2}", extension.Name, extension.Version, extension.Author);
