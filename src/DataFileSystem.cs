@@ -111,6 +111,12 @@ namespace Oxide.Core
         public void WriteObject<T>(string name, T Object, bool sync = false) => GetFile(name).WriteObject(Object, sync);
 
         /// <summary>
+        /// Removes the specified datafile
+        /// </summary>
+        /// <param name="name"></param>
+        public void DeleteDataFile(string name) => GetFile(name).Delete();
+
+        /// <summary>
         /// Read data files in a batch and send callback
         /// </summary>
         /// <typeparam name="T"></typeparam>

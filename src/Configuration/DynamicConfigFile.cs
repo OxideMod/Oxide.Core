@@ -120,6 +120,19 @@ namespace Oxide.Core.Configuration
         }
 
         /// <summary>
+        /// Removes specified file
+        /// </summary>
+        /// <param name="filename"></param>
+        public void Delete(string filename = null)
+        {
+            filename = CheckPath(filename ?? Filename);
+            if (Exists(filename))
+            {
+                File.Delete(filename);
+            }
+        }
+
+        /// <summary>
         /// Check if file path is in chroot directory
         /// </summary>
         /// <param name="filename"></param>
