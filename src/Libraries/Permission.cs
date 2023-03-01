@@ -763,6 +763,22 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
+        /// Returns the data for the specified group
+        /// </summary>
+        /// <param name="groupName"></param>
+        /// <returns></returns>
+        public GroupData GetGroupData(string groupName)
+        {
+            if (!groupsData.TryGetValue(groupName, out GroupData groupData))
+            {
+                return null;
+            }
+
+            // Return the data
+            return groupData;
+        }
+
+        /// <summary>
         /// Returns existing groups
         /// </summary>
         /// <returns></returns>
