@@ -9,10 +9,10 @@ namespace Oxide.Core.Database
         Connection OpenDb(string file, Plugin plugin, bool persistent = false);
         void CloseDb(Connection db);
         Sql NewSql();
-        void Query(Sql sql, Connection db, Action<List<Dictionary<string, object>>> callback);
-        void ExecuteNonQuery(Sql sql, Connection db, Action<int> callback = null);
-        void Insert(Sql sql, Connection db, Action<int> callback = null);
-        void Update(Sql sql, Connection db, Action<int> callback = null);
-        void Delete(Sql sql, Connection db, Action<int> callback = null);
+        void Query(Sql sql, Connection db, Action<List<Dictionary<string, object>>> callback, Action<Exception> callbackOnError = null);
+        void ExecuteNonQuery(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null);
+        void Insert(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null);
+        void Update(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null);
+        void Delete(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null);
     }
 }
