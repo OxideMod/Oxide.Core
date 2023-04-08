@@ -31,7 +31,7 @@ namespace Oxide.Pooling
             }
         }
 
-        public void Free(ref object item)
+        public void Free(object item)
         {
             if (item == null || item.GetType() != _poolType)
             {
@@ -51,7 +51,6 @@ namespace Oxide.Pooling
             }
 
             T obj = (T)item;
-            item = null;
 
             lock (_pool)
             {

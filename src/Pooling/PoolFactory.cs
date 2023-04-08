@@ -87,21 +87,26 @@ namespace Oxide.Pooling
         /// <remarks>
         /// If a <see cref="IPoolSource"/> is not found the item is ignored
         /// </remarks>
-        public static void Free<T>(ref T item)
+        public static void Free<T>(T item)
         {
             if (item == null)
             {
                 return;
             }
-            object reference = item;
-            item = default;
-            Type type = reference.GetType();
+
+            if (item is IPoolObject obj && obj.Source != null)
+            {
+                obj.Source.Free(item);
+                return;
+            }
+
+            Type type = item.GetType();
 
             lock (sources)
             {
                 if (sources.TryGetValue(type, out IPoolSource source))
                 {
-                    source.Free(ref reference);
+                    source.Free(item);
                 }
             }
         }

@@ -1,4 +1,5 @@
 ﻿using Oxide.Core.Libraries;
+using Oxide.Pooling;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -43,6 +44,9 @@ namespace Oxide.Core.Plugins
 
         // All matched hooked methods
         protected HookCache HooksCache = new HookCache();
+
+        // Pooled object arrays
+        protected IArrayPoolSource<object> ObjectArray { get; } = (IArrayPoolSource<object>)PoolFactory.GetSource<object[]>();
 
         /// <summary>
         /// Initializes a new instance of the CSPlugin class
@@ -135,7 +139,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArray.Get(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -176,7 +180,7 @@ namespace Oxide.Core.Plugins
                 {
                     if (pooledArray)
                     {
-                        ArrayPool.Free(hookArgs);
+                        ObjectArray.Free(hookArgs);
                     }
                     throw ex.InnerException ?? ex;
                 }
@@ -196,7 +200,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArray.Free(hookArgs);
                 }
             }
 
@@ -243,7 +247,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArray.Get(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -290,7 +294,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArray.Free(hookArgs);
                 }
             }
 

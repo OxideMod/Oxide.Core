@@ -3,11 +3,12 @@ using System.Collections.Generic;
 
 namespace Oxide.Pooling
 {
-    internal class ArrayPool<T> : IArrayPoolSource<T>
+    internal class ArrayPool<T> : IArrayPoolSource<T> where T : class
     {
         public const int MaxPooledArrays = 256;
         public const int MaxArrayLength = 50;
 
+        private readonly bool _arePooledItems;
         private readonly Type _poolType;
         private readonly T[] _empty;
         private readonly List<List<T[]>> _pool;
@@ -17,6 +18,7 @@ namespace Oxide.Pooling
             _poolType = typeof(T[]);
             _empty = new T[0];
             _pool = new List<List<T[]>>();
+            _arePooledItems = typeof(IPoolObject).IsAssignableFrom(_poolType.GetElementType());
 
             for (int i = 0; i < MaxArrayLength; i++)
             {
@@ -34,6 +36,11 @@ namespace Oxide.Pooling
                 return Get();
             }
 
+            if (length > MaxArrayLength)
+            {
+                return new T[length];
+            }
+
             List<T[]> values = _pool[length - 1];
 
             lock (values)
@@ -49,7 +56,7 @@ namespace Oxide.Pooling
             }
         }
 
-        public void Free(ref object item)
+        public void Free(object item)
         {
             if (item == null || item.GetType() != _poolType)
             {
@@ -63,15 +70,31 @@ namespace Oxide.Pooling
                 return;
             }
 
+            IPoolSource<T> elementSource = _arePooledItems ? PoolFactory.GetSource<T>() : null;
+
             for (int i = 0; i < items.Length; i++)
             {
-                T itm = items[i];
-                items[i] = default;
+                object itm = items[i];
+                items[i] = null;
 
-                if (itm is IPoolObject obj && obj.ShouldPool)
+                if (_arePooledItems)
                 {
-                    PoolFactory.Free(ref obj);
+                    IPoolObject obj = item as IPoolObject;
+
+                    if (obj.Source != null)
+                    {
+                        obj.Source.Free(obj);
+                    }
+                    else if (elementSource != null)
+                    {
+                        elementSource.Free(obj);
+                    }
                 }
+            }
+
+            if (items.Length > MaxArrayLength)
+            {
+                return;
             }
 
             List<T[]> pool = _pool[items.Length - 1];
