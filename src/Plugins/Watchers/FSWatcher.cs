@@ -1,10 +1,12 @@
 ﻿extern alias References;
 
 using Oxide.Core.Libraries;
-using References::Mono.Posix;
+using Oxide.Pooling;
+using References::Mono.Unix.Native;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 #if !NETSTANDARD
 using System.Security.Permissions;
 #endif
@@ -35,6 +37,8 @@ namespace Oxide.Core.Plugins.Watchers
         private Timer timers;
 
         private Dictionary<string, FileSystemWatcher> m_symlinkWatchers = new Dictionary<string, FileSystemWatcher>();
+
+        private IPoolSource<StringBuilder> stringPool = PoolFactory.GetSource<StringBuilder>();
 
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
@@ -80,7 +84,23 @@ namespace Oxide.Core.Plugins.Watchers
 #endif
         private void LoadWatcherSymlink(string path)
         {
-            string realPath = Syscall.readlink(path);
+            StringBuilder buffer = stringPool.Get();
+            buffer.Length = 0;
+            string realPath = path;
+            int pathLength = Syscall.readlink(path, buffer);
+
+            if (pathLength == -1)
+            {
+                Interface.Oxide.LogDebug($"[FS] Failed to determine symlink | {Stdlib.GetLastError()}");
+            }
+            else
+            {
+                realPath = buffer.ToString().Substring(0, pathLength);
+            }
+
+            buffer.Length = 0;
+            stringPool.Free(buffer);
+
             string realDirName = Path.GetDirectoryName(realPath);
             string realFileName = Path.GetFileName(realPath);
 
