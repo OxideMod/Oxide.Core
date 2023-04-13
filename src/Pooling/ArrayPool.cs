@@ -79,7 +79,7 @@ namespace Oxide.Pooling
 
                 if (_arePooledItems)
                 {
-                    IPoolObject obj = item as IPoolObject;
+                    IPoolObject obj = itm as IPoolObject;
 
                     if (obj.Source != null)
                     {
