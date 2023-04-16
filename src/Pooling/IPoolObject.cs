@@ -7,7 +7,7 @@ namespace Oxide.Pooling
         /// <summary>
         /// The source pool this item came from
         /// </summary>
-        IPoolSource Source { get; }
+        IPoolSource Source { get; set; }
 
         /// <summary>
         /// Instruct the <see cref="IPoolSource"/> to ignore this object

@@ -70,8 +70,6 @@ namespace Oxide.Pooling
                 return;
             }
 
-            IPoolSource<T> elementSource = _arePooledItems ? PoolFactory.GetSource<T>() : null;
-
             for (int i = 0; i < items.Length; i++)
             {
                 object itm = items[i];
@@ -84,10 +82,6 @@ namespace Oxide.Pooling
                     if (obj.Source != null)
                     {
                         obj.Source.Free(obj);
-                    }
-                    else if (elementSource != null)
-                    {
-                        elementSource.Free(obj);
                     }
                 }
             }

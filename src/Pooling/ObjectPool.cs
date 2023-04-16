@@ -9,26 +9,37 @@ namespace Oxide.Pooling
 
         private readonly Type _poolType;
         private readonly List<T> _pool;
+        private readonly bool _isPooledInterface;
 
         public ObjectPool()
         {
             _poolType = typeof(T);
             _pool = new List<T>();
+            _isPooledInterface = typeof(IPoolObject).IsAssignableFrom(typeof(T));
         }
 
         public T Get()
         {
+            T item;
             lock (_pool)
             {
                 if (_pool.Count == 0)
                 {
-                    return (T)Activator.CreateInstance(typeof(T));
+                    item = (T)Activator.CreateInstance(typeof(T));
                 }
-
-                T item = _pool[0];
-                _pool.RemoveAt(0);
-                return item;
+                else
+                {
+                    item = _pool[0];
+                    _pool.RemoveAt(0);
+                }
             }
+
+            if (_isPooledInterface && item is IPoolObject pooled)
+            {
+                pooled.Source = this;
+            }
+
+            return item;
         }
 
         public void Free(object item)
