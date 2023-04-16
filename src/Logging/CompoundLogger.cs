@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Oxide.Core.Logging
 {
@@ -13,6 +13,7 @@ namespace Oxide.Core.Logging
         // Any cached messages for new loggers
         private readonly List<LogMessage> messagecache;
         private bool usecache;
+        private const int MAX_CACHE_SIZE = 100;
 
         private readonly object Lock = new object();
 
@@ -89,6 +90,11 @@ namespace Oxide.Core.Logging
             {
                 lock (Lock)
                 {
+                    if (messagecache.Count >= MAX_CACHE_SIZE)
+                    {
+                        messagecache.RemoveAt(0);
+                    }
+
                     messagecache.Add(CreateLogMessage(type, format, args));
                 }
             }
