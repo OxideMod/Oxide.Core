@@ -107,7 +107,7 @@ namespace Oxide.Core.Configuration
         public OxideConfig(string filename) : base(filename)
         {
             Options = new OxideOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" }, WebRequestIP = "0.0.0.0" };
-            Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
+            Console = new OxideConsole { Enabled = false, MinimalistMode = true, ShowStatusBar = true };
             Rcon = new OxideRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
         }
     }
