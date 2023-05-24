@@ -133,7 +133,7 @@ namespace Oxide.Core.Plugins.Watchers
             watcher.Created += watcher_Changed;
             watcher.Deleted += watcher_Changed;
             watcher.Error += watcher_Error;
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
             watcher.IncludeSubdirectories = true;
             watcher.EnableRaisingEvents = true;
             GC.KeepAlive(watcher);
