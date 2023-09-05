@@ -279,7 +279,7 @@ namespace Oxide.Core.Extensions
             };
             string[] gameExtensions = {
                 "Oxide.Blackwake", "Oxide.Blockstorm", "Oxide.FortressCraft", "Oxide.FromTheDepths", "Oxide.GangBeasts", "Oxide.Hurtworld",
-                "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings",  "Oxide.Rust",
+                "Oxide.InterstellarRift", "Oxide.MedievalEngineers", "Oxide.Nomad", "Oxide.PlanetExplorers", "Oxide.ReignOfKings", "Oxide.Rust",
                 "Oxide.RustLegacy", "Oxide.SavageLands", "Oxide.SevenDaysToDie", "Oxide.SpaceEngineers", "Oxide.TheForest", "Oxide.Terraria",
                 "Oxide.Unturned"
             };
@@ -305,11 +305,13 @@ namespace Oxide.Core.Extensions
                     continue;
                 }
 
-                if (coreExtensions.Contains(extPath.Basename()))
+                string fileName = Path.GetFileNameWithoutExtension(extPath);
+
+                if (coreExtensions.Contains(fileName))
                 {
                     foundCore.Add(extPath);
                 }
-                else if (gameExtensions.Contains(extPath.Basename()))
+                else if (gameExtensions.Contains(fileName))
                 {
                     foundGame.Add(extPath);
                 }
