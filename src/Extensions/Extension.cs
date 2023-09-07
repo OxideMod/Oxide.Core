@@ -1,4 +1,7 @@
-﻿namespace Oxide.Core.Extensions
+﻿using System.Linq;
+using System.Reflection;
+
+namespace Oxide.Core.Extensions
 {
     /// <summary>
     /// Represents a single binary extension
@@ -28,7 +31,7 @@
         /// <summary>
         /// Gets the branch of this extension
         /// </summary>
-        public virtual string Branch { get; } = "public";
+        public virtual string Branch { get; }
 
         /// <summary>
         /// Gets whether this extension is a core extension
@@ -72,6 +75,8 @@
         public Extension(ExtensionManager manager)
         {
             Manager = manager;
+            // Grab GitBranch metadata from assembly file and auto set the Branch property
+            Branch = GetType().Assembly.Metadata("GitBranch").FirstOrDefault() ?? "master";
         }
 
         /// <summary>

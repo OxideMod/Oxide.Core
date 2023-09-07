@@ -37,6 +37,11 @@ namespace Oxide.Core
         public static readonly VersionNumber Version = new VersionNumber(AssemblyVersion.Major, AssemblyVersion.Minor, AssemblyVersion.Build);
 
         /// <summary>
+        /// The Git Branch of this Oxide.Core build
+        /// </summary>
+        public static readonly string Branch = Assembly.GetExecutingAssembly().Metadata("GitBranch").FirstOrDefault() ?? "unknown";
+
+        /// <summary>
         /// Gets the main logger
         /// </summary>
         public CompoundLogger RootLogger { get; private set; }
