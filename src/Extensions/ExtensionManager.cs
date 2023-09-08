@@ -196,7 +196,14 @@ namespace Oxide.Core.Extensions
                     extensions.Add(extension);
 
                     // Log extension loaded
-                    Logger.Write(LogType.Info, "Loaded extension {0} v{1} by {2}", extension.Name, extension.Version, extension.Author);
+                    string version = extension.Version.ToString();
+
+                    if (extension.Branch != "master")
+                    {
+                        version += $"@{extension.Branch}";
+                    }
+
+                    Logger.Write(LogType.Info, $"Loaded extension {extension.Name} v{version} by {extension.Author}");
                 }
             }
             catch (Exception ex)
@@ -292,6 +299,7 @@ namespace Oxide.Core.Extensions
             List<string> foundCore = new List<string>();
             List<string> foundGame = new List<string>();
             List<string> foundOther = new List<string>();
+            string[] ignoredExtensions = { "Oxide.Core.dll", "Oxide.References.dll", "Oxide.Common.dll" };
             string[] coreExtensions = {
                 "Oxide.CSharp", "Oxide.JavaScript", "Oxide.Lua", "Oxide.MySql", "Oxide.Python", "Oxide.SQLite", "Oxide.Unity"
             };
@@ -303,7 +311,7 @@ namespace Oxide.Core.Extensions
             };
             string[] foundExtensions = Directory.GetFiles(directory, extSearchPattern);
 
-            foreach (string extPath in foundExtensions.Where(e => !e.EndsWith("Oxide.Core.dll") && !e.EndsWith("Oxide.References.dll")))
+            foreach (string extPath in foundExtensions.Where(e => !ignoredExtensions.Contains(Path.GetFileName(e))))
             {
                 if (extPath.Contains("Oxide.Core.") && Array.IndexOf(foundExtensions, extPath.Replace(".Core", "")) != -1)
                 {
