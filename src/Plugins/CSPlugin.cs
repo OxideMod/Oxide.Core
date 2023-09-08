@@ -1,6 +1,7 @@
 ﻿using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Oxide.Core.Plugins
@@ -113,6 +114,16 @@ namespace Oxide.Core.Plugins
             }
 
             hookMethods.Add(new HookMethod(method));
+        }
+
+        internal override bool IsBaseHook(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            return Hooks.TryGetValue(name, out List<HookMethod> hooks) && hooks.Any(h => h.IsBaseHook);
         }
 
         /// <summary>
