@@ -12,7 +12,8 @@ namespace Oxide.Core.Logging
         Chat,
         Error,
         Info,
-        Warning
+        Warning,
+        Debug
     }
 
     /// <summary>
