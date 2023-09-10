@@ -522,7 +522,7 @@ namespace Oxide.Core
         {
             // Get the plugin
             Plugin plugin = RootPluginManager.GetPlugin(name);
-            if (plugin == null)
+            if (plugin == null || (plugin.IsCorePlugin && !IsShuttingDown))
             {
                 return false;
             }
