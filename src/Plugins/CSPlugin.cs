@@ -1,7 +1,6 @@
 ﻿using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace Oxide.Core.Plugins
@@ -123,7 +122,18 @@ namespace Oxide.Core.Plugins
                 return false;
             }
 
-            return Hooks.TryGetValue(name, out List<HookMethod> hooks) && hooks.Any(h => h.IsBaseHook);
+            if (Hooks.TryGetValue(name, out List<HookMethod> hooks))
+            {
+                for (int i = 0; i < hooks.Count; i++)
+                {
+                    if (hooks[i].IsBaseHook)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
