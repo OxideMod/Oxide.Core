@@ -113,8 +113,7 @@ namespace Oxide.Core.Extensions
         /// Loads the extension at the specified filename
         /// </summary>
         /// <param name="filename"></param>
-        /// <param name="isCoreOrGameExtension"></param>
-        public void LoadExtension(string filename, bool isCoreOrGameExtension = false)
+        public void LoadExtension(string filename)
         {
             string name = Utility.GetFileNameWithoutExtension(filename);
 
@@ -125,9 +124,11 @@ namespace Oxide.Core.Extensions
                 return;
             }
 
-            Assembly assembly = null;
-            if (isCoreOrGameExtension) // Prevent double loading of core extensions
+            try
             {
+                Assembly assembly = null;
+
+                // Check if the assembly is already loaded
                 foreach (Assembly loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     if (loadedAssembly.GetName().Name != name)
@@ -138,10 +139,7 @@ namespace Oxide.Core.Extensions
                     assembly = loadedAssembly;
                     break;
                 }
-            }
 
-            try
-            {
                 if (assembly == null)
                 {
                     // Read the assembly from file
@@ -267,7 +265,7 @@ namespace Oxide.Core.Extensions
             // If the extension isn't already loaded, load it
             if (extension == null)
             {
-                LoadExtension(filename, false);
+                LoadExtension(filename);
                 return;
             }
 
@@ -287,7 +285,7 @@ namespace Oxide.Core.Extensions
 
             UnloadExtension(filename);
 
-            LoadExtension(filename, false);
+            LoadExtension(filename);
         }
 
         /// <summary>
@@ -349,12 +347,12 @@ namespace Oxide.Core.Extensions
 
             foreach (string extPath in foundCore)
             {
-                LoadExtension(Path.Combine(directory, extPath), true);
+                LoadExtension(Path.Combine(directory, extPath));
             }
 
             foreach (string extPath in foundGame)
             {
-                LoadExtension(Path.Combine(directory, extPath), true);
+                LoadExtension(Path.Combine(directory, extPath));
             }
 
             foreach (string extPath in foundOther)

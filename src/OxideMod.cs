@@ -602,7 +602,7 @@ namespace Oxide.Core
                 return false;
             }
 
-            extensionManager.LoadExtension(extPath, false);
+            extensionManager.LoadExtension(extPath);
             return true;
         }
 
