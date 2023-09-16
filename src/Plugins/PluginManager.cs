@@ -144,7 +144,7 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         internal void UnsubscribeToHook(string hook, Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && (hook.StartsWith("IOn") || hook.StartsWith("ICan")) || plugin.IsBaseHook(hook))
+            if (!loadedPlugins.ContainsKey(plugin.Name) || !plugin.IsCorePlugin && (hook.StartsWith("IOn") || hook.StartsWith("ICan")))
             {
                 return;
             }

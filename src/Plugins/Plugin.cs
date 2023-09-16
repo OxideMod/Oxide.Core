@@ -327,8 +327,6 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         protected abstract object OnCallHook(string hook, object[] args);
 
-        internal virtual bool IsBaseHook(string name) => false;
-
         /// <summary>
         /// Raises an error on this plugin
         /// </summary>
