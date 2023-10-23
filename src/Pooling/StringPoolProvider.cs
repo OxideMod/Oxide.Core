@@ -2,7 +2,7 @@
 
 namespace Oxide.Pooling
 {
-    public sealed class StringPoolProvider : BasePoolProvider<StringBuilder>
+    internal sealed class StringPoolProvider : BasePoolProvider<StringBuilder>
     {
         protected override void OnTake(StringBuilder item) => OnReturn(item);
 

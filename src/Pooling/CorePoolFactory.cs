@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Security.Permissions;
-using System.Text;
 
 namespace Oxide.Pooling
 {
-    public class CorePoolFactory : IPoolFactory
+    internal class CorePoolFactory : IPoolFactory
     {
         private readonly Type arrayType = typeof(IArrayPoolProvider<>);
         private readonly Type itemType = typeof(IPoolProvider<>);

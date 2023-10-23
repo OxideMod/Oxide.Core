@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Oxide.Pooling
 {
-    public class BaseArrayPoolProvider<T> : IArrayPoolProvider<T>
+    internal class BaseArrayPoolProvider<T> : IArrayPoolProvider<T>
     {
         private readonly int maxSetCapacity;
         private readonly int maxArrayLength;
 
         private readonly T[] empty;
-        private readonly ICollection<ICollection<T[]>> pooledArrays;
+        private readonly Stack<T[]>[] pooledArrays;
 
         public BaseArrayPoolProvider()
         {
@@ -19,29 +18,11 @@ namespace Oxide.Pooling
             // ReSharper disable once VirtualMemberCallInConstructor
             empty = InstantiateArray(0);
 
-            if (maxArrayLength > 7)
-            {
-                pooledArrays = new HashSet<ICollection<T[]>>();
-            }
-            else
-            {
-                pooledArrays = new List<ICollection<T[]>>(maxArrayLength - 1);
-            }
+            pooledArrays = new Stack<T[]>[maxArrayLength];
 
-            for (int i = 0; i < maxArrayLength; i++)
+            for (int i = 0; i < pooledArrays.Length; i++)
             {
-                ICollection<T[]> pool;
-
-                if (maxSetCapacity > 6)
-                {
-                    pool = new HashSet<T[]>();
-                }
-                else
-                {
-                    pool = new List<T[]>(maxSetCapacity);
-                }
-
-                pooledArrays.Add(pool);
+                pooledArrays[i] = new Stack<T[]>(maxSetCapacity);
             }
         }
 
@@ -65,17 +46,11 @@ namespace Oxide.Pooling
             }
 
             T[] item;
-
-            ICollection<T[]> pooled = pooledArrays.ElementAt(length - 1);
+            Stack<T[]> pooled = pooledArrays[length - 1];
 
             lock (pooled)
             {
-                if (pooled.Count != 0)
-                {
-                    item = pooled.ElementAt(0);
-                    pooled.Remove(item);
-                }
-                else
+                if (!pooled.TryPop(out item))
                 {
                     item = InstantiateArray(length);
                 }
@@ -102,13 +77,13 @@ namespace Oxide.Pooling
                 return;
             }
 
-            ICollection<T[]> pooled = pooledArrays.ElementAt(array.Length - 1);
+            Stack<T[]> pooled = pooledArrays[array.Length - 1];
 
             lock (pooled)
             {
                 if (pooled.Count < maxSetCapacity)
                 {
-                    pooled.Add(array);
+                    pooled.Push(array);
                 }
             }
         }

@@ -1,25 +1,16 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Oxide.Pooling
 {
-    public abstract class BasePoolProvider<T> : IPoolProvider<T>
+    internal abstract class BasePoolProvider<T> : IPoolProvider<T>
     {
         private int MaxPoolSize { get; }
-        private readonly ICollection<T> pooledData;
+        private readonly Stack<T> pooledData;
 
         protected BasePoolProvider()
         {
             MaxPoolSize = 50; // TODO: Set based on configuration
-
-            if (MaxPoolSize > 6)
-            {
-                pooledData = new HashSet<T>();
-            }
-            else
-            {
-                pooledData = new List<T>(MaxPoolSize);
-            }
+            pooledData = new Stack<T>(MaxPoolSize);
         }
 
         public T Take()
@@ -27,13 +18,7 @@ namespace Oxide.Pooling
             T item;
             lock (pooledData)
             {
-                if (pooledData.Count > 0)
-                {
-                    item = pooledData.ElementAt(0);
-                    pooledData.Remove(item);
-
-                }
-                else
+                if (!pooledData.TryPop(out item))
                 {
                     item = InstantiateItem();
                 }
@@ -51,7 +36,7 @@ namespace Oxide.Pooling
             {
                 if (pooledData.Count < MaxPoolSize)
                 {
-                    pooledData.Add(typed);
+                    pooledData.Push(typed);
                 }
             }
         }
