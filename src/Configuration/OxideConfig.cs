@@ -1,8 +1,10 @@
-extern alias References;
+﻿extern alias References;
 
 using References::Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 namespace Oxide.Core.Configuration
 {
@@ -145,9 +147,93 @@ namespace Oxide.Core.Configuration
         /// </summary>
         public OxideConfig(string filename) : base(filename)
         {
-            Options = new OxideOptions { Modded = true, PluginWatchers = true, DefaultGroups = new DefaultGroups { Administrators = "admin", Players = "default" }, WebRequestIP = "0.0.0.0" };
-            Console = new OxideConsole { Enabled = true, MinimalistMode = true, ShowStatusBar = true };
-            Rcon = new OxideRcon { Enabled = false, ChatPrefix = "[Server Console]", Port = 25580, Password = string.Empty };
+            InitializeDefaultValues();
+        }
+
+        public override void Load(string filename = null)
+        {
+            base.Load(filename);
+
+            if (InitializeDefaultValues())
+            {
+                Save();
+            }
+
+            if (Compiler.PreprocessorDirectives.Count > 0)
+            {
+                Compiler.PreprocessorDirectives = Compiler.PreprocessorDirectives
+                    .Select(s => s.ToUpperInvariant().Replace(" ", "_"))
+                    .Distinct()
+                    .ToList();
+            }
+
+            Commands.ChatPrefix = Commands.ChatPrefix.Distinct().ToList();
+        }
+
+        private bool InitializeDefaultValues()
+        {
+            bool changed = false;
+            if (Options == null)
+            {
+                Options = new OxideOptions();
+                changed = true;
+            }
+
+            if (Commands == null)
+            {
+                Commands = new CommandOptions();
+                changed = true;
+            }
+
+            if (Commands.ChatPrefix == null)
+            {
+                Commands.ChatPrefix = new List<string>() { "/" };
+                changed = true;
+            }
+
+            if (Commands.ChatPrefix.Count == 0)
+            {
+                Commands.ChatPrefix.Add("/");
+                changed = true;
+            }
+
+            if (Options.DefaultGroups == null)
+            {
+                Options.DefaultGroups = new DefaultGroups();
+                changed = true;
+            }
+
+            if (string.IsNullOrEmpty(Options.WebRequestIP) || !IPAddress.TryParse(Options.WebRequestIP, out IPAddress address))
+            {
+                Options.WebRequestIP = "0.0.0.0";
+                changed = true;
+            }
+
+            if (Console == null)
+            {
+                Console = new OxideConsole();
+                changed = true;
+            }
+
+            if (Rcon == null)
+            {
+                Rcon = new OxideRcon();
+                changed = true;
+            }
+
+            if (Compiler == null)
+            {
+                Compiler = new CompilerOptions();
+                changed = true;
+            }
+
+            if (Compiler.PreprocessorDirectives == null)
+            {
+                Compiler.PreprocessorDirectives = new List<string>();
+                changed = true;
+            }
+
+            return changed;
         }
     }
 }
