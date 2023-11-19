@@ -2,6 +2,7 @@
 
 using References::Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.IO;
 
 namespace Oxide.Core.Configuration
@@ -11,6 +12,13 @@ namespace Oxide.Core.Configuration
     /// </summary>
     public abstract class ConfigFile
     {
+        private static JsonSerializerSettings SerializerSettings = new JsonSerializerSettings()
+        {
+            DefaultValueHandling = DefaultValueHandling.Populate, Culture = CultureInfo.InvariantCulture,
+            Formatting = Formatting.Indented,
+            MissingMemberHandling = MissingMemberHandling.Ignore
+        };
+
         [JsonIgnore]
         public string Filename { get; private set; }
 
@@ -37,7 +45,7 @@ namespace Oxide.Core.Configuration
         public virtual void Load(string filename = null)
         {
             string source = File.ReadAllText(filename ?? Filename);
-            JsonConvert.PopulateObject(source, this);
+            JsonConvert.PopulateObject(source, this, SerializerSettings);
         }
 
         /// <summary>
@@ -46,7 +54,7 @@ namespace Oxide.Core.Configuration
         /// <param name="filename"></param>
         public virtual void Save(string filename = null)
         {
-            string source = JsonConvert.SerializeObject(this, Formatting.Indented);
+            string source = JsonConvert.SerializeObject(this, SerializerSettings);
             File.WriteAllText(filename ?? Filename, source);
         }
     }
