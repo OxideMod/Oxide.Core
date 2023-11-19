@@ -16,10 +16,11 @@ namespace Oxide.Core.Configuration
         /// </summary>
         public class OxideOptions
         {
-            public bool Modded;
-            public bool PluginWatchers;
-            public DefaultGroups DefaultGroups;
-            public string WebRequestIP;
+            public bool Modded { get; set; } = true;
+            public bool PluginWatchers { get; set; } = true;
+            public DefaultGroups DefaultGroups { get; set; } = new DefaultGroups();
+            public string WebRequestIP { get; set; } = "0.0.0.0";
+        }
 
         public class CommandOptions
         {
@@ -32,8 +33,8 @@ namespace Oxide.Core.Configuration
         [JsonObject]
         public class DefaultGroups : IEnumerable<string>
         {
-            public string Players;
-            public string Administrators;
+            public string Players { get; set; } = "default";
+            public string Administrators { get; set; } = "admin";
 
             public IEnumerator<string> GetEnumerator()
             {
@@ -52,17 +53,17 @@ namespace Oxide.Core.Configuration
             /// <summary>
             /// Gets or sets if the Oxide console should be setup
             /// </summary>
-            public bool Enabled { get; set; }
+            public bool Enabled { get; set; } = true;
 
             /// <summary>
             /// Gets or sets if the Oxide console should run in minimalist mode (no tags in the console)
             /// </summary>
-            public bool MinimalistMode { get; set; }
+            public bool MinimalistMode { get; set; } = true;
 
             /// <summary>
             /// Gets or sets if the Oxide console should show the toolbar on the bottom with server information
             /// </summary>
-            public bool ShowStatusBar { get; set; }
+            public bool ShowStatusBar { get; set; } = true;
         }
 
         /// <summary>
@@ -73,22 +74,22 @@ namespace Oxide.Core.Configuration
             /// <summary>
             /// Gets or sets if the Oxide remote console should be setup
             /// </summary>
-            public bool Enabled { get; set; }
+            public bool Enabled { get; set; } = false;
 
             /// <summary>
             /// Gets or sets the Oxide remote console port
             /// </summary>
-            public int Port { get; set; }
+            public int Port { get; set; } = 25580;
 
             /// <summary>
             /// Gets or sets the Oxide remote console password
             /// </summary>
-            public string Password { get; set; }
+            public string Password { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the Oxide remote console chat prefix
             /// </summary>
-            public string ChatPrefix { get; set; }
+            public string ChatPrefix { get; set; } = "[Server Console]";
         }
 
         /// <summary>
