@@ -28,6 +28,25 @@ namespace Oxide.Core.Configuration
             public List<string> ChatPrefix { get; set; } = new List<string>() { "/" };
         }
 
+        public class CompilerOptions
+        {
+            /// <summary>
+            /// Shuts the compiler down when no more jobs are in queue
+            /// </summary>
+            [JsonProperty(PropertyName = "Shutdown on idle")]
+            public bool IdleShutdown { get; set; } = true;
+
+            /// <summary>
+            /// Seconds after last job before considered idle
+            /// </summary>
+            [JsonProperty(PropertyName = "Seconds before idle")]
+            public int IdleTimeout { get; set; } = 60;
+
+            /// <summary>
+            /// Additional preprocessor directives to add during plugin compilation
+            /// </summary>
+            [JsonProperty(PropertyName = "Preprocessor directives")]
+            public List<string> PreprocessorDirectives { get; set; } = new List<string>();
         }
 
         [JsonObject]
@@ -102,6 +121,12 @@ namespace Oxide.Core.Configuration
         /// </summary>
         [JsonProperty(PropertyName = "Commands")]
         public CommandOptions Commands { get; set; }
+
+        /// <summary>
+        /// Gets or sets information regarding the Roslyn compiler
+        /// </summary>
+        [JsonProperty(PropertyName = "Plugin Compiler")]
+        public CompilerOptions Compiler { get; set; }
 
         /// <summary>
         /// Gets or sets information regarding the Oxide console
