@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using References::Newtonsoft.Json;
 using System.Collections;
@@ -20,6 +20,13 @@ namespace Oxide.Core.Configuration
             public bool PluginWatchers;
             public DefaultGroups DefaultGroups;
             public string WebRequestIP;
+
+        public class CommandOptions
+        {
+            [JsonProperty(PropertyName = "Chat command prefixes")]
+            public List<string> ChatPrefix { get; set; } = new List<string>() { "/" };
+        }
+
         }
 
         [JsonObject]
@@ -88,6 +95,12 @@ namespace Oxide.Core.Configuration
         /// Gets or sets information regarding the Oxide mod
         /// </summary>
         public OxideOptions Options { get; set; }
+
+        /// <summary>
+        /// Gets or sets information regarding commands
+        /// </summary>
+        [JsonProperty(PropertyName = "Commands")]
+        public CommandOptions Commands { get; set; }
 
         /// <summary>
         /// Gets or sets information regarding the Oxide console
