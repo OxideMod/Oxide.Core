@@ -27,6 +27,24 @@ namespace Oxide.Core.Libraries.Covalence
         }
 
         /// <summary>
+        /// Returns chat command prefix if the message is a chat command
+        ///  </summary>
+        ///  <param name="message"></param>
+        ///  <returns></returns>
+        public static string GetChatCommandPrefix(string message)
+        {
+            foreach (string prefix in Interface.Oxide.Config.Commands.ChatPrefix)
+            {
+                if (message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return prefix;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Handles a chat message from the specified player, returns true if handled
         /// </summary>
         /// <param name="player"></param>
@@ -40,13 +58,14 @@ namespace Oxide.Core.Libraries.Covalence
             }
 
             // Is it a chat command?
-            if (message[0] != '/')
+            string chatCommandPrefix = GetChatCommandPrefix(message);
+            if ( chatCommandPrefix == null )
             {
                 return false;
             }
 
-            // Get the message
-            message = message.Substring(1);
+            // Remove the prefix from the message
+            message = message.Substring(chatCommandPrefix.Length);
 
             // Parse the command
             ParseCommand(message, out string command, out string[] args);
