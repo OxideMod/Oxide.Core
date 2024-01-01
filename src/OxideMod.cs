@@ -18,6 +18,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Oxide.Configuration;
+using Oxide.Data.StorageDrivers;
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core
@@ -55,6 +57,11 @@ namespace Oxide.Core
         /// Gets the data file system
         /// </summary>
         public DataFileSystem DataFileSystem { get; private set; }
+
+        /// <summary>
+        /// Get the config manager
+        /// </summary>
+        public IConfigurationManager ConfigurationManager { get; private set; }
 
         // Various directories
         public string RootDirectory { get; private set; }
@@ -189,6 +196,7 @@ namespace Oxide.Core
             }
 
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
+            ConfigurationManager = new ConfigurationManager(FileDriver.CreateDefault(ConfigDirectory));
 
             string config = Path.Combine(InstanceDirectory, "oxide.config.json");
             if (File.Exists(config))

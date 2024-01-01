@@ -1,46 +1,53 @@
 ﻿using System;
-using System.IO;
-using Oxide.Data;
+using Oxide.Core;
+using Oxide.Data.StorageDrivers;
 
 namespace Oxide.Configuration
 {
     internal class ConfigurationManager : IConfigurationManager
     {
-        protected string ConfigDirectory { get; }
-        protected IDataReaderWriter ReaderWriter { get; }
+        public IStorageDriver Driver { get; }
 
-        public ConfigurationManager(string configDirectory, IDataReaderWriter rw)
+        public ConfigurationManager(IStorageDriver driver)
         {
-            ConfigDirectory = configDirectory ?? throw new ArgumentNullException(nameof(configDirectory));
-            ReaderWriter = rw ?? throw new ArgumentNullException(nameof(rw));
+            Driver = driver ?? FileDriver.CreateDefault(Interface.Oxide.ConfigDirectory);
         }
 
-        public T ReadConfig<T>(string name = null)
+        public T ReadConfig<T>(string name = null, IStorageDriver driver = null)
         {
-            if (string.IsNullOrEmpty(name))
+            Parse<T>(out Type context, ref name, ref driver);
+
+            try
             {
-                name = DataHelpers.GetFileNameFromType<T>();
+                return (T)driver.Read(name, context);
             }
-            else
+            catch (NullReferenceException e)
             {
-                name = name.Replace("..", string.Empty);
+                Interface.Oxide.LogDebug($"Unable to locate configuration file with key: {name} | {e.Message}");
             }
 
-            return ReaderWriter.Read<T>(Path.Combine(ConfigDirectory, name));
+            return default;
         }
 
-        public void WriteConfig<T>(T config, string name = null)
+        public void WriteConfig<T>(T config, string name = null, IStorageDriver driver = null)
         {
+            Parse<T>(out Type context, ref name, ref driver);
+            driver.Write(name, config);
+        }
+
+        private void Parse<T>(out Type context, ref string name, ref IStorageDriver driver)
+        {
+            context = typeof(T);
+
             if (string.IsNullOrEmpty(name))
             {
-                name = DataHelpers.GetFileNameFromType<T>();
-            }
-            else
-            {
-                name = name.Replace("..", string.Empty);
+                name = context.Name;
             }
 
-            ReaderWriter.Write(config, Path.Combine(ConfigDirectory, name));
+            if (driver == null)
+            {
+                driver = Driver;
+            }
         }
     }
 }
