@@ -140,6 +140,8 @@ namespace Oxide.Core.Plugins
         /// </summary>
         /// <value>The total hook time.</value>
         public double TotalHookTime { get; internal set; }
+        public long TotalHookMemory { get; internal set; }
+        private long _currentMemoryUsed { get; set; }
 
         // Used to measure time spent in this plugin
         private Stopwatch trackStopwatch = new Stopwatch();
@@ -346,6 +348,7 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
+            _currentMemoryUsed = GetMemory();
             stopwatch.Start();
         }
 
@@ -364,8 +367,12 @@ namespace Oxide.Core.Plugins
 
             stopwatch.Stop();
             TotalHookTime += stopwatch.Elapsed.TotalSeconds;
+            TotalHookMemory += Math.Max(0, GetMemory() - _currentMemoryUsed);
             stopwatch.Reset();
         }
+
+        private static long GetMemory()
+            => GC.GetTotalMemory(false);
 
         #region Config
 
