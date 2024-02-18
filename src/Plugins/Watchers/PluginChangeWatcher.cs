@@ -1,4 +1,7 @@
-﻿namespace Oxide.Core.Plugins.Watchers
+﻿using System;
+using Oxide.IO;
+
+namespace Oxide.Core.Plugins.Watchers
 {
     public delegate void PluginChangeEvent(string name);
 

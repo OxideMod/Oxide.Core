@@ -18,6 +18,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Oxide.IO;
+using Oxide.IO.Unix;
+using Oxide.IO.Windows;
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core
@@ -66,6 +69,10 @@ namespace Oxide.Core
         public string DataDirectory { get; private set; }
         public string LangDirectory { get; private set; }
         public string LogDirectory { get; private set; }
+
+        public IFileSystem FileSystem { get; private set; }
+
+        public IFileSystemWatcher FileWatcher { get; private set; }
 
         // Gets the number of seconds since the server started
         public float Now => getTimeSinceStartup();
@@ -143,7 +150,9 @@ namespace Oxide.Core
                 CommandLine.GetArgument("oxide.directory", out string var, out string format);
                 if (string.IsNullOrEmpty(var) || CommandLine.HasVariable(var))
                 {
-                    InstanceDirectory = Path.Combine(RootDirectory, Utility.CleanPath(string.Format(format, CommandLine.GetVariable(var))));
+                    InstanceDirectory = Path.Combine(RootDirectory,
+                                                     Utility.CleanPath(string.Format(format,
+                                                                        CommandLine.GetVariable(var))));
                 }
             }
 
@@ -243,6 +252,21 @@ namespace Oxide.Core
             extensionManager.RegisterLibrary("Timer", libtimer = new Timer());
             extensionManager.RegisterLibrary("WebRequests", new WebRequests());
 
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                FileSystem = new UnixFileSystem();
+                FileWatcher = new UnixFileSystemWatcher(FileSystem, InstanceDirectory, true, NotifyMask.Default);
+            }
+            else
+            {
+                FileSystem = new WindowsFileSystem();
+                FileWatcher = new WindowsFileSystemWatcher(FileSystem, InstanceDirectory, true, NotifyMask.Default);
+            }
+
+            FileWatcher.Ignore("*.log")
+                       .Ignore("*.txt")
+                       .BeginInit();
+
             LogInfo("Loading extensions...");
             extensionManager.LoadAllExtensions(ExtensionDirectory);
 
@@ -273,6 +297,8 @@ namespace Oxide.Core
                 watcher.OnPluginAdded += watcher_OnPluginAdded;
                 watcher.OnPluginRemoved += watcher_OnPluginRemoved;
             }
+
+            FileWatcher.EndInit();
         }
 
         /// <summary>
@@ -756,6 +782,7 @@ namespace Oxide.Core
                 RemoteConsole?.Shutdown();
                 ServerConsole?.OnDisable();
                 RootLogger.Shutdown();
+                FileWatcher.Dispose();
             }
         }
 
