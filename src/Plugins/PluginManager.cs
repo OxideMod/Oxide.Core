@@ -37,8 +37,17 @@ namespace Oxide.Core.Plugins
         // All hook subscriptions
         private readonly IDictionary<string, IList<Plugin>> hookSubscriptions;
 
+        // The current depth of hook calls
+        private int hookCallDepth;
+
         // Stores the last time a deprecation warning was printed for a specific hook
         private readonly Dictionary<string, float> lastDeprecatedWarningAt = new Dictionary<string, float>();
+
+        // Pending hook subscriptions
+        private readonly Dictionary<string, IList<Plugin>> pendingHookSubscriptions = new Dictionary<string, IList<Plugin>>();
+
+        // Pending hook unsubscriptions
+        private readonly Dictionary<string, IList<Plugin>> pendingHookUnsubscriptions = new Dictionary<string, IList<Plugin>>();
 
         // Re-usable conflict list used for hook calls
         private readonly List<string> hookConflicts = new List<string>();
@@ -125,7 +134,25 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist))
+            IList<Plugin> sublist;
+            // Avoids modifying the plugin list while iterating over it during a hook call
+            if (hookCallDepth > 0)
+            {
+                if (!pendingHookSubscriptions.TryGetValue(hook, out sublist))
+                {
+                    sublist = new List<Plugin>();
+                    pendingHookSubscriptions.Add(hook, sublist);
+                }
+
+                if (!sublist.Contains(plugin))
+                {
+                    sublist.Add(plugin);
+                }
+
+                return;
+            }
+
+            if (!hookSubscriptions.TryGetValue(hook, out sublist))
             {
                 sublist = new List<Plugin>();
                 hookSubscriptions.Add(hook, sublist);
@@ -149,7 +176,24 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            if (hookSubscriptions.TryGetValue(hook, out IList<Plugin> sublist) && sublist.Contains(plugin))
+            IList<Plugin> sublist;
+            // Avoids modifying the plugin list while iterating over it during a hook call
+            if (hookCallDepth > 0)
+            {
+                if (!pendingHookUnsubscriptions.TryGetValue(hook, out sublist))
+                {
+                    sublist = new List<Plugin>();
+                    pendingHookUnsubscriptions.Add(hook, sublist);
+                }
+
+                if (!sublist.Contains(plugin))
+                {
+                    sublist.Add(plugin);
+                }
+
+                return;
+            }
+            if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
             {
                 sublist.Remove(plugin);
             }
@@ -180,62 +224,111 @@ namespace Oxide.Core.Plugins
             int returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
-            for (int i = 0; i < plugins.Count; i++)
-            {
-                // Call the hook
-                object value = plugins[i].CallHook(hook, args);
-                if (value != null)
-                {
-                    values[i] = value;
-                    finalValue = value;
-                    finalPlugin = plugins[i];
-                    returnCount++;
-                }
-            }
 
-            // Is there a return value?
-            if (returnCount == 0)
-            {
-                ArrayPool.Free(values);
-                return null;
-            }
+            hookCallDepth++;
 
-            if (returnCount > 1 && finalValue != null)
+            try
             {
-                // Notify log of hook conflict
-                hookConflicts.Clear();
                 for (int i = 0; i < plugins.Count; i++)
                 {
-                    object value = values[i];
-                    if (value == null)
+                    // Call the hook
+                    object value = plugins[i].CallHook(hook, args);
+                    if (value != null)
                     {
-                        continue;
-                    }
-
-                    if (value.GetType().IsValueType)
-                    {
-                        if (!values[i].Equals(finalValue))
-                        {
-                            hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
-                        }
-                    }
-                    else
-                    {
-                        if (values[i] != finalValue)
-                        {
-                            hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
-                        }
+                        values[i] = value;
+                        finalValue = value;
+                        finalPlugin = plugins[i];
+                        returnCount++;
                     }
                 }
-                if (hookConflicts.Count > 0)
+
+                // Is there a return value?
+                if (returnCount == 0)
                 {
-                    hookConflicts.Add($"{finalPlugin.Name} ({finalValue} ({finalValue.GetType().Name}))");
-                    Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
+                    ArrayPool.Free(values);
+                    return null;
+                }
+
+                if (returnCount > 1 && finalValue != null)
+                {
+                    // Notify log of hook conflict
+                    hookConflicts.Clear();
+                    for (int i = 0; i < plugins.Count; i++)
+                    {
+                        object value = values[i];
+                        if (value == null)
+                        {
+                            continue;
+                        }
+
+                        if (value.GetType().IsValueType)
+                        {
+                            if (!values[i].Equals(finalValue))
+                            {
+                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            }
+                        }
+                        else
+                        {
+                            if (values[i] != finalValue)
+                            {
+                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                            }
+                        }
+                    }
+                    if (hookConflicts.Count > 0)
+                    {
+                        hookConflicts.Add($"{finalPlugin.Name} ({finalValue} ({finalValue.GetType().Name}))");
+                        Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
+                    }
+                }
+                ArrayPool.Free(values);
+            }
+            finally
+            {
+                hookCallDepth--;
+                if (hookCallDepth == 0)
+                {
+                    ProcessHookChanges();
                 }
             }
-            ArrayPool.Free(values);
 
             return finalValue;
+        }
+
+        private void ProcessHookChanges()
+        {
+            foreach (var pair in pendingHookSubscriptions)
+            {
+                if (!hookSubscriptions.TryGetValue(pair.Key, out IList<Plugin> list))
+                {
+                    list = new List<Plugin>();
+                    hookSubscriptions.Add(pair.Key, list);
+                }
+
+                foreach (var plugin in pair.Value)
+                {
+                    if (!list.Contains(plugin))
+                    {
+                        list.Add(plugin);
+                    }
+                }
+            }
+
+            pendingHookSubscriptions.Clear();
+
+            foreach (var pair in pendingHookUnsubscriptions)
+            {
+                if (hookSubscriptions.TryGetValue(pair.Key, out IList<Plugin> list))
+                {
+                    foreach (var plugin in pair.Value)
+                    {
+                        list.Remove(plugin);
+                    }
+                }
+            }
+
+            pendingHookUnsubscriptions.Clear();
         }
 
         /// <summary>
