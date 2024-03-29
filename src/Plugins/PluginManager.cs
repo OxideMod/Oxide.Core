@@ -11,6 +11,41 @@ namespace Oxide.Core.Plugins
     /// </summary>
     public sealed class PluginManager
     {
+        private enum SubscriptionChangeType : byte
+        {
+            Subscribe = 0,
+            Unsubscribe = 1
+        }
+
+        private struct SubscriptionChange
+        {
+            public Plugin Plugin { get; }
+
+            public SubscriptionChangeType Change { get; }
+
+            public SubscriptionChange(Plugin plugin, SubscriptionChangeType type)
+            {
+                Plugin = plugin;
+                Change = type;
+            }
+        }
+
+        private class HookSubscriptions
+        {
+            public IList<Plugin> Plugins { get; }
+
+            public int CallDepth { get; set; }
+
+            public Queue<SubscriptionChange> PendingChanges { get; }
+
+            public HookSubscriptions()
+            {
+                Plugins = new List<Plugin>();
+                PendingChanges = new Queue<SubscriptionChange>();
+                CallDepth = 0;
+            }
+        }
+
         /// <summary>
         /// Gets the logger to which this plugin manager writes
         /// </summary>
@@ -35,19 +70,10 @@ namespace Oxide.Core.Plugins
         private readonly IDictionary<string, Plugin> loadedPlugins;
 
         // All hook subscriptions
-        private readonly IDictionary<string, IList<Plugin>> hookSubscriptions;
-
-        // The current depth of hook calls
-        private int hookCallDepth;
+        private readonly IDictionary<string, HookSubscriptions> hookSubscriptions;
 
         // Stores the last time a deprecation warning was printed for a specific hook
         private readonly Dictionary<string, float> lastDeprecatedWarningAt = new Dictionary<string, float>();
-
-        // Pending hook subscriptions
-        private readonly Dictionary<string, IList<Plugin>> pendingHookSubscriptions = new Dictionary<string, IList<Plugin>>();
-
-        // Pending hook unsubscriptions
-        private readonly Dictionary<string, IList<Plugin>> pendingHookUnsubscriptions = new Dictionary<string, IList<Plugin>>();
 
         // Re-usable conflict list used for hook calls
         private readonly List<string> hookConflicts = new List<string>();
@@ -59,7 +85,7 @@ namespace Oxide.Core.Plugins
         {
             // Initialize
             loadedPlugins = new Dictionary<string, Plugin>();
-            hookSubscriptions = new Dictionary<string, IList<Plugin>>();
+            hookSubscriptions = new Dictionary<string, HookSubscriptions>();
             Logger = logger;
         }
 
@@ -93,11 +119,15 @@ namespace Oxide.Core.Plugins
             }
 
             loadedPlugins.Remove(plugin.Name);
-            foreach (IList<Plugin> list in hookSubscriptions.Values)
+
+            lock (hookSubscriptions)
             {
-                if (list.Contains(plugin))
+                foreach (HookSubscriptions sub in hookSubscriptions.Values)
                 {
-                    list.Remove(plugin);
+                    if (sub.Plugins.Contains(plugin))
+                    {
+                        sub.Plugins.Remove(plugin);
+                    }
                 }
             }
 
@@ -134,32 +164,27 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            IList<Plugin> sublist;
-            // Avoids modifying the plugin list while iterating over it during a hook call
-            if (hookCallDepth > 0)
+            HookSubscriptions sublist;
+
+            lock (hookSubscriptions)
             {
-                if (!pendingHookSubscriptions.TryGetValue(hook, out sublist))
+                if (!hookSubscriptions.TryGetValue(hook, out sublist))
                 {
-                    sublist = new List<Plugin>();
-                    pendingHookSubscriptions.Add(hook, sublist);
+                    sublist = new HookSubscriptions();
+                    hookSubscriptions[hook] = sublist;
                 }
+            }
 
-                if (!sublist.Contains(plugin))
-                {
-                    sublist.Add(plugin);
-                }
-
+            // Avoids modifying the plugin list while iterating over it during a hook call
+            if (sublist.CallDepth > 0)
+            {
+                sublist.PendingChanges.Enqueue(new SubscriptionChange(plugin, SubscriptionChangeType.Subscribe));
                 return;
             }
 
-            if (!hookSubscriptions.TryGetValue(hook, out sublist))
+            if (!sublist.Plugins.Contains(plugin))
             {
-                sublist = new List<Plugin>();
-                hookSubscriptions.Add(hook, sublist);
-            }
-            if (!sublist.Contains(plugin))
-            {
-                sublist.Add(plugin);
+                sublist.Plugins.Add(plugin);
             }
             //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is subscribing to hook '{hook}'!");
         }
@@ -176,27 +201,24 @@ namespace Oxide.Core.Plugins
                 return;
             }
 
-            IList<Plugin> sublist;
-            // Avoids modifying the plugin list while iterating over it during a hook call
-            if (hookCallDepth > 0)
+            HookSubscriptions sublist;
+
+            lock (hookSubscriptions)
             {
-                if (!pendingHookUnsubscriptions.TryGetValue(hook, out sublist))
+                if (!hookSubscriptions.TryGetValue(hook, out sublist))
                 {
-                    sublist = new List<Plugin>();
-                    pendingHookUnsubscriptions.Add(hook, sublist);
+                    return;
                 }
+            }
 
-                if (!sublist.Contains(plugin))
-                {
-                    sublist.Add(plugin);
-                }
-
+            // Avoids modifying the plugin list while iterating over it during a hook call
+            if (sublist.CallDepth > 0)
+            {
+                sublist.PendingChanges.Enqueue(new SubscriptionChange(plugin, SubscriptionChangeType.Unsubscribe));
                 return;
             }
-            if (hookSubscriptions.TryGetValue(hook, out sublist) && sublist.Contains(plugin))
-            {
-                sublist.Remove(plugin);
-            }
+
+            sublist.Plugins.Remove(plugin);
             //Logger.Write(LogType.Debug, $"Plugin {plugin.Name} is unsubscribing to hook '{hook}'!");
         }
 
@@ -208,36 +230,43 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public object CallHook(string hook, params object[] args)
         {
+            HookSubscriptions subscriptions;
+
             // Locate the sublist
-            if (!hookSubscriptions.TryGetValue(hook, out IList<Plugin> plugins))
+            lock (hookSubscriptions)
             {
-                return null;
+                if (!hookSubscriptions.TryGetValue(hook, out subscriptions))
+                {
+                    return null;
+                }
             }
 
-            if (plugins.Count == 0)
+
+            if (subscriptions.Plugins.Count == 0)
             {
                 return null;
             }
 
             // Loop each item
-            object[] values = ArrayPool.Get(plugins.Count);
+            object[] values = ArrayPool.Get(subscriptions.Plugins.Count);
             int returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
 
-            hookCallDepth++;
+            subscriptions.CallDepth++;
 
             try
             {
-                for (int i = 0; i < plugins.Count; i++)
+                for (int i = 0; i < subscriptions.Plugins.Count; i++)
                 {
+                    Plugin plugin = subscriptions.Plugins[i];
                     // Call the hook
-                    object value = plugins[i].CallHook(hook, args);
+                    object value = plugin.CallHook(hook, args);
                     if (value != null)
                     {
                         values[i] = value;
                         finalValue = value;
-                        finalPlugin = plugins[i];
+                        finalPlugin = plugin;
                         returnCount++;
                     }
                 }
@@ -253,8 +282,9 @@ namespace Oxide.Core.Plugins
                 {
                     // Notify log of hook conflict
                     hookConflicts.Clear();
-                    for (int i = 0; i < plugins.Count; i++)
+                    for (int i = 0; i < subscriptions.Plugins.Count; i++)
                     {
+                        Plugin plugin = subscriptions.Plugins[i];
                         object value = values[i];
                         if (value == null)
                         {
@@ -265,14 +295,14 @@ namespace Oxide.Core.Plugins
                         {
                             if (!values[i].Equals(finalValue))
                             {
-                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                                hookConflicts.Add($"{plugin.Name} - {value} ({value.GetType().Name})");
                             }
                         }
                         else
                         {
                             if (values[i] != finalValue)
                             {
-                                hookConflicts.Add($"{plugins[i].Name} - {value} ({value.GetType().Name})");
+                                hookConflicts.Add($"{plugin.Name} - {value} ({value.GetType().Name})");
                             }
                         }
                     }
@@ -286,49 +316,34 @@ namespace Oxide.Core.Plugins
             }
             finally
             {
-                hookCallDepth--;
-                if (hookCallDepth == 0)
+                subscriptions.CallDepth--;
+                if (subscriptions.CallDepth == 0)
                 {
-                    ProcessHookChanges();
+                    ProcessHookChanges(subscriptions);
                 }
             }
 
             return finalValue;
         }
 
-        private void ProcessHookChanges()
+        private void ProcessHookChanges(HookSubscriptions subscriptions)
         {
-            foreach (var pair in pendingHookSubscriptions)
+            while (subscriptions.PendingChanges.Count != 0)
             {
-                if (!hookSubscriptions.TryGetValue(pair.Key, out IList<Plugin> list))
-                {
-                    list = new List<Plugin>();
-                    hookSubscriptions.Add(pair.Key, list);
-                }
+                SubscriptionChange change = subscriptions.PendingChanges.Dequeue();
 
-                foreach (var plugin in pair.Value)
+                if (change.Change == SubscriptionChangeType.Subscribe)
                 {
-                    if (!list.Contains(plugin))
+                    if (!subscriptions.Plugins.Contains(change.Plugin))
                     {
-                        list.Add(plugin);
+                        subscriptions.Plugins.Add(change.Plugin);
                     }
                 }
-            }
-
-            pendingHookSubscriptions.Clear();
-
-            foreach (var pair in pendingHookUnsubscriptions)
-            {
-                if (hookSubscriptions.TryGetValue(pair.Key, out IList<Plugin> list))
+                else
                 {
-                    foreach (var plugin in pair.Value)
-                    {
-                        list.Remove(plugin);
-                    }
+                    subscriptions.Plugins.Remove(change.Plugin);
                 }
             }
-
-            pendingHookUnsubscriptions.Clear();
         }
 
         /// <summary>
@@ -341,12 +356,18 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, params object[] args)
         {
-            if (!hookSubscriptions.TryGetValue(oldHook, out IList<Plugin> plugins))
+            HookSubscriptions subscriptions;
+
+            lock (hookSubscriptions)
             {
-                return null;
+                if (!hookSubscriptions.TryGetValue(oldHook, out subscriptions))
+                {
+                    return null;
+                }
             }
 
-            if (plugins.Count == 0)
+
+            if (subscriptions.Plugins.Count == 0)
             {
                 return null;
             }
@@ -354,8 +375,9 @@ namespace Oxide.Core.Plugins
             float now = Interface.Oxide.Now;
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 3600f)
             {
+                // TODO: Add better handling
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.Oxide.LogWarning($"'{plugins[0].Name} v{plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                Interface.Oxide.LogWarning($"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);
