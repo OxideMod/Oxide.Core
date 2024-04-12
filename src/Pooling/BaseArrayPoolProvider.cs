@@ -7,23 +7,25 @@ namespace Oxide.Pooling
     {
         private readonly int maxSetCapacity;
         private readonly int maxArrayLength;
-
         private readonly T[] empty;
         private readonly Stack<T[]>[] pooledArrays;
 
-        public BaseArrayPoolProvider()
+        public BaseArrayPoolProvider(int poolCapacity, int arrayMaxLength)
         {
-            maxSetCapacity = 100;
-            maxArrayLength = 50;
+            maxSetCapacity = poolCapacity;
+            maxArrayLength = arrayMaxLength;
             // ReSharper disable once VirtualMemberCallInConstructor
             empty = InstantiateArray(0);
-
             pooledArrays = new Stack<T[]>[maxArrayLength];
 
             for (int i = 0; i < pooledArrays.Length; i++)
             {
                 pooledArrays[i] = new Stack<T[]>(maxSetCapacity);
             }
+        }
+
+        public BaseArrayPoolProvider() : this(100, 50)
+        {
         }
 
         public T[] Take() => empty;
