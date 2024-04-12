@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace Oxide.Pooling
 {
@@ -14,10 +15,12 @@ namespace Oxide.Pooling
         {
             registeredProviders = new Dictionary<Type, IPoolProvider>
             {
-                // [typeof(object[])] = new BaseArrayPoolProvider<object>(),
-                // [typeof(StringBuilder)] = new StringPoolProvider()
+                [typeof(object[])] = new BaseArrayPoolProvider<object>(256, 50),
+                [typeof(StringBuilder)] = new StringPoolProvider()
             };
         }
+
+        internal void Internal_RegisterProvider(Type type, IPoolProvider provider) => registeredProviders[type] = provider;
 
         public IPoolProvider<T> GetProvider<T>()
         {
