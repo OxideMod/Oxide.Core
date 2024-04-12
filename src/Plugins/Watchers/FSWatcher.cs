@@ -1,14 +1,17 @@
 ﻿extern alias References;
 
 using Oxide.Core.Libraries;
-using References::Mono.Posix;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 #if !NETSTANDARD
 using System.Security.Permissions;
 #endif
 using System.Text.RegularExpressions;
+using Oxide.Pooling;
+using References::Mono.Unix.Native;
+using Syscall = References::Mono.Unix.Native.Syscall;
 
 namespace Oxide.Core.Plugins.Watchers
 {
@@ -35,6 +38,7 @@ namespace Oxide.Core.Plugins.Watchers
         private Timer timers;
 
         private Dictionary<string, FileSystemWatcher> m_symlinkWatchers = new Dictionary<string, FileSystemWatcher>();
+        private IPoolProvider<StringBuilder> StringPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
@@ -43,6 +47,7 @@ namespace Oxide.Core.Plugins.Watchers
         /// <param name="filter"></param>
         public FSWatcher(string directory, string filter)
         {
+            StringPool = Interface.Oxide.PoolFactory.GetProvider<StringBuilder>();
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
             timers = Interface.Oxide.GetLibrary<Timer>();
@@ -80,21 +85,46 @@ namespace Oxide.Core.Plugins.Watchers
 #endif
         private void LoadWatcherSymlink(string path)
         {
-            string realPath = Syscall.readlink(path);
-            string realDirName = Path.GetDirectoryName(realPath);
-            string realFileName = Path.GetFileName(realPath);
+            StringBuilder str = StringPool.Take();
+            try
+            {
+                int count = Syscall.readlink(path, str);
 
-            void symlinkTarget_Changed(object sender, FileSystemEventArgs e) => watcher_Changed(sender, e);
+                if (count == -1)
+                {
+                    Errno err = Stdlib.GetLastError();
 
-            FileSystemWatcher watcher = new FileSystemWatcher(realDirName, realFileName);
-            m_symlinkWatchers[path] = watcher;
-            watcher.Changed += symlinkTarget_Changed;
-            watcher.Created += symlinkTarget_Changed;
-            watcher.Deleted += symlinkTarget_Changed;
-            watcher.Error += watcher_Error;
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.IncludeSubdirectories = false;
-            watcher.EnableRaisingEvents = true;
+                    switch (err)
+                    {
+                        case Errno.EINVAL:
+                            return;
+
+                        default:
+                            throw new IOException($"Unable to process symlink | {err}", (int)err);
+                    }
+                }
+
+                string realPath = str.ToString(0, count);
+                string realDirName = Path.GetDirectoryName(realPath);
+                string realFileName = Path.GetFileName(realPath);
+
+                void symlinkTarget_Changed(object sender, FileSystemEventArgs e) => watcher_Changed(sender, e);
+
+                FileSystemWatcher watcher = new FileSystemWatcher(realDirName, realFileName);
+                m_symlinkWatchers[path] = watcher;
+                watcher.Changed += symlinkTarget_Changed;
+                watcher.Created += symlinkTarget_Changed;
+                watcher.Deleted += symlinkTarget_Changed;
+                watcher.Error += watcher_Error;
+                watcher.NotifyFilter = NotifyFilters.LastWrite;
+                watcher.IncludeSubdirectories = false;
+                watcher.EnableRaisingEvents = true;
+            }
+            finally
+            {
+                StringPool.Return(str);
+            }
+
         }
 
         /// <summary>
