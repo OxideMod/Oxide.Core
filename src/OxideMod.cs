@@ -18,6 +18,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Oxide.Pooling;
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core
@@ -40,6 +41,11 @@ namespace Oxide.Core
         /// The Git Branch of this Oxide.Core build
         /// </summary>
         public static readonly string Branch = Assembly.GetExecutingAssembly().Metadata("GitBranch").FirstOrDefault() ?? "unknown";
+
+        /// <summary>
+        /// Retrieve pooled objects
+        /// </summary>
+        public IPoolFactory PoolFactory { get; }
 
         /// <summary>
         /// Gets the main logger
@@ -102,6 +108,7 @@ namespace Oxide.Core
         // Allow extensions to register a method to be called every frame
         private Action<float> onFrame;
 
+        internal bool init_called;
         private bool isInitialized;
         public bool HasLoadedCorePlugins { get; private set; }
 
@@ -112,9 +119,11 @@ namespace Oxide.Core
 
         private NativeDebugCallback debugCallback;
 
-        public OxideMod(NativeDebugCallback debugCallback)
+        public OxideMod()
         {
-            this.debugCallback = debugCallback;
+            init_called = false;
+            CorePoolFactory factory = new CorePoolFactory();
+            PoolFactory = factory;
         }
 
         /// <summary>
@@ -122,6 +131,7 @@ namespace Oxide.Core
         /// </summary>
         public void Load()
         {
+            debugCallback = Interface.DebugCallback;
             RootDirectory = Environment.CurrentDirectory;
             if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
             {

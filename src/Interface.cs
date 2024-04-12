@@ -1,4 +1,5 @@
 ﻿using System;
+using Oxide.Pooling;
 
 namespace Oxide.Core
 {
@@ -17,18 +18,25 @@ namespace Oxide.Core
         /// </summary>
         public static NativeDebugCallback DebugCallback { get; set; }
 
+        private static IArrayPoolProvider<object> HookArrays { get; }
+
+        static Interface()
+        {
+            Oxide = new OxideMod();
+            HookArrays = Oxide.PoolFactory.GetArrayProvider<object>();
+        }
+
         /// <summary>
         /// Initializes Oxide
         /// </summary>
         public static void Initialize()
         {
-            // Create if not already created
-            if (Oxide != null)
+            if (Oxide.init_called)
             {
                 return;
             }
 
-            Oxide = new OxideMod(DebugCallback);
+            Oxide.init_called = true;
             Oxide.Load();
         }
 
@@ -64,7 +72,7 @@ namespace Oxide.Core
         /// <param name="hook"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object[] args) => Oxide?.CallHook(hook, args);
+        public static object CallHook(string hook, object[] args) => Oxide.CallHook(hook, args);
 
         #region Hook Overloads
 
@@ -99,10 +107,10 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1)
         {
-            object[] array = ArrayPool.Get(1);
+            object[] array = HookArrays.Take(1);
             array[0] = obj1;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -116,10 +124,10 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1)
         {
-            object[] array = ArrayPool.Get(1);
+            object[] array = HookArrays.Take(1);
             array[0] = obj1;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -132,11 +140,11 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2)
         {
-            object[] array = ArrayPool.Get(2);
+            object[] array = HookArrays.Take(2);
             array[0] = obj1;
             array[1] = obj2;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -151,11 +159,11 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2)
         {
-            object[] array = ArrayPool.Get(2);
+            object[] array = HookArrays.Take(2);
             array[0] = obj1;
             array[1] = obj2;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -169,12 +177,12 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3)
         {
-            object[] array = ArrayPool.Get(3);
+            object[] array = HookArrays.Take(3);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -190,12 +198,12 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3)
         {
-            object[] array = ArrayPool.Get(3);
+            object[] array = HookArrays.Take(3);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -210,13 +218,13 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4)
         {
-            object[] array = ArrayPool.Get(4);
+            object[] array = HookArrays.Take(4);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -233,13 +241,13 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4)
         {
-            object[] array = ArrayPool.Get(4);
+            object[] array = HookArrays.Take(4);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -255,14 +263,14 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5)
         {
-            object[] array = ArrayPool.Get(5);
+            object[] array = HookArrays.Take(5);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
             array[4] = obj5;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -280,14 +288,14 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5)
         {
-            object[] array = ArrayPool.Get(5);
+            object[] array = HookArrays.Take(5);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
             array[4] = obj5;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -304,7 +312,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6)
         {
-            object[] array = ArrayPool.Get(6);
+            object[] array = HookArrays.Take(6);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -312,7 +320,7 @@ namespace Oxide.Core
             array[4] = obj5;
             array[5] = obj6;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -331,7 +339,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6)
         {
-            object[] array = ArrayPool.Get(6);
+            object[] array = HookArrays.Take(6);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -339,7 +347,7 @@ namespace Oxide.Core
             array[4] = obj5;
             array[5] = obj6;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -357,7 +365,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7)
         {
-            object[] array = ArrayPool.Get(7);
+            object[] array = HookArrays.Take(7);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -366,7 +374,7 @@ namespace Oxide.Core
             array[5] = obj6;
             array[6] = obj7;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -386,7 +394,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7)
         {
-            object[] array = ArrayPool.Get(7);
+            object[] array = HookArrays.Take(7);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -395,7 +403,7 @@ namespace Oxide.Core
             array[5] = obj6;
             array[6] = obj7;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -414,7 +422,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8)
         {
-            object[] array = ArrayPool.Get(8);
+            object[] array = HookArrays.Take(8);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -424,7 +432,7 @@ namespace Oxide.Core
             array[6] = obj7;
             array[7] = obj8;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -445,7 +453,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8)
         {
-            object[] array = ArrayPool.Get(8);
+            object[] array = HookArrays.Take(8);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -455,7 +463,7 @@ namespace Oxide.Core
             array[6] = obj7;
             array[7] = obj8;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -475,7 +483,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9)
         {
-            object[] array = ArrayPool.Get(9);
+            object[] array = HookArrays.Take(9);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -486,7 +494,7 @@ namespace Oxide.Core
             array[7] = obj8;
             array[8] = obj9;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -508,7 +516,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9)
         {
-            object[] array = ArrayPool.Get(9);
+            object[] array = HookArrays.Take(9);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -519,7 +527,7 @@ namespace Oxide.Core
             array[7] = obj8;
             array[8] = obj9;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -540,7 +548,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9, object obj10)
         {
-            object[] array = ArrayPool.Get(10);
+            object[] array = HookArrays.Take(10);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -552,7 +560,7 @@ namespace Oxide.Core
             array[8] = obj9;
             array[9] = obj10;
             object ret = CallHook(hook, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 
@@ -575,7 +583,7 @@ namespace Oxide.Core
         /// <returns></returns>
         public static object CallDeprecatedHook(string oldHook, string newHook, DateTime expireDate, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9, object obj10)
         {
-            object[] array = ArrayPool.Get(10);
+            object[] array = HookArrays.Take(10);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
@@ -587,7 +595,7 @@ namespace Oxide.Core
             array[8] = obj9;
             array[9] = obj10;
             object ret = CallDeprecatedHook(oldHook, newHook, expireDate, array);
-            ArrayPool.Free(array);
+            HookArrays.Return(array);
             return ret;
         }
 

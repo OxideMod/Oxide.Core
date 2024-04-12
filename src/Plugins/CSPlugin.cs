@@ -2,6 +2,7 @@ using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins
 {
@@ -45,10 +46,17 @@ namespace Oxide.Core.Plugins
         protected HookCache HooksCache = new HookCache();
 
         /// <summary>
+        /// Pool of <see cref="object"/> array's
+        /// </summary>
+        protected IArrayPoolProvider<object> ObjectArrayPool { get; }
+
+        /// <summary>
         /// Initializes a new instance of the CSPlugin class
         /// </summary>
         public CSPlugin()
         {
+            ObjectArrayPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
             List<Type> types = new List<Type> { type };
@@ -135,7 +143,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -176,7 +184,7 @@ namespace Oxide.Core.Plugins
                 {
                     if (pooledArray)
                     {
-                        ArrayPool.Free(hookArgs);
+                        ObjectArrayPool.Return(hookArgs);
                     }
                     throw ex.InnerException ?? ex;
                 }
@@ -196,7 +204,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArrayPool.Return(hookArgs);
                 }
             }
 
@@ -243,7 +251,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -290,7 +298,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArrayPool.Return(hookArgs);
                 }
             }
 

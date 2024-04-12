@@ -1,6 +1,7 @@
 ﻿using Oxide.Core.Logging;
 using System;
 using System.Collections.Generic;
+using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins
 {
@@ -78,12 +79,15 @@ namespace Oxide.Core.Plugins
         // Re-usable conflict list used for hook calls
         private readonly List<string> hookConflicts = new List<string>();
 
+        private IArrayPoolProvider<object> ObjectPool { get; }
+
         /// <summary>
         /// Initializes a new instance of the PluginManager class
         /// </summary>
         public PluginManager(Logger logger)
         {
             // Initialize
+            ObjectPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
             loadedPlugins = new Dictionary<string, Plugin>();
             hookSubscriptions = new Dictionary<string, HookSubscriptions>();
             Logger = logger;
@@ -248,7 +252,7 @@ namespace Oxide.Core.Plugins
             }
 
             // Loop each item
-            object[] values = ArrayPool.Get(subscriptions.Plugins.Count);
+            object[] values = ObjectPool.Take(subscriptions.Plugins.Count);
             int returnCount = 0;
             object finalValue = null;
             Plugin finalPlugin = null;
@@ -274,7 +278,7 @@ namespace Oxide.Core.Plugins
                 // Is there a return value?
                 if (returnCount == 0)
                 {
-                    ArrayPool.Free(values);
+                    ObjectPool.Return(values);
                     return null;
                 }
 
@@ -312,7 +316,7 @@ namespace Oxide.Core.Plugins
                         Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
                     }
                 }
-                ArrayPool.Free(values);
+                ObjectPool.Return(values);
             }
             finally
             {
