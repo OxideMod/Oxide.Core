@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core.Plugins
 {
@@ -35,6 +36,13 @@ namespace Oxide.Core.Plugins
         /// Stores the plugin file extension which this loader supports
         /// </summary>
         public virtual string FileExtension { get; }
+
+        protected Timer Timers { get; }
+
+        public PluginLoader()
+        {
+            Timers = Interface.Oxide.ServiceProvider.GetRequiredService<Timer>();
+        }
 
         /// <summary>
         /// Scans the specified directory and returns a set of plugin names for plugins that this loader can load
@@ -113,7 +121,7 @@ namespace Oxide.Core.Plugins
                     Interface.Oxide.LogWarning("Waiting for another application to stop using script: {0}", plugin.Name);
                 }
 
-                Interface.Oxide.GetLibrary<Timer>().Once(.5f, () => LoadPlugin(plugin, true));
+                Timers.Once(.5f, () => LoadPlugin(plugin, true));
             }
             catch (Exception ex)
             {

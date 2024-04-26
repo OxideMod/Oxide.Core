@@ -11,6 +11,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using Oxide.Core.Logging;
+using Oxide.DependencyInjection;
 
 #if DEBUG
 using System.Text;
@@ -119,9 +121,11 @@ namespace Oxide.Core
 
     public class Utility
     {
+        internal static Logger Logger { get; set; }
+
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
-            DataFileSystem dfs = Interface.Oxide.DataFileSystem;
+            DataFileSystem dfs = Interface.Oxide.ServiceProvider.GetRequiredService<DataFileSystem>();
             if (!dfs.ExistsDatafile(name))
             {
                 return;
@@ -129,7 +133,6 @@ namespace Oxide.Core
 
             if (ProtoStorage.Exists(name))
             {
-                Interface.Oxide.LogWarning("Failed to import JSON file: {0} already exists.", name);
                 return;
             }
             try
@@ -143,11 +146,11 @@ namespace Oxide.Core
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException("Failed to convert datafile to proto storage: " + name, ex);
+                Logger.WriteException("Failed to convert datafile to proto storage: " + name, ex);
             }
         }
 
-        public static void PrintCallStack() => Interface.Oxide.LogDebug("CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
+        public static void PrintCallStack() => Logger.Write(LogType.Debug, "CallStack:{0}{1}", Environment.NewLine, new StackTrace(1, true));
 
         public static string FormatBytes(double bytes)
         {

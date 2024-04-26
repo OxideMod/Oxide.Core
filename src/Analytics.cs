@@ -3,15 +3,16 @@ using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core
 {
     public static class Analytics
     {
-        private static readonly WebRequests Webrequests = Interface.Oxide.GetLibrary<WebRequests>();
-        private static readonly PluginManager PluginManager = Interface.Oxide.RootPluginManager;
-        private static readonly Covalence Covalence = Interface.Oxide.GetLibrary<Covalence>();
-        private static readonly Lang Lang = Interface.Oxide.GetLibrary<Lang>();
+        private static WebRequests Webrequests { get; } = Interface.Services.GetRequiredService<WebRequests>();
+        private static PluginManager PluginManager { get; } = Interface.Services.GetRequiredService<PluginManager>();
+        private static Covalence Covalence { get; } = Interface.Services.GetRequiredService<Covalence>();
+        private static Lang Lang { get; } = Interface.Services.GetRequiredService<Lang>();
 
         private const string trackingId = "UA-48448359-3";
         private const string url = "https://www.google-analytics.com/collect";

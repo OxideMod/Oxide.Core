@@ -4,9 +4,9 @@ using Oxide.Core.Plugins;
 using References::ProtoBuf;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
+using Oxide.Core.Logging;
 
 namespace Oxide.Core.Libraries
 {
@@ -79,6 +79,7 @@ namespace Oxide.Core.Libraries
         private Dictionary<string, GroupData> groupsData;
 
         private Func<string, bool> validate;
+        private Logger Logger { get; }
 
         // Permission status
         public bool IsLoaded { get; private set; }
@@ -86,8 +87,9 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Initializes a new instance of the Permission library
         /// </summary>
-        public Permission()
+        public Permission(Logger logger)
         {
+            Logger = logger;
             // Initialize
             registeredPermissions = new Dictionary<Plugin, HashSet<string>>();
 
@@ -111,7 +113,7 @@ namespace Oxide.Core.Libraries
                     continue;
                 }
 
-                Interface.Oxide.LogWarning("Detected circular parent group for '{0}'; removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
+                Logger.Write(LogType.Warning, "Detected circular parent group for '{0}'; removing parent '{1}'", pair.Key, pair.Value.ParentGroup);
                 pair.Value.ParentGroup = null;
                 circularReference = true;
             }
@@ -245,7 +247,7 @@ namespace Oxide.Core.Libraries
 
                     existing.Perms.UnionWith(group.Perms);
 
-                    Interface.Oxide.LogWarning("Duplicate group '{0}' found, merged entries with {1}", entry.Key, existingKey);
+                    Logger.Write(LogType.Warning,"Duplicate group '{0}' found, merged entries with {1}", entry.Key, existingKey);
 
                     continue;
                 }
@@ -353,7 +355,7 @@ namespace Oxide.Core.Libraries
 
             if (PermissionExists(permission))
             {
-                Interface.Oxide.LogWarning("Duplicate permission registered '{0}' (by plugin '{1}')", permission, owner.Title);
+                Logger.Write(LogType.Error,"Duplicate permission registered '{0}' (by plugin '{1}')", permission, owner.Title);
                 return;
             }
 
@@ -369,7 +371,7 @@ namespace Oxide.Core.Libraries
 
             if (!permission.StartsWith($"{owner.Name}.", StringComparison.OrdinalIgnoreCase) && !owner.IsCorePlugin)
             {
-                Interface.Oxide.LogWarning("Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", owner.Name.ToLower(), permission, owner.Title);
+                Logger.Write(LogType.Warning,"Missing plugin name prefix '{0}' for permission '{1}' (by plugin '{2}')", owner.Name.ToLower(), permission, owner.Title);
             }
         }
 

@@ -6,6 +6,8 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Oxide.Core.Logging;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core.Libraries
 {
@@ -26,7 +28,8 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public class WebRequests : Library
     {
-        private static readonly Covalence.Covalence covalence = Interface.Oxide.GetLibrary<Covalence.Covalence>();
+        private static readonly Covalence.Covalence covalence =
+            Interface.Services.GetRequiredService<Covalence.Covalence>();
 
         /// <summary>
         /// Specifies the HTTP request timeout in seconds
@@ -88,6 +91,7 @@ namespace Oxide.Core.Libraries
             /// </summary>
             public Dictionary<string, string> RequestHeaders { get; set; }
 
+            private WebRequests parent;
             private HttpWebRequest request;
             private WaitHandle waitHandle;
             private RegisteredWaitHandle registeredWaitHandle;
@@ -99,8 +103,9 @@ namespace Oxide.Core.Libraries
             /// <param name="url"></param>
             /// <param name="callback"></param>
             /// <param name="owner"></param>
-            public WebRequest(string url, Action<int, string> callback, Plugin owner)
+            public WebRequest(string url, Action<int, string> callback, Plugin owner, WebRequests parent)
             {
+                this.parent = parent;
                 Url = url;
                 Callback = callback;
                 Owner = owner;
@@ -192,7 +197,7 @@ namespace Oxide.Core.Libraries
                         message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                     }
 
-                    Interface.Oxide.LogException(message, ex);
+                    parent.logger.WriteException(message, ex);
                     request?.Abort();
                     OnComplete();
                 }
@@ -245,7 +250,7 @@ namespace Oxide.Core.Libraries
                             message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         }
 
-                        Interface.Oxide.LogException(message, ex);
+                        parent.logger.WriteException(message, ex);
                     }
                     if (request == null)
                     {
@@ -300,7 +305,7 @@ namespace Oxide.Core.Libraries
                             message += $" in '{Owner.Name} v{Owner.Version}' plugin";
                         }
 
-                        Interface.Oxide.LogException(message, ex);
+                        parent.logger.WriteException(message, ex);
                     }
                     Owner?.TrackEnd();
                     Owner = null;
@@ -332,6 +337,7 @@ namespace Oxide.Core.Libraries
         private bool shutdown;
         private readonly int maxWorkerThreads;
         private readonly int maxCompletionPortThreads;
+        private readonly Logger logger;
 
         /// <summary>
         /// Formats given WebException to string
@@ -359,8 +365,9 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Initializes a new instance of the WebRequests library
         /// </summary>
-        public WebRequests()
+        public WebRequests(Logger logger)
         {
+            this.logger = logger;
             // Initialize SSL
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
@@ -388,7 +395,7 @@ namespace Oxide.Core.Libraries
             shutdown = true;
             workevent.Set();
             Thread.Sleep(250);
-            workerthread.Abort();
+            workerthread.Join();
         }
 
         /// <summary>
@@ -404,6 +411,12 @@ namespace Oxide.Core.Libraries
                     if (workerThreads <= maxWorkerThreads || completionPortThreads <= maxCompletionPortThreads)
                     {
                         Thread.Sleep(100);
+
+                        if (shutdown)
+                        {
+                            break;
+                        }
+
                         continue;
                     }
                     WebRequest request = null;
@@ -413,6 +426,11 @@ namespace Oxide.Core.Libraries
                         {
                             request = queue.Dequeue();
                         }
+                    }
+
+                    if (shutdown)
+                    {
+                        break;
                     }
 
                     if (request != null)
@@ -427,7 +445,7 @@ namespace Oxide.Core.Libraries
             }
             catch (Exception ex)
             {
-                Interface.Oxide.LogException("WebRequests worker: ", ex);
+                logger.WriteException(ex.Message, ex);
             }
         }
 
@@ -491,7 +509,7 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("Enqueue")]
         public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
         {
-            WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
+            WebRequest request = new WebRequest(url, callback, owner, this) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
             lock (syncroot)
             {
                 queue.Enqueue(request);

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core.Libraries.Covalence
 {
     public class SaveInfo
     {
-        private readonly Time time = Interface.Oxide.GetLibrary<Time>();
+        private readonly Time time = Interface.Services.GetService<Time>();
         private readonly string FullPath;
 
         /// <summary>

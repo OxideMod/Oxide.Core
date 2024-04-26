@@ -1,6 +1,6 @@
-﻿using Oxide.Core.Logging;
 using System;
 using System.Collections.Generic;
+using Oxide.Core.Logging;
 using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins
@@ -12,6 +12,8 @@ namespace Oxide.Core.Plugins
     /// </summary>
     public sealed class PluginManager
     {
+        // Gets the logger to which this plugin manager writes
+        private Logger Logger { get;}
         private enum SubscriptionChangeType : byte
         {
             Subscribe = 0,
@@ -48,11 +50,6 @@ namespace Oxide.Core.Plugins
         }
 
         /// <summary>
-        /// Gets the logger to which this plugin manager writes
-        /// </summary>
-        public Logger Logger { get; private set; }
-
-        /// <summary>
         /// Gets or sets the path for plugin configs
         /// </summary>
         public string ConfigPath { get; set; }
@@ -84,11 +81,12 @@ namespace Oxide.Core.Plugins
         /// <summary>
         /// Initializes a new instance of the PluginManager class
         /// </summary>
-        public PluginManager(Logger logger)
+        public PluginManager(Logger logger, IArrayPoolProvider<object> objectPool, string configDir)
         {
             // Initialize
-            ObjectPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+            ObjectPool = objectPool;
             loadedPlugins = new Dictionary<string, Plugin>();
+            ConfigPath = configDir;
             hookSubscriptions = new Dictionary<string, HookSubscriptions>();
             Logger = logger;
         }
@@ -245,7 +243,6 @@ namespace Oxide.Core.Plugins
                 }
             }
 
-
             if (subscriptions.Plugins.Count == 0)
             {
                 return null;
@@ -258,7 +255,6 @@ namespace Oxide.Core.Plugins
             Plugin finalPlugin = null;
 
             subscriptions.CallDepth++;
-
             try
             {
                 for (int i = 0; i < subscriptions.Plugins.Count; i++)
@@ -274,7 +270,6 @@ namespace Oxide.Core.Plugins
                         returnCount++;
                     }
                 }
-
                 // Is there a return value?
                 if (returnCount == 0)
                 {
@@ -313,7 +308,7 @@ namespace Oxide.Core.Plugins
                     if (hookConflicts.Count > 0)
                     {
                         hookConflicts.Add($"{finalPlugin.Name} ({finalValue} ({finalValue.GetType().Name}))");
-                        Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
+                        Logger.Write(LogType.Warning,"Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
                     }
                 }
                 ObjectPool.Return(values);
@@ -381,7 +376,7 @@ namespace Oxide.Core.Plugins
             {
                 // TODO: Add better handling
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.Oxide.LogWarning($"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                Logger.Write(LogType.Warning,$"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);

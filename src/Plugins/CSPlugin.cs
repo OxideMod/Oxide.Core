@@ -2,6 +2,7 @@ using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Oxide.DependencyInjection;
 using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins
@@ -48,14 +49,14 @@ namespace Oxide.Core.Plugins
         /// <summary>
         /// Pool of <see cref="object"/> array's
         /// </summary>
-        protected IArrayPoolProvider<object> ObjectArrayPool { get; }
+        private IArrayPoolProvider<object> ObjectArrayPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the CSPlugin class
         /// </summary>
         public CSPlugin()
         {
-            ObjectArrayPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+            ObjectArrayPool = Services.GetArrayPoolProvider<object>();
 
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
@@ -99,6 +100,7 @@ namespace Oxide.Core.Plugins
 
             try
             {
+                LoadDependencies();
                 // Let the plugin know that it is loading
                 OnCallHook("Init", null);
             }
@@ -108,6 +110,61 @@ namespace Oxide.Core.Plugins
                 if (Loader != null)
                 {
                     Loader.PluginErrors[Name] = ex.Message;
+                }
+            }
+        }
+
+        protected virtual void LoadDependencies()
+        {
+            Type plugin = GetType();
+            IDependencyResolverFactory resolver = Services.GetRequiredService<IDependencyResolverFactory>();
+            FieldInfo[] fields = plugin.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                FieldInfo field = fields[i];
+
+                if (field.IsSpecialName || field.GetValue(this) != null)
+                {
+                    continue;
+                }
+
+                object value = Services.GetService(field.FieldType) ?? resolver.ResolveService(field);
+
+                if (value != null)
+                {
+                    field.SetValue(this, value);
+                }
+            }
+
+            PropertyInfo[] properties = plugin.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            for (int i = 0; i < properties.Length; i++)
+            {
+                PropertyInfo prop = properties[i];
+
+                if (prop.IsSpecialName || prop.GetValue(this, null) != null)
+                {
+                    continue;
+                }
+
+                object value = Services.GetService(prop.PropertyType) ?? resolver.ResolveService(prop);
+
+                if (value == null)
+                {
+                    continue;
+                }
+
+
+
+                if (prop.CanWrite)
+                {
+                    prop.SetValue(this, value, null);
+                }
+                else
+                {
+                    FieldInfo backingField = plugin.GetField($"<{prop.Name}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+                    backingField?.SetValue(this, value);
                 }
             }
         }

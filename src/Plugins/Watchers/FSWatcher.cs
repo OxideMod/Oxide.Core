@@ -9,6 +9,8 @@ using System.Text;
 using System.Security.Permissions;
 #endif
 using System.Text.RegularExpressions;
+using Oxide.Core.Logging;
+using Oxide.DependencyInjection;
 using Oxide.Pooling;
 using References::Mono.Unix.Native;
 using Syscall = References::Mono.Unix.Native.Syscall;
@@ -39,6 +41,7 @@ namespace Oxide.Core.Plugins.Watchers
 
         private Dictionary<string, FileSystemWatcher> m_symlinkWatchers = new Dictionary<string, FileSystemWatcher>();
         private IPoolProvider<StringBuilder> StringPool { get; }
+        private Logger Logger { get; }
 
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
@@ -47,10 +50,12 @@ namespace Oxide.Core.Plugins.Watchers
         /// <param name="filter"></param>
         public FSWatcher(string directory, string filter)
         {
-            StringPool = Interface.Oxide.PoolFactory.GetProvider<StringBuilder>();
+            StringPool = Interface.Services.GetRequiredService<IPoolFactory>()
+                                  .GetProvider<StringBuilder>();
+            Logger = Interface.Oxide.RootLogger;
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
-            timers = Interface.Oxide.GetLibrary<Timer>();
+            timers = Interface.Services.GetRequiredService<Timer>();
 
             if (Interface.Oxide.Config.Options.PluginWatchers)
             {
@@ -70,7 +75,7 @@ namespace Oxide.Core.Plugins.Watchers
             }
             else
             {
-                Interface.Oxide.LogWarning("Automatic plugin reloading and unloading has been disabled");
+                Logger.Write(LogType.Warning,"Automatic plugin reloading and unloading has been disabled");
             }
         }
 
@@ -283,7 +288,7 @@ namespace Oxide.Core.Plugins.Watchers
         {
             Interface.Oxide.NextTick(() =>
             {
-                Interface.Oxide.LogError("FSWatcher error: {0}", e.GetException());
+                Logger.WriteException("FSWatcher error",e.GetException());
                 RemoteLogger.Exception("FSWatcher error", e.GetException());
             });
         }

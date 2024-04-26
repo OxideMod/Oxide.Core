@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core
 {
@@ -149,8 +150,8 @@ namespace Oxide.Core
             }
         }
 
-        private static readonly Timer Timers = Interface.Oxide.GetLibrary<Timer>();
-        private static readonly WebRequests Webrequests = Interface.Oxide.GetLibrary<WebRequests>();
+        private static Timer Timers { get; } = Interface.Services.GetRequiredService<Timer>();
+        private static WebRequests Webrequests { get; } = Interface.Services.GetRequiredService<WebRequests>();
         private static readonly List<QueuedReport> QueuedReports = new List<QueuedReport>();
         private static bool submittingReports;
 

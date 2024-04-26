@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Oxide.DependencyInjection;
+using Oxide.Plugins;
 
 namespace Oxide.Core.Plugins
 {
@@ -170,7 +172,9 @@ namespace Oxide.Core.Plugins
 
         private IDictionary<string, CommandInfo> commandInfos;
 
-        private Permission permission = Interface.Oxide.GetLibrary<Permission>();
+        private Permission permission { get; }
+
+        protected IServiceProvider Services => Interface.Oxide.ServiceProvider;
 
         /// <summary>
         /// Initializes an empty version of the Plugin class
@@ -182,6 +186,7 @@ namespace Oxide.Core.Plugins
             Author = "Unnamed";
             Version = new VersionNumber(1, 0, 0);
             commandInfos = new Dictionary<string, CommandInfo>();
+            permission = Services.GetRequiredService<Permission>();
         }
 
         /// <summary>
@@ -468,7 +473,7 @@ namespace Oxide.Core.Plugins
                 return true;
             });
 
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Interface.Services.GetRequiredService<Covalence>();
             foreach (string command in commands)
             {
                 covalence.RegisterCommand(command, this, CovalenceCommandCallback);
@@ -510,7 +515,7 @@ namespace Oxide.Core.Plugins
 
         private void RegisterWithCovalence()
         {
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Services.GetRequiredService<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.RegisterCommand(pair.Key, this, CovalenceCommandCallback);
@@ -550,7 +555,7 @@ namespace Oxide.Core.Plugins
 
         private void UnregisterWithCovalence()
         {
-            Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
+            Covalence covalence = Services.GetRequiredService<Covalence>();
             foreach (KeyValuePair<string, CommandInfo> pair in commandInfos)
             {
                 covalence.UnregisterCommand(pair.Key, this);

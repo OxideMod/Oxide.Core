@@ -16,6 +16,7 @@ namespace Oxide.Pooling
             registeredProviders = new Dictionary<Type, IPoolProvider>
             {
                 [typeof(object[])] = new BaseArrayPoolProvider<object>(256, 50),
+                [typeof(Type[])] = new BaseArrayPoolProvider<Type>(50, 50),
                 [typeof(StringBuilder)] = new StringPoolProvider()
             };
         }

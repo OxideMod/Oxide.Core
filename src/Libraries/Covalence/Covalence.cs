@@ -1,4 +1,3 @@
-﻿using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using System;
@@ -7,13 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace uMod.Libraries.Universal
-{
-    public class Universal : Covalence
-    {
-    }
-}
-
 namespace Oxide.Core.Libraries.Covalence
 {
     /// <summary>
@@ -21,9 +13,9 @@ namespace Oxide.Core.Libraries.Covalence
     /// </summary>
     public class Covalence : Library
     {
-        private ICommandSystem cmdSystem;
-        private ICovalenceProvider provider;
-        private readonly Logger logger;
+        private ICommandSystem CommandSystem { get; set; }
+        private ICovalenceProvider Provider { get; set; }
+        private Logger Logger { get; }
 
         /// <summary>
         /// Returns if this library should be loaded into the global namespace
@@ -46,33 +38,33 @@ namespace Oxide.Core.Libraries.Covalence
         /// Gets the name of the current game
         /// </summary>
         [LibraryProperty("Game")]
-        public string Game => provider?.GameName ?? string.Empty;
+        public string Game => Provider?.GameName ?? string.Empty;
 
         /// <summary>
         /// Gets the Steam app ID of the game's client, if available
         /// </summary>
         [LibraryProperty("ClientAppId")]
-        public uint ClientAppId => provider?.ClientAppId ?? 0;
+        public uint ClientAppId => Provider?.ClientAppId ?? 0;
 
         /// <summary>
         /// Gets the Steam app ID of the game's server, if available
         /// </summary>
         [LibraryProperty("ServerAppId")]
-        public uint ServerAppId => provider?.ServerAppId ?? 0;
+        public uint ServerAppId => Provider?.ServerAppId ?? 0;
 
         /// <summary>
         /// Formats the text with markup into the game-specific markup language
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public string FormatText(string text) => provider.FormatText(text);
+        public string FormatText(string text) => Provider.FormatText(text);
 
         /// <summary>
         /// Initializes a new instance of the Covalence class
         /// </summary>
-        public Covalence()
+        public Covalence(Logger logger)
         {
-            logger = Interface.Oxide.RootLogger;
+            Logger = logger;
         }
 
         /// <summary>
@@ -95,8 +87,9 @@ namespace Oxide.Core.Libraries.Covalence
                 }
                 catch (TypeLoadException tlEx)
                 {
-                    logger.Write(LogType.Warning, "Covalence: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
+                    Logger.Write(LogType.Warning, "Covalence: Type {0} could not be loaded from assembly '{1}': {2}", tlEx.TypeName, ass.FullName, tlEx);
                 }
+
                 if (assTypes != null)
                 {
                     candidateSet = candidateSet?.Concat(assTypes) ?? assTypes;
@@ -104,15 +97,16 @@ namespace Oxide.Core.Libraries.Covalence
             }
             if (candidateSet == null)
             {
-                logger.Write(LogType.Warning, "Covalence not available yet for this game");
+                Logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
+
             List<Type> candidates = new List<Type>(candidateSet.Where(t => t != null && t.IsClass && !t.IsAbstract && t.FindInterfaces((m, o) => m == baseType, null).Length == 1));
 
             Type selectedCandidate;
             if (candidates.Count == 0)
             {
-                logger.Write(LogType.Warning, "Covalence not available yet for this game");
+                Logger.Write(LogType.Warning, "Covalence not available yet for this game");
                 return;
             }
             if (candidates.Count > 1)
@@ -128,7 +122,7 @@ namespace Oxide.Core.Libraries.Covalence
 
                     sb.Append(candidates[i].FullName);
                 }
-                logger.Write(LogType.Warning, "Multiple Covalence providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
+                Logger.Write(LogType.Warning, "Multiple Covalence providers found! Using {0}. (Also found {1})", selectedCandidate, sb);
             }
             else
             {
@@ -137,20 +131,20 @@ namespace Oxide.Core.Libraries.Covalence
 
             try
             {
-                provider = (ICovalenceProvider)Activator.CreateInstance(selectedCandidate);
+                Provider = (ICovalenceProvider)Activator.CreateInstance(selectedCandidate);
             }
             catch (Exception ex)
             {
-                logger.Write(LogType.Warning, "Got exception when instantiating Covalence provider, Covalence will not be functional for this session.");
-                logger.Write(LogType.Warning, "{0}", ex);
+                Logger.Write(LogType.Warning, "Got exception when instantiating Covalence provider, Covalence will not be functional for this session.");
+                Logger.Write(LogType.Warning, "{0}", ex);
                 return;
             }
 
-            Server = provider.CreateServer();
-            Players = provider.CreatePlayerManager();
-            cmdSystem = provider.CreateCommandSystemProvider();
+            Server = Provider.CreateServer();
+            Players = Provider.CreatePlayerManager();
+            CommandSystem = Provider.CreateCommandSystemProvider();
 
-            logger.Write(LogType.Info, "Using Covalence provider for game '{0}'", provider.GameName);
+            Logger.Write(LogType.Info, "Using Covalence provider for game '{0}'", Provider.GameName);
         }
 
         /// <summary>
@@ -161,19 +155,19 @@ namespace Oxide.Core.Libraries.Covalence
         /// <param name="callback"></param>
         public void RegisterCommand(string command, Plugin plugin, CommandCallback callback)
         {
-            if (cmdSystem == null)
+            if (CommandSystem == null)
             {
                 return;
             }
 
             try
             {
-                cmdSystem.RegisterCommand(command, plugin, callback);
+                CommandSystem.RegisterCommand(command, plugin, callback);
             }
             catch (CommandAlreadyExistsException)
             {
                 string pluginName = plugin?.Name ?? "An unknown plugin";
-                logger.Write(LogType.Error, "{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
+                Logger.Write(LogType.Error,"{0} tried to register command '{1}', this command already exists and cannot be overridden!", pluginName, command);
             }
         }
 
@@ -182,6 +176,6 @@ namespace Oxide.Core.Libraries.Covalence
         /// </summary>
         /// <param name="command"></param>
         /// <param name="plugin"></param>
-        public void UnregisterCommand(string command, Plugin plugin) => cmdSystem?.UnregisterCommand(command, plugin);
+        public void UnregisterCommand(string command, Plugin plugin) => CommandSystem?.UnregisterCommand(command, plugin);
     }
 }

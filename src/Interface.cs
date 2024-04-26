@@ -1,4 +1,5 @@
 ﻿using System;
+using Oxide.DependencyInjection;
 using Oxide.Pooling;
 
 namespace Oxide.Core
@@ -11,7 +12,9 @@ namespace Oxide.Core
         /// <summary>
         /// Gets the main Oxide mod instance
         /// </summary>
-        public static OxideMod Oxide { get; private set; }
+        public static OxideMod Oxide { get; }
+
+        public static IServiceProvider Services => Oxide?.ServiceProvider;
 
         /// <summary>
         /// Gets or sets the debug callback to use
@@ -23,7 +26,7 @@ namespace Oxide.Core
         static Interface()
         {
             Oxide = new OxideMod();
-            HookArrays = Oxide.PoolFactory.GetArrayProvider<object>();
+            HookArrays = Services.GetArrayPoolProvider<object>();
         }
 
         /// <summary>
@@ -31,12 +34,11 @@ namespace Oxide.Core
         /// </summary>
         public static void Initialize()
         {
-            if (Oxide.init_called)
+            if (Oxide.InitCalled)
             {
                 return;
             }
 
-            Oxide.init_called = true;
             Oxide.Load();
         }
 

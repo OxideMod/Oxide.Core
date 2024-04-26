@@ -5,17 +5,17 @@ namespace Oxide.Core
 {
     public static class ArrayPool
     {
-        private static readonly IArrayPoolProvider<object> pool;
+        private static IArrayPoolProvider<object> Pool { get; }
 
         static ArrayPool()
         {
-            pool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+            Pool = Interface.Services.GetArrayPoolProvider<object>();
         }
 
         [Obsolete("Use Interface.Oxide.PoolFactory")]
-        public static object[] Get(int length) => pool.Take(length);
+        public static object[] Get(int length) => Pool.Take(length);
 
         [Obsolete("Use Interface.Oxide.PoolFactory")]
-        public static void Free(object[] array) => pool.Return(array);
+        public static void Free(object[] array) => Pool.Return(array);
     }
 }

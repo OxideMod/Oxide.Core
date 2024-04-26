@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using Oxide.DependencyInjection;
 
 namespace Oxide.Core.RemoteConsole
 {
@@ -16,8 +17,8 @@ namespace Oxide.Core.RemoteConsole
     {
         #region Initialization
 
-        private readonly Covalence covalence = Interface.Oxide.GetLibrary<Covalence>();
-        private readonly OxideConfig.OxideRcon config = Interface.Oxide.Config.Rcon;
+        private Covalence Covalence { get; set; }
+        private OxideConfig.OxideRcon Config { get; set; }
 
         private RconListener listener;
         private WebSocketServer server;
@@ -25,14 +26,17 @@ namespace Oxide.Core.RemoteConsole
         /// <summary>
         /// Initalizes the RCON server
         /// </summary>
-        public void Initalize()
+        public void Initialize()
         {
-            if (!config.Enabled || listener != null || server != null)
+            Config = Interface.Oxide.Config.Rcon;
+            if (!Config.Enabled || listener != null || server != null)
             {
                 return;
             }
 
-            if (string.IsNullOrEmpty(config.Password))
+            Covalence = Interface.Services.GetService<Covalence>();
+
+            if (string.IsNullOrEmpty(Config.Password))
             {
                 Interface.Oxide.LogWarning("[Rcon] Remote console password is not set, disabling");
                 return;
@@ -40,8 +44,8 @@ namespace Oxide.Core.RemoteConsole
 
             try
             {
-                server = new WebSocketServer(config.Port) { WaitTime = TimeSpan.FromSeconds(5.0), ReuseAddress = true };
-                server.AddWebSocketService($"/{config.Password}", () => listener = new RconListener(this));
+                server = new WebSocketServer(Config.Port) { WaitTime = TimeSpan.FromSeconds(5.0), ReuseAddress = true };
+                server.AddWebSocketService($"/{Config.Password}", () => listener = new RconListener(this));
                 server.Start();
 
                 Interface.Oxide.LogInfo($"[Rcon] Server started successfully on port {server.Port}");
@@ -117,7 +121,7 @@ namespace Oxide.Core.RemoteConsole
         /// <param name="connection"></param>
         private void OnMessage(MessageEventArgs e, WebSocketContext connection)
         {
-            if (covalence == null)
+            if (Covalence == null)
             {
                 Interface.Oxide.LogError("[Rcon] Failed to process command, Covalence is null");
                 return;
@@ -146,7 +150,7 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            covalence.Server.Command(command, args);
+            Covalence.Server.Command(command, args);
         }
 
         [StructLayout(LayoutKind.Sequential)]

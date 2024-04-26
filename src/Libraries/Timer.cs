@@ -349,7 +349,6 @@ namespace Oxide.Core.Libraries
                     }
 
                     Interface.Oxide.LogException(error_message, ex);
-                    return;
                 }
                 finally
                 {

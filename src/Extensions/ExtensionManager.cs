@@ -1,5 +1,4 @@
-﻿using Oxide.Core.Libraries;
-using Oxide.Core.Logging;
+using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
 using System;
@@ -7,6 +6,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Oxide.Core.Libraries.Covalence;
+using Oxide.Core.Logging;
+using Oxide.DependencyInjection;
+using Oxide.Pooling;
 
 namespace Oxide.Core.Extensions
 {
@@ -24,28 +27,41 @@ namespace Oxide.Core.Extensions
         /// <summary>
         /// Gets the logger to which this extension manager writes
         /// </summary>
-        public CompoundLogger Logger { get; private set; }
+        public Logger Logger { get; private set; }
 
         // All registered plugin loaders
         private IList<PluginLoader> pluginloaders;
 
         // All registered libraries
-        private IDictionary<string, Library> libraries;
+        private IDictionary<string, Type> libraries;
 
         // All registered watchers
         private IList<PluginChangeWatcher> changewatchers;
 
+        private IArrayPoolProvider<object> Pool { get; }
+
         /// <summary>
         /// Initializes a new instance of the ExtensionManager class
         /// </summary>
-        public ExtensionManager(CompoundLogger logger)
+        public ExtensionManager(Logger logger, IArrayPoolProvider<object> pool)
         {
             // Initialize
             Logger = logger;
             extensions = new List<Extension>();
             pluginloaders = new List<PluginLoader>();
-            libraries = new Dictionary<string, Library>();
+            libraries = new Dictionary<string, Type>()
+            {
+                ["Covalence"] = typeof(Covalence),
+                ["Global"] = typeof(Global),
+                ["Lang"] = typeof(Lang),
+                ["Permission"] = typeof(Permission),
+                ["Plugins"] = typeof(Libraries.Plugins),
+                ["Time"] = typeof(Time),
+                ["Timer"] = typeof(Timer),
+                ["WebRequests"] = typeof(WebRequests)
+            };
             changewatchers = new List<PluginChangeWatcher>();
+            Pool = pool;
         }
 
         #region Registering
@@ -67,15 +83,20 @@ namespace Oxide.Core.Extensions
         /// </summary>
         /// <param name="name"></param>
         /// <param name="library"></param>
+        [Obsolete("Use Interface.Oxide.Services.AddSingleton")]
         public void RegisterLibrary(string name, Library library)
         {
             if (libraries.ContainsKey(name))
             {
-                Interface.Oxide.LogError("An extension tried to register an already registered library: " + name);
+                Logger.Write(LogType.Error, "An extension tried to register an already registered library: {0}", name);
             }
             else
             {
-                libraries[name] = library;
+                libraries[name] = library.GetType();
+                Interface.Oxide.Services.AddSingleton(library.GetType(), library);
+#if DEBUG
+                Logger.Write(LogType.Debug, "Registered Library {0} : {1}", name, library.GetType());
+#endif
             }
         }
 
@@ -92,7 +113,7 @@ namespace Oxide.Core.Extensions
         /// <returns></returns>
         public Library GetLibrary(string name)
         {
-            return !libraries.TryGetValue(name, out Library lib) ? null : lib;
+            return !libraries.TryGetValue(name, out Type lib) ? null : Interface.Services.GetService(lib) as Library;
         }
 
         /// <summary>
@@ -170,7 +191,7 @@ namespace Oxide.Core.Extensions
                 }
 
                 // Create and register the extension
-                Extension extension = Activator.CreateInstance(extensionType, this) as Extension;
+                Extension extension = ActivationUtility.CreateInstance(Interface.Oxide.ServiceProvider, extensionType) as Extension;
                 if (extension != null)
                 {
                     /*if (!forced)
@@ -189,7 +210,7 @@ namespace Oxide.Core.Extensions
                     }*/
 
                     extension.Filename = filename;
-
+                    ConfigureServices(extension, Interface.Oxide.Services);
                     extension.Load();
                     extensions.Add(extension);
 
@@ -372,6 +393,36 @@ namespace Oxide.Core.Extensions
                     Logger.WriteException($"Failed OnModLoad extension {ext.Name} v{ext.Version}", ex);
                     RemoteLogger.Exception($"Failed OnModLoad extension {ext.Name} v{ext.Version}", ex);
                 }
+            }
+        }
+
+        private void ConfigureServices(Extension extension, IServiceCollection services)
+        {
+            if (services == null)
+            {
+                return;
+            }
+
+            MethodInfo configure = extension.GetType().GetMethod(nameof(ConfigureServices), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (configure == null)
+            {
+                return;
+            }
+
+            object[] call = Pool.Take(1);
+            call[0] = services;
+            try
+            {
+                configure.Invoke(extension, call);
+            }
+            catch (Exception e)
+            {
+                Logger.WriteException($"Failed to call {nameof(ConfigureServices)} on extension {extension.Name} v{extension.Version} by {extension.Author}", e);
+            }
+            finally
+            {
+                Pool.Return(call);
             }
         }
 
