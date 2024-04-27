@@ -6,7 +6,7 @@ namespace Oxide.Core.Libraries.Covalence
 {
     public class SaveInfo
     {
-        private readonly Time time = Interface.Services.GetService<Time>();
+        private readonly Time time = Interface.ServiceProvider.GetService<Time>();
         private readonly string FullPath;
 
         /// <summary>

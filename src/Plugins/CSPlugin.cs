@@ -123,17 +123,28 @@ namespace Oxide.Core.Plugins
             for (int i = 0; i < fields.Length; i++)
             {
                 FieldInfo field = fields[i];
-
-                if (field.IsSpecialName || field.GetValue(this) != null)
+                try
                 {
-                    continue;
+                    if (field.IsSpecialName || field.GetValue(this) != null)
+                    {
+                        continue;
+                    }
+
+                    object value = Services.GetService(field.FieldType) ?? resolver.ResolveService(field);
+
+                    if (value != null)
+                    {
+                        field.SetValue(this, value);
+                    }
                 }
-
-                object value = Services.GetService(field.FieldType) ?? resolver.ResolveService(field);
-
-                if (value != null)
+                catch (Exception e)
                 {
-                    field.SetValue(this, value);
+                    if (e is TargetInvocationException tiex && tiex.InnerException != null)
+                    {
+                        e = tiex.InnerException;
+                    }
+
+                    Interface.Oxide.LogException($"Failed to apply dependency to field {field.Name} on plugin {Name} - Requested Dependency {field.FieldType.FullName}", e);
                 }
             }
 
@@ -143,28 +154,46 @@ namespace Oxide.Core.Plugins
             {
                 PropertyInfo prop = properties[i];
 
-                if (prop.IsSpecialName || prop.GetValue(this, null) != null)
+                try
                 {
-                    continue;
-                }
+                    if (prop.IsSpecialName)
+                    {
+                        continue;
+                    }
 
-                object value = Services.GetService(prop.PropertyType) ?? resolver.ResolveService(prop);
-
-                if (value == null)
-                {
-                    continue;
-                }
-
-
-
-                if (prop.CanWrite)
-                {
-                    prop.SetValue(this, value, null);
-                }
-                else
-                {
                     FieldInfo backingField = plugin.GetField($"<{prop.Name}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-                    backingField?.SetValue(this, value);
+                    object currentValue = backingField?.GetValue(this);
+
+                    if (currentValue != null)
+                    {
+                        continue;
+                    }
+
+                    currentValue = Services.GetService(prop.PropertyType) ?? resolver.ResolveService(prop);
+
+                    if (currentValue == null)
+                    {
+                        continue;
+                    }
+
+                    if (prop.CanWrite)
+                    {
+                        prop.SetValue(this, currentValue, null);
+                    }
+                    else
+                    {
+
+                        backingField?.SetValue(this, currentValue);
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (e is TargetInvocationException tiex && tiex.InnerException != null)
+                    {
+                        e = tiex.InnerException;
+                    }
+
+                    Interface.Oxide.LogException($"Failed to apply dependency to field {prop.Name} on plugin {Name} - Requested Dependency {prop.PropertyType.FullName}", e);
                 }
             }
         }

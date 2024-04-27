@@ -41,7 +41,7 @@ namespace Oxide.Core.Plugins
 
         public PluginLoader()
         {
-            Timers = Interface.Oxide.ServiceProvider.GetRequiredService<Timer>();
+            Timers = Interface.ServiceProvider.GetRequiredService<Timer>();
         }
 
         /// <summary>

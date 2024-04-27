@@ -40,13 +40,17 @@ namespace Oxide.Core.Extensions
 
         private IArrayPoolProvider<object> Pool { get; }
 
+        private IServiceCollection ServiceCollection { get; }
+
         /// <summary>
         /// Initializes a new instance of the ExtensionManager class
         /// </summary>
-        public ExtensionManager(Logger logger, IArrayPoolProvider<object> pool)
+        public ExtensionManager(Logger logger, IArrayPoolProvider<object> pool, IServiceCollection services)
         {
             // Initialize
             Logger = logger;
+            Pool = pool;
+            ServiceCollection = services;
             extensions = new List<Extension>();
             pluginloaders = new List<PluginLoader>();
             libraries = new Dictionary<string, Type>()
@@ -61,7 +65,7 @@ namespace Oxide.Core.Extensions
                 ["WebRequests"] = typeof(WebRequests)
             };
             changewatchers = new List<PluginChangeWatcher>();
-            Pool = pool;
+
         }
 
         #region Registering
@@ -83,7 +87,7 @@ namespace Oxide.Core.Extensions
         /// </summary>
         /// <param name="name"></param>
         /// <param name="library"></param>
-        [Obsolete("Use Interface.Oxide.Services.AddSingleton")]
+        [Obsolete("Libraries should be registered by adding `void ConfigureServices(IServiceCollection)` method to your extension class")]
         public void RegisterLibrary(string name, Library library)
         {
             if (libraries.ContainsKey(name))
@@ -93,7 +97,7 @@ namespace Oxide.Core.Extensions
             else
             {
                 libraries[name] = library.GetType();
-                Interface.Oxide.Services.AddSingleton(library.GetType(), library);
+                ServiceCollection.AddSingleton(library.GetType(), library);
 #if DEBUG
                 Logger.Write(LogType.Debug, "Registered Library {0} : {1}", name, library.GetType());
 #endif
@@ -111,9 +115,10 @@ namespace Oxide.Core.Extensions
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
+        [Obsolete("Use Interface.ServiceProvider.GetService")]
         public Library GetLibrary(string name)
         {
-            return !libraries.TryGetValue(name, out Type lib) ? null : Interface.Services.GetService(lib) as Library;
+            return !libraries.TryGetValue(name, out Type lib) ? null : Interface.ServiceProvider.GetService(lib) as Library;
         }
 
         /// <summary>
@@ -191,8 +196,7 @@ namespace Oxide.Core.Extensions
                 }
 
                 // Create and register the extension
-                Extension extension = ActivationUtility.CreateInstance(Interface.Oxide.ServiceProvider, extensionType) as Extension;
-                if (extension != null)
+                if (ActivationUtility.CreateInstance(Interface.ServiceProvider, extensionType) is Extension extension)
                 {
                     /*if (!forced)
                     {
@@ -210,7 +214,7 @@ namespace Oxide.Core.Extensions
                     }*/
 
                     extension.Filename = filename;
-                    ConfigureServices(extension, Interface.Oxide.Services);
+                    ConfigureServices(extension, ServiceCollection);
                     extension.Load();
                     extensions.Add(extension);
 

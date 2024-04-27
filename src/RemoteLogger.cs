@@ -150,8 +150,8 @@ namespace Oxide.Core
             }
         }
 
-        private static Timer Timers { get; } = Interface.Services.GetRequiredService<Timer>();
-        private static WebRequests Webrequests { get; } = Interface.Services.GetRequiredService<WebRequests>();
+        private static Timer Timers { get; } = Interface.ServiceProvider.GetRequiredService<Timer>();
+        private static WebRequests Webrequests { get; } = Interface.ServiceProvider.GetRequiredService<WebRequests>();
         private static readonly List<QueuedReport> QueuedReports = new List<QueuedReport>();
         private static bool submittingReports;
 

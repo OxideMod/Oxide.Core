@@ -57,7 +57,7 @@ namespace Oxide.DependencyInjection
                     return this;
                 }
 
-                IDependencyResolver resolver = (IDependencyResolver)ActivationUtility.CreateInstance(Interface.Oxide?.ServiceProvider, type);
+                IDependencyResolver resolver = (IDependencyResolver)ActivationUtility.CreateInstance(Interface.ServiceProvider, type);
                 ServiceResolvers.Add(resolver);
             }
 

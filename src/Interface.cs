@@ -9,12 +9,19 @@ namespace Oxide.Core
     /// </summary>
     public static class Interface
     {
+        private static IServiceProvider _serviceProvider;
+
         /// <summary>
         /// Gets the main Oxide mod instance
         /// </summary>
         public static OxideMod Oxide { get; }
 
-        public static IServiceProvider Services => Oxide?.ServiceProvider;
+        /// <summary>
+        /// Used to access oxide services
+        /// </summary>
+        public static IServiceProvider ServiceProvider => ServiceCollection.IsModified ? _serviceProvider = ServiceCollection.Internal_BuildServiceProvider() : _serviceProvider;
+
+        private static ServiceCollection ServiceCollection { get; }
 
         /// <summary>
         /// Gets or sets the debug callback to use
@@ -25,8 +32,11 @@ namespace Oxide.Core
 
         static Interface()
         {
-            Oxide = new OxideMod();
-            HookArrays = Services.GetArrayPoolProvider<object>();
+            ServiceCollection = new ServiceCollection();
+            IPoolFactory factory = new CorePoolFactory();
+            ServiceCollection.AddSingleton(factory);
+            HookArrays = factory.GetArrayProvider<object>();
+            Oxide = new OxideMod(factory, ServiceCollection);
         }
 
         /// <summary>

@@ -9,10 +9,10 @@ namespace Oxide.Core
 {
     public static class Analytics
     {
-        private static WebRequests Webrequests { get; } = Interface.Services.GetRequiredService<WebRequests>();
-        private static PluginManager PluginManager { get; } = Interface.Services.GetRequiredService<PluginManager>();
-        private static Covalence Covalence { get; } = Interface.Services.GetRequiredService<Covalence>();
-        private static Lang Lang { get; } = Interface.Services.GetRequiredService<Lang>();
+        private static WebRequests Webrequests { get; } = Interface.ServiceProvider.GetRequiredService<WebRequests>();
+        private static PluginManager PluginManager { get; } = Interface.ServiceProvider.GetRequiredService<PluginManager>();
+        private static Covalence Covalence { get; } = Interface.ServiceProvider.GetRequiredService<Covalence>();
+        private static Lang Lang { get; } = Interface.ServiceProvider.GetRequiredService<Lang>();
 
         private const string trackingId = "UA-48448359-3";
         private const string url = "https://www.google-analytics.com/collect";

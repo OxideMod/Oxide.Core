@@ -44,15 +44,6 @@ namespace Oxide.Core
         /// </summary>
         public static readonly string Branch = Assembly.GetExecutingAssembly().Metadata("GitBranch").FirstOrDefault() ?? "unknown";
 
-        private volatile IServiceProvider provider;
-
-        /// <summary>
-        /// Collection of services from Oxide & Extensions
-        /// </summary>
-        public IServiceProvider ServiceProvider => Services.IsModified ? provider = Services.Internal_BuildServiceProvider() : provider;
-
-        internal ServiceCollection Services { get; }
-
         /// <summary>
         /// Gets the main logger
         /// </summary>
@@ -122,35 +113,26 @@ namespace Oxide.Core
         public ServerConsole.ServerConsole ServerConsole { get; }
 
         private Stopwatch timer;
+        private IPoolFactory PoolFactory { get; }
 
-        public OxideMod()
+        private JsonSerializerSettings JsonSettings { get; }
+        private IServiceCollection ServiceCollection { get; }
+
+        internal OxideMod(IPoolFactory poolFactory, IServiceCollection serviceCollection)
         {
-            // Helper Initialization
-            CorePoolFactory factory = new CorePoolFactory();
-            RemoteConsole = new RemoteConsole.RemoteConsole();
+            PoolFactory = poolFactory;
+            ServiceCollection = serviceCollection;
             CommandLine = new CommandLine(Environment.GetCommandLineArgs());
-            RootLogger = new CompoundLogger();
-            Utility.Logger = RootLogger;
-            ServerConsole = new ServerConsole.ServerConsole();
-            ExtensionManager = new ExtensionManager(RootLogger, factory.GetArrayProvider<object>());
-            Services = new ServiceCollection();
-            Services.AddSingleton<IPoolFactory>(factory)
-                    .AddSingleton(ServerConsole)
-                    .AddSingleton(RemoteConsole)
-                    .AddSingleton<Logger>(RootLogger)
-                    .AddSingleton(CommandLine)
-                    .AddSingleton(ExtensionManager)
-                    .AddSingleton<IDependencyResolverFactory>(new ResolverFactory(RootLogger))
-                    .AddSingleton(this);
 
-            // Directory Setup
+            // Set directories
+            ExtensionDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             RootDirectory = Environment.CurrentDirectory;
+
             if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
             {
                 RootDirectory = AppDomain.CurrentDomain.BaseDirectory;
             }
 
-            InitDirectory(nameof(RootDirectory), RootDirectory);
             InstanceDirectory = Path.Combine(RootDirectory, "oxide");
 
             if (CommandLine.HasVariable("oxide.directory"))
@@ -162,32 +144,21 @@ namespace Oxide.Core
                 }
             }
 
-            InitDirectory(nameof(InstanceDirectory), InstanceDirectory);
-            ExtensionDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            InitDirectory(nameof(ExtensionDirectory), ExtensionDirectory);
             ConfigDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("config"));
-            InitDirectory(nameof(ConfigDirectory), ConfigDirectory);
             DataDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("data"));
-            InitDirectory(nameof(DataDirectory), DataDirectory);
             LangDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("lang"));
-            InitDirectory(nameof(LangDirectory), LangDirectory);
             LogDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("logs"));
-            InitDirectory(nameof(LogDirectory), LogDirectory);
             PluginDirectory = Path.Combine(InstanceDirectory, Utility.CleanPath("plugins"));
-            InitDirectory(nameof(PluginDirectory), PluginDirectory);
 
-            RootPluginManager = new PluginManager(RootLogger, factory.GetArrayProvider<object>(), ConfigDirectory);
+            // Tools Initialization
+            RemoteConsole = new RemoteConsole.RemoteConsole();
+            RootLogger = new CompoundLogger();
+            Utility.Logger = RootLogger;
+            ServerConsole = new ServerConsole.ServerConsole();
+            ExtensionManager = new ExtensionManager(RootLogger, PoolFactory.GetArrayProvider<object>(), serviceCollection);
+            RootPluginManager = new PluginManager(RootLogger, PoolFactory.GetArrayProvider<object>(), ConfigDirectory);
             DataFileSystem = new DataFileSystem(DataDirectory);
-            Services.AddSingleton(DataFileSystem)
-                    .AddSingleton(RootPluginManager)
-                    .AddSingleton<Covalence>()
-                    .AddSingleton<Global>()
-                    .AddSingleton<Lang>()
-                    .AddSingleton<Permission>()
-                    .AddSingleton<Libraries.Plugins>()
-                    .AddSingleton<Time>()
-                    .AddSingleton<Timer>()
-                    .AddSingleton<WebRequests>();
+            JsonSettings = new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
         }
 
         /// <summary>
@@ -201,9 +172,17 @@ namespace Oxide.Core
             {
                 RootLogger.AddLogger(new CallbackLogger(Interface.DebugCallback));
             }
+
+            // Ensure directory creation
+            InitDirectory(nameof(InstanceDirectory), InstanceDirectory);
+            InitDirectory(nameof(PluginDirectory), PluginDirectory);
+            InitDirectory(nameof(ConfigDirectory), ConfigDirectory);
+            InitDirectory(nameof(DataDirectory), DataDirectory);
+            InitDirectory(nameof(LangDirectory), LangDirectory);
+            InitDirectory(nameof(LogDirectory), LogDirectory);
+            RootLogger.AddLogger(new RotatingFileLogger(LogDirectory));
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
-            RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
+            JsonConvert.DefaultSettings = () => JsonSettings;
             string config = Path.Combine(InstanceDirectory, "oxide.config.json");
 
             if (File.Exists(config))
@@ -217,7 +196,27 @@ namespace Oxide.Core
                 RootLogger.Write(LogType.Info, "Created new Oxide configuration: {0}", config);
             }
 
-            Services.AddSingleton(Config);
+            ServiceCollection.AddSingleton(ServerConsole)
+                    .AddSingleton(RemoteConsole)
+                    .AddSingleton<Logger>(RootLogger)
+                    .AddSingleton(CommandLine)
+                    .AddSingleton(ExtensionManager)
+                    .AddSingleton<IDependencyResolverFactory>(new ResolverFactory(RootLogger))
+                    .AddSingleton(DataFileSystem)
+                    .AddSingleton(RootPluginManager)
+                    .AddSingleton<Covalence>()
+                    .AddSingleton<Global>()
+                    .AddSingleton<Lang>()
+                    .AddSingleton<Permission>()
+                    .AddSingleton<Libraries.Plugins>()
+                    .AddSingleton<Time>()
+                    .AddSingleton<Timer>()
+                    .AddSingleton<WebRequests>()
+                    .AddSingleton(this)
+                    .AddSingleton(Config)
+                    .AddSingleton(JsonSettings);
+
+            RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
             if (CommandLine.HasVariable("web.ip"))
             {
@@ -235,18 +234,18 @@ namespace Oxide.Core
             }
 
             RootLogger.Write(LogType.Info, "Loading Oxide Core v{0}...", Version);
-            IDependencyResolverFactory depResolver = ServiceProvider.GetRequiredService<IDependencyResolverFactory>()
-                                                                    .RegisterServiceResolver<LibraryResolver>()
-                                                                    .RegisterServiceResolver<PluginResolver>()
-                                                                    .RegisterServiceResolver<ExtensionResolver>()
-                                                                    .RegisterServiceResolver<PoolResolver>();
+            Interface.ServiceProvider
+                     .GetRequiredService<IDependencyResolverFactory>()
+                     .RegisterServiceResolver<LibraryResolver>()
+                     .RegisterServiceResolver<PluginResolver>()
+                     .RegisterServiceResolver<ExtensionResolver>()
+                     .RegisterServiceResolver<PoolResolver>();
 
-            covalence = ServiceProvider.GetRequiredService<Covalence>();
-            libperm = ServiceProvider.GetRequiredService<Permission>();
-            libtimer = ServiceProvider.GetRequiredService<Timer>();
+            covalence = Interface.ServiceProvider.GetRequiredService<Covalence>();
+            libperm = Interface.ServiceProvider.GetRequiredService<Permission>();
+            libtimer = Interface.ServiceProvider.GetRequiredService<Timer>();
 
             RootLogger.Write(LogType.Info, "Loading extensions...");
-
             ExtensionManager.LoadAllExtensions(ExtensionDirectory);
 
             Cleanup.Run();
@@ -305,7 +304,7 @@ namespace Oxide.Core
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        [Obsolete("Use Interface.Oxide.GetService")]
+        [Obsolete("Use Interface.ServiceProvider.GetService")]
         public T GetLibrary<T>(string name = null) where T : Library => ExtensionManager.GetLibrary(name ?? typeof(T).Name) as T;
 
         /// <summary>
@@ -401,7 +400,7 @@ namespace Oxide.Core
                     {
                         try
                         {
-                            Plugin plugin = (Plugin)ActivationUtility.CreateInstance(ServiceProvider, type);
+                            Plugin plugin = (Plugin)ActivationUtility.CreateInstance(Interface.ServiceProvider, type);
                             plugin.IsCorePlugin = true;
                             PluginLoaded(plugin);
                         }

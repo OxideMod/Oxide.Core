@@ -9,7 +9,7 @@ namespace Oxide.Core
 
         static ArrayPool()
         {
-            Pool = Interface.Services.GetArrayPoolProvider<object>();
+            Pool = Interface.ServiceProvider.GetArrayPoolProvider<object>();
         }
 
         [Obsolete("Use Interface.Oxide.PoolFactory")]

@@ -174,7 +174,7 @@ namespace Oxide.Core.Plugins
 
         private Permission permission { get; }
 
-        protected IServiceProvider Services => Interface.Oxide.ServiceProvider;
+        protected IServiceProvider Services => Interface.ServiceProvider;
 
         /// <summary>
         /// Initializes an empty version of the Plugin class
@@ -473,7 +473,7 @@ namespace Oxide.Core.Plugins
                 return true;
             });
 
-            Covalence covalence = Interface.Services.GetRequiredService<Covalence>();
+            Covalence covalence = Interface.ServiceProvider.GetRequiredService<Covalence>();
             foreach (string command in commands)
             {
                 covalence.RegisterCommand(command, this, CovalenceCommandCallback);

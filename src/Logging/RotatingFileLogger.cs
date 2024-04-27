@@ -11,10 +11,15 @@ namespace Oxide.Core.Logging
         /// <summary>
         /// Gets the directory to write log files to
         /// </summary>
-        public string Directory { get; set; }
+        public string Directory { get; }
 
         // The active writer
         private StreamWriter writer;
+
+        public RotatingFileLogger(string logDirectory)
+        {
+            Directory = logDirectory;
+        }
 
         /// <summary>
         /// Gets the filename for the specified date

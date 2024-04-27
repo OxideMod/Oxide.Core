@@ -50,12 +50,12 @@ namespace Oxide.Core.Plugins.Watchers
         /// <param name="filter"></param>
         public FSWatcher(string directory, string filter)
         {
-            StringPool = Interface.Services.GetRequiredService<IPoolFactory>()
+            StringPool = Interface.ServiceProvider.GetRequiredService<IPoolFactory>()
                                   .GetProvider<StringBuilder>();
             Logger = Interface.Oxide.RootLogger;
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
-            timers = Interface.Services.GetRequiredService<Timer>();
+            timers = Interface.ServiceProvider.GetRequiredService<Timer>();
 
             if (Interface.Oxide.Config.Options.PluginWatchers)
             {

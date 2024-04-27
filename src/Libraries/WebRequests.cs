@@ -28,8 +28,7 @@ namespace Oxide.Core.Libraries
     /// </summary>
     public class WebRequests : Library
     {
-        private static readonly Covalence.Covalence covalence =
-            Interface.Services.GetRequiredService<Covalence.Covalence>();
+        private static readonly Covalence.Covalence covalence = Interface.ServiceProvider.GetRequiredService<Covalence.Covalence>();
 
         /// <summary>
         /// Specifies the HTTP request timeout in seconds

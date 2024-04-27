@@ -125,7 +125,7 @@ namespace Oxide.Core
 
         public static void DatafileToProto<T>(string name, bool deleteAfter = true)
         {
-            DataFileSystem dfs = Interface.Oxide.ServiceProvider.GetRequiredService<DataFileSystem>();
+            DataFileSystem dfs = Interface.ServiceProvider.GetRequiredService<DataFileSystem>();
             if (!dfs.ExistsDatafile(name))
             {
                 return;

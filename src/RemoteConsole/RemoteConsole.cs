@@ -34,7 +34,7 @@ namespace Oxide.Core.RemoteConsole
                 return;
             }
 
-            Covalence = Interface.Services.GetService<Covalence>();
+            Covalence = Interface.ServiceProvider.GetService<Covalence>();
 
             if (string.IsNullOrEmpty(Config.Password))
             {
