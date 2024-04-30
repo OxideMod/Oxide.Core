@@ -134,17 +134,24 @@ namespace Oxide.Core.Plugins
                     continue;
                 }
 
-                List<MethodInfo> harmonyMethods = HarmonyInstance.CreateClassProcessor(nestedType)?.Patch();
-
-                if (harmonyMethods == null || harmonyMethods.Count == 0)
+                try
                 {
-                    Interface.Oxide.LogWarning($"[{Title}] AutoPatch attribute found on '{nestedType.Name}' but no HarmonyPatch methods found. Skipping.");
-                    continue;
+                    List<MethodInfo> harmonyMethods = HarmonyInstance.CreateClassProcessor(nestedType)?.Patch();
+
+                    if (harmonyMethods == null || harmonyMethods.Count == 0)
+                    {
+                        Interface.Oxide.LogWarning($"[{Title}] AutoPatch attribute found on '{nestedType.Name}' but no HarmonyPatch methods found. Skipping.");
+                        continue;
+                    }
+
+                    foreach (MethodInfo method in harmonyMethods)
+                    {
+                        Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method.Name}' method. ({nestedType.Name})");
+                    }
                 }
-
-                foreach (MethodInfo method in harmonyMethods)
+                catch (Exception ex)
                 {
-                    Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method.Name}' method. ({nestedType.Name})");
+                    Interface.Oxide.LogException($"[{Title}] Failed to automatically Harmony patch '{nestedType.Name}'", ex);
                 }
             }
 
