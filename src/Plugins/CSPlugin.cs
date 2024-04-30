@@ -125,6 +125,20 @@ namespace Oxide.Core.Plugins
                 Subscribe(hookname);
             }
 
+            try
+            {
+                // Let the plugin know that it is loading
+                OnCallHook("Init", null);
+            }
+            catch (Exception ex)
+            {
+                Interface.Oxide.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
+                if (Loader != null)
+                {
+                    Loader.PluginErrors[Name] = ex.Message;
+                }
+            }
+
             // Find all classes with the AutoPatch attribute and apply the patches
             foreach (Type nestedType in GetType().GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
             {
@@ -152,20 +166,6 @@ namespace Oxide.Core.Plugins
                 catch (Exception ex)
                 {
                     Interface.Oxide.LogException($"[{Title}] Failed to automatically Harmony patch '{nestedType.Name}'", ex);
-                }
-            }
-
-            try
-            {
-                // Let the plugin know that it is loading
-                OnCallHook("Init", null);
-            }
-            catch (Exception ex)
-            {
-                Interface.Oxide.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
-                if (Loader != null)
-                {
-                    Loader.PluginErrors[Name] = ex.Message;
                 }
             }
         }
