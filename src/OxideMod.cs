@@ -159,6 +159,9 @@ namespace Oxide.Core
             RootPluginManager = new PluginManager(RootLogger, PoolFactory.GetArrayProvider<object>(), ConfigDirectory);
             DataFileSystem = new DataFileSystem(DataDirectory);
             JsonSettings = new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            JsonConvert.DefaultSettings = () => JsonSettings;
         }
 
         /// <summary>
@@ -180,9 +183,7 @@ namespace Oxide.Core
             InitDirectory(nameof(DataDirectory), DataDirectory);
             InitDirectory(nameof(LangDirectory), LangDirectory);
             InitDirectory(nameof(LogDirectory), LogDirectory);
-            RootLogger.AddLogger(new RotatingFileLogger(LogDirectory));
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            JsonConvert.DefaultSettings = () => JsonSettings;
+
             string config = Path.Combine(InstanceDirectory, "oxide.config.json");
 
             if (File.Exists(config))
@@ -196,25 +197,27 @@ namespace Oxide.Core
                 RootLogger.Write(LogType.Info, "Created new Oxide configuration: {0}", config);
             }
 
+            RootLogger.AddLogger(new RotatingFileLogger(LogDirectory));
+
             ServiceCollection.AddSingleton(ServerConsole)
-                    .AddSingleton(RemoteConsole)
-                    .AddSingleton<Logger>(RootLogger)
-                    .AddSingleton(CommandLine)
-                    .AddSingleton(ExtensionManager)
-                    .AddSingleton<IDependencyResolverFactory>(new ResolverFactory(RootLogger))
-                    .AddSingleton(DataFileSystem)
-                    .AddSingleton(RootPluginManager)
-                    .AddSingleton<Covalence>()
-                    .AddSingleton<Global>()
-                    .AddSingleton<Lang>()
-                    .AddSingleton<Permission>()
-                    .AddSingleton<Libraries.Plugins>()
-                    .AddSingleton<Time>()
-                    .AddSingleton<Timer>()
-                    .AddSingleton<WebRequests>()
-                    .AddSingleton(this)
-                    .AddSingleton(Config)
-                    .AddSingleton(JsonSettings);
+                             .AddSingleton(RemoteConsole)
+                             .AddSingleton<Logger>(RootLogger)
+                             .AddSingleton(CommandLine)
+                             .AddSingleton(ExtensionManager)
+                             .AddSingleton<IDependencyResolverFactory>(new ResolverFactory(RootLogger))
+                             .AddSingleton(DataFileSystem)
+                             .AddSingleton(RootPluginManager)
+                             .AddSingleton<Covalence>()
+                             .AddSingleton<Global>()
+                             .AddSingleton<Lang>()
+                             .AddSingleton<Permission>()
+                             .AddSingleton<Libraries.Plugins>()
+                             .AddSingleton<Time>()
+                             .AddSingleton<Timer>()
+                             .AddSingleton<WebRequests>()
+                             .AddSingleton(this)
+                             .AddSingleton(Config)
+                             .AddSingleton(JsonSettings);
 
             RegisterLibrarySearchPath(Path.Combine(ExtensionDirectory, IntPtr.Size == 8 ? "x64" : "x86"));
 
@@ -280,22 +283,12 @@ namespace Oxide.Core
         {
             if (string.IsNullOrEmpty(path))
             {
-                RootLogger.Write(LogType.Error, "Failed to find {0}", name);
                 throw new ArgumentNullException(nameof(path), $"Failed to find {name}");
             }
 
             if (!Directory.Exists(path))
             {
-                try
-                {
-                    Directory.CreateDirectory(path);
-                    RootLogger.Write(LogType.Info, "Created {0}: {1}", name, path);
-                }
-                catch (Exception e)
-                {
-                    RootLogger.WriteException($"Failed to create {name}: {path}", e);
-                    throw;
-                }
+                Directory.CreateDirectory(path);
             }
         }
 
