@@ -76,6 +76,16 @@ namespace Oxide.Core.Plugins.Watchers
 
         private bool IsFileSymlink(string path)
         {
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                int result = Syscall.lstat(path, out Stat buff);
+
+                if (result > 0)
+                {
+                    return (buff.st_mode & FilePermissions.S_IFMT) == FilePermissions.S_IFLNK;
+                }
+            }
+
             return (File.GetAttributes(path) & FileAttributes.ReparsePoint) > 0;
         }
 
@@ -86,11 +96,13 @@ namespace Oxide.Core.Plugins.Watchers
         private void LoadWatcherSymlink(string path)
         {
             StringBuilder str = StringPool.Take();
+            str.Capacity = 4096;
+            int count = 0;
             try
             {
-                int count = Syscall.readlink(path, str);
+                count = Syscall.readlink(path, str);
 
-                if (count == -1)
+                if (count < 0)
                 {
                     Errno err = Stdlib.GetLastError();
 
@@ -104,17 +116,20 @@ namespace Oxide.Core.Plugins.Watchers
                     }
                 }
 
-                string realPath = str.ToString(0, str.Length);
-
-#if DEBUG
-                if (str.Length != count)
+                if (count == 0)
                 {
-                    Interface.Oxide.LogDebug($"Path {path} returned a symlink at {realPath} but wrong length was reported | {count} != {str.Length}");
-                }
+#if DEBUG
+                    Interface.Oxide.LogError($"Unable to read symbolic link: {path}");
 #endif
+                    return;
+                }
 
+                string realPath = str.ToString(0, count);
                 string realDirName = Path.GetDirectoryName(realPath);
                 string realFileName = Path.GetFileName(realPath);
+#if DEBUG
+                Interface.Oxide.LogDebug($"Read symbolic link: {realPath} | Original: {path}");
+#endif
 
                 void symlinkTarget_Changed(object sender, FileSystemEventArgs e) => watcher_Changed(sender, e);
 
@@ -127,6 +142,13 @@ namespace Oxide.Core.Plugins.Watchers
                 watcher.NotifyFilter = NotifyFilters.LastWrite;
                 watcher.IncludeSubdirectories = false;
                 watcher.EnableRaisingEvents = true;
+            }
+            catch(Exception e)
+            {
+#if DEBUG
+                Interface.Oxide.LogDebug($"Failed to process symlink | Original: ({path.Length}) {path} | Link: ({str.Length}) {str}");
+                Interface.Oxide.LogException(e.Message, e);
+#endif
             }
             finally
             {
