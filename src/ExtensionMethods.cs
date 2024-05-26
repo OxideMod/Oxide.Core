@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Oxide.Pooling;
 
 namespace Oxide.Core
 {
@@ -175,6 +176,15 @@ namespace Oxide.Core
         /// <param name="max"></param>
         /// <returns></returns>
         public static string Truncate(this string text, int max) => text.Length <= max ? text : text.Substring(0, max) + " ...";
+
+        /// <summary>
+        /// Creates a new <see cref="HashSet{T}"/> based off a <see cref="IEnumerable{T}"/>
+        /// </summary>
+        /// <param name="collection">The collection to copy items from</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> collection) => new HashSet<T>(collection);
+
     }
 }
 
@@ -348,5 +358,14 @@ namespace Oxide.Plugins
         /// <param name="max"></param>
         /// <returns></returns>
         public static string Truncate(this string text, int max) => text.Length <= max ? text : text.Substring(0, max) + " ...";
+
+        /// <summary>
+        /// Creates a new <see cref="HashSet{T}"/> based off a <see cref="IEnumerable{T}"/>
+        /// </summary>
+        /// <param name="collection">The collection to copy items from</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> collection) => new HashSet<T>(collection);
+
     }
 }

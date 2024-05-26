@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <Import Project="..\netfx.props" />
@@ -17,6 +17,7 @@
     <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
     <PackageReference Include="Oxide.Common" Version="2.0.*" />
     <PackageReference Include="Oxide.References" Version="2.0.*">
       <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>

@@ -2,6 +2,8 @@ using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Oxide.Pooling;
+using HarmonyLib;
 
 namespace Oxide.Core.Plugins
 {
@@ -27,6 +29,17 @@ namespace Oxide.Core.Plugins
     }
 
     /// <summary>
+    /// Indicates that the specified class should automatically apply it's harmony patches
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class AutoPatchAttribute : Attribute
+    {
+        public AutoPatchAttribute()
+        {
+        }
+    }
+
+    /// <summary>
     /// Represents a plugin implemented in .NET
     /// </summary>
     public abstract class CSPlugin : Plugin
@@ -41,14 +54,37 @@ namespace Oxide.Core.Plugins
         // All hooked methods
         protected Dictionary<string, List<HookMethod>> Hooks = new Dictionary<string, List<HookMethod>>();
 
+        // Harmony
+        private Harmony _harmonyInstance;
+        protected string HarmonyId => $"com.oxidemod.{Name}";
+        protected Harmony HarmonyInstance
+        {
+            get
+            {
+                if (_harmonyInstance == null)
+                {
+                    _harmonyInstance = new Harmony(HarmonyId);
+                }
+
+                return _harmonyInstance;
+            }
+        }
+
         // All matched hooked methods
         protected HookCache HooksCache = new HookCache();
+
+        /// <summary>
+        /// Pool of <see cref="object"/> array's
+        /// </summary>
+        protected IArrayPoolProvider<object> ObjectArrayPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the CSPlugin class
         /// </summary>
         public CSPlugin()
         {
+            ObjectArrayPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
             List<Type> types = new List<Type> { type };
@@ -102,6 +138,49 @@ namespace Oxide.Core.Plugins
                     Loader.PluginErrors[Name] = ex.Message;
                 }
             }
+
+            // Find all classes with the AutoPatch attribute and apply the patches
+            foreach (Type nestedType in GetType().GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            {
+                object[] attr = nestedType.GetCustomAttributes(typeof(AutoPatchAttribute), false);
+                if (attr.Length < 1)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    List<MethodInfo> harmonyMethods = HarmonyInstance.CreateClassProcessor(nestedType)?.Patch();
+
+                    if (harmonyMethods == null || harmonyMethods.Count == 0)
+                    {
+                        Interface.Oxide.LogWarning($"[{Title}] AutoPatch attribute found on '{nestedType.Name}' but no HarmonyPatch methods found. Skipping.");
+                        continue;
+                    }
+
+                    foreach (MethodInfo method in harmonyMethods)
+                    {
+                        Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method.Name}' method. ({nestedType.Name})");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Interface.Oxide.LogException($"[{Title}] Failed to automatically Harmony patch '{nestedType.Name}'", ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called when this plugin has been removed from a manager
+        /// </summary>
+        /// <param name="manager"></param>
+        public override void HandleRemovedFromManager(PluginManager manager)
+        {
+            // Unpatch all automatically patched Harmony patches
+            _harmonyInstance?.UnpatchAll(HarmonyId);
+
+            // Let base work
+            base.HandleRemovedFromManager(manager);
         }
 
         protected void AddHookMethod(string name, MethodInfo method)
@@ -135,7 +214,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -176,7 +255,7 @@ namespace Oxide.Core.Plugins
                 {
                     if (pooledArray)
                     {
-                        ArrayPool.Free(hookArgs);
+                        ObjectArrayPool.Return(hookArgs);
                     }
                     throw ex.InnerException ?? ex;
                 }
@@ -196,7 +275,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArrayPool.Return(hookArgs);
                 }
             }
 
@@ -243,7 +322,7 @@ namespace Oxide.Core.Plugins
                 if (received != h.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ArrayPool.Get(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -290,7 +369,7 @@ namespace Oxide.Core.Plugins
 
                 if (pooledArray)
                 {
-                    ArrayPool.Free(hookArgs);
+                    ObjectArrayPool.Return(hookArgs);
                 }
             }
 
