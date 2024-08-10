@@ -152,12 +152,12 @@ namespace Oxide.Core.Libraries
         [LibraryFunction("GetMessageByLang")]
         public string GetMessageByLang(string key, Plugin plugin, string lang = "en")
         {
-            if (string.IsNullOrEmpty(key) || plugin == null)
+            if (!string.IsNullOrEmpty(key) && plugin != null && langFiles.TryGetValue($"{lang}{Path.DirectorySeparatorChar}{plugin.Name}.json", out var value) && value.TryGetValue(key, out var value2))
             {
-                return key;
+                return value2;
             }
-
-            return GetMessageKey(key, plugin, lang);
+            
+            return key;
         }
         
         /// <summary>
