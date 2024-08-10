@@ -125,7 +125,7 @@ namespace Oxide.Core.Libraries
         }
 
         /// <summary>
-        /// Gets a message for a plugin in the required language
+        /// Gets a message for a plugin in the received language from the specified user Id
         /// </summary>
         /// <param name="key"></param>
         /// <param name="plugin"></param>
@@ -141,7 +141,25 @@ namespace Oxide.Core.Libraries
 
             return GetMessageKey(key, plugin, GetLanguage(userId));
         }
+        
+        /// <summary>
+        /// Gets a message for a plugin in the specified language
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="plugin"></param>
+        /// <param name="lang"></param>
+        /// <returns></returns>
+        [LibraryFunction("GetMessageByLang")]
+        public string GetMessageByLang(string key, Plugin plugin, string lang = "en")
+        {
+            if (string.IsNullOrEmpty(key) || plugin == null)
+            {
+                return key;
+            }
 
+            return GetMessageKey(key, plugin, lang);
+        }
+        
         /// <summary>
         /// Gets all messages for a plugin in a language
         /// </summary>
