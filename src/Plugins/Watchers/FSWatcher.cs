@@ -38,7 +38,7 @@ namespace Oxide.Core.Plugins.Watchers
         private Timer timers;
 
         private Dictionary<string, FileSystemWatcher> m_symlinkWatchers = new Dictionary<string, FileSystemWatcher>();
-        private IPoolProvider<StringBuilder> StringPool { get; }
+        private IPool<StringBuilder> StringPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the FSWatcher class
@@ -47,7 +47,7 @@ namespace Oxide.Core.Plugins.Watchers
         /// <param name="filter"></param>
         public FSWatcher(string directory, string filter)
         {
-            StringPool = Interface.Oxide.PoolFactory.GetProvider<StringBuilder>();
+            StringPool = PoolFactory<StringBuilder>.Shared;
             watchedPlugins = new HashSet<string>();
             changeQueue = new Dictionary<string, QueuedChange>();
             timers = Interface.Oxide.GetLibrary<Timer>();

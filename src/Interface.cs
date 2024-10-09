@@ -18,12 +18,12 @@ namespace Oxide.Core
         /// </summary>
         public static NativeDebugCallback DebugCallback { get; set; }
 
-        private static IArrayPoolProvider<object> HookArrays { get; }
+        private static IArrayPool<object> HookArrays { get; }
 
         static Interface()
         {
             Oxide = new OxideMod();
-            HookArrays = Oxide.PoolFactory.GetArrayProvider<object>();
+            HookArrays = ArrayPool<object>.Shared;
         }
 
         /// <summary>
