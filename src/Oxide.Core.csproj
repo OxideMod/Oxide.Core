@@ -24,7 +24,18 @@
     </PackageReference>
     <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+    <Target Name="AddGitMetadaAssemblyAttributes" BeforeTargets="CoreGenerateAssemblyInfo">
+	    <Exec Command="git name-rev --name-only HEAD" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="True">
+		    <Output TaskParameter="ConsoleOutput" PropertyName="GitBranch" />
+	    </Exec>
+	    <ItemGroup>
+		    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="$(GitBranch) != ''">
+			    <_Parameter1>GitBranch</_Parameter1>
+			    <_Parameter2>$(GitBranch)</_Parameter2>
+		    </AssemblyAttribute>
+	    </ItemGroup>
+    </Target>
+	<Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
     <ItemGroup>
       <ReferencePath Condition="'%(FileName)' == 'Oxide.References'">
