@@ -43,11 +43,6 @@ namespace Oxide.Core
         public static readonly string Branch = Assembly.GetExecutingAssembly().Metadata("GitBranch").FirstOrDefault() ?? "unknown";
 
         /// <summary>
-        /// Retrieve pooled objects
-        /// </summary>
-        public IPoolFactory PoolFactory { get; }
-
-        /// <summary>
         /// Gets the main logger
         /// </summary>
         public CompoundLogger RootLogger { get; private set; }
@@ -122,8 +117,6 @@ namespace Oxide.Core
         public OxideMod()
         {
             init_called = false;
-            CorePoolFactory factory = new CorePoolFactory();
-            PoolFactory = factory;
         }
 
         /// <summary>

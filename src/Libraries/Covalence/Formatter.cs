@@ -129,7 +129,7 @@ namespace Oxide.Core.Libraries.Covalence
                 [ElementType.Color] = c => new Tag($"[c/{RGBAtoRGB(c)}:", "]")
             };
 
-        private static readonly IPoolProvider<StringBuilder> stringPool = Interface.Oxide.PoolFactory.GetProvider<StringBuilder>();
+        private static readonly IPool<StringBuilder> stringPool = PoolFactory<StringBuilder>.Shared;
 
         private class Token : Poolable<Token>
         {

@@ -79,7 +79,7 @@ namespace Oxide.Core.Plugins
         // Re-usable conflict list used for hook calls
         private readonly List<string> hookConflicts = new List<string>();
 
-        private IArrayPoolProvider<object> ObjectPool { get; }
+        private IArrayPool<object> ObjectPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the PluginManager class
@@ -87,7 +87,7 @@ namespace Oxide.Core.Plugins
         public PluginManager(Logger logger)
         {
             // Initialize
-            ObjectPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+            ObjectPool = ArrayPool<object>.Shared;
             loadedPlugins = new Dictionary<string, Plugin>();
             hookSubscriptions = new Dictionary<string, HookSubscriptions>();
             Logger = logger;

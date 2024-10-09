@@ -76,14 +76,14 @@ namespace Oxide.Core.Plugins
         /// <summary>
         /// Pool of <see cref="object"/> array's
         /// </summary>
-        protected IArrayPoolProvider<object> ObjectArrayPool { get; }
+        protected IArrayPool<object> ObjectArrayPool { get; }
 
         /// <summary>
         /// Initializes a new instance of the CSPlugin class
         /// </summary>
         public CSPlugin()
         {
-            ObjectArrayPool = Interface.Oxide.PoolFactory.GetArrayProvider<object>();
+            ObjectArrayPool = ArrayPool<object>.Shared;
 
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
