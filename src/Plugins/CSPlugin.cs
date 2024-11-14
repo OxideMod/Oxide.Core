@@ -160,6 +160,12 @@ namespace Oxide.Core.Plugins
 
                     foreach (MethodInfo method in harmonyMethods)
                     {
+                        // the MethodInfo is null when the list of methods contains a reverse patched method
+                        if (method == null)
+                        {
+                            continue;
+                        }
+
                         Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method.Name}' method. ({nestedType.Name})");
                     }
                 }
