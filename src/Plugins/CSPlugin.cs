@@ -160,7 +160,7 @@ namespace Oxide.Core.Plugins
 
                     foreach (MethodInfo method in harmonyMethods)
                     {
-                        Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method.Name}' method. ({nestedType.Name})");
+                        Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method?.Name ?? "unknown"}' method. ({nestedType.Name})");
                     }
                 }
                 catch (Exception ex)
