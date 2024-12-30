@@ -49,6 +49,12 @@ namespace Oxide.Core.Configuration
             /// </summary>
             [JsonProperty(PropertyName = "Preprocessor directives")]
             public List<string> PreprocessorDirectives { get; set; } = new List<string>();
+
+            /// <summary>
+            /// Enables the publicizer
+            /// </summary>
+            [JsonProperty(PropertyName = "Enable Publicizer")]
+            public bool Publicize { get; set; } = true;
         }
 
         [JsonObject]
