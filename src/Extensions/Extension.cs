@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Oxide.Core.Extensions
@@ -99,6 +100,15 @@ namespace Oxide.Core.Extensions
         /// <param name="pluginDirectory"></param>
         public virtual void LoadPluginWatchers(string pluginDirectory)
         {
+        }
+
+        /// <summary>
+        /// Gets the preprocessor directives for this extension
+        /// </summary>
+        /// <returns></returns>
+        public virtual IEnumerable<string> GetPreprocessorDirectives()
+        {
+            return Enumerable.Empty<string>();
         }
 
         /// <summary>
