@@ -98,14 +98,18 @@ namespace Oxide.Core
 
         public T ReadObject<T>(string name)
         {
-            if (!ExistsDatafile(name))
+            T instance = default;
+
+            if (ExistsDatafile(name))
+                instance = GetFile(name).ReadObject<T>();
+
+            if (instance == null)
             {
-                T instance = Activator.CreateInstance<T>();
+                instance = Activator.CreateInstance<T>();
                 WriteObject(name, instance);
-                return instance;
             }
 
-            return GetFile(name).ReadObject<T>();
+            return instance;
         }
 
         public void WriteObject<T>(string name, T Object, bool sync = false) => GetFile(name).WriteObject(Object, sync);
