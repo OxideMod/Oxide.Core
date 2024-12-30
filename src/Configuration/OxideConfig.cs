@@ -54,7 +54,7 @@ namespace Oxide.Core.Configuration
             /// Enables the publicizer
             /// </summary>
             [JsonProperty(PropertyName = "Enable Publicizer")]
-            public bool Publicize { get; set; } = true;
+            public bool? Publicize { get; set; } = true;
         }
 
         [JsonObject]
@@ -236,6 +236,12 @@ namespace Oxide.Core.Configuration
             if (Compiler.PreprocessorDirectives == null)
             {
                 Compiler.PreprocessorDirectives = new List<string>();
+                changed = true;
+            }
+
+            if (Compiler.Publicize == null)
+            {
+                Compiler.Publicize = true;
                 changed = true;
             }
 
