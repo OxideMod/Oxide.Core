@@ -104,15 +104,7 @@ namespace Oxide.Core.Plugins.Watchers
                     }
                 }
 
-                string realPath = str.ToString(0, str.Length);
-
-#if DEBUG
-                if (str.Length != count)
-                {
-                    Interface.Oxide.LogDebug($"Path {path} returned a symlink at {realPath} but wrong length was reported | {count} != {str.Length}");
-                }
-#endif
-
+                string realPath = str.ToString(0, count);
                 string realDirName = Path.GetDirectoryName(realPath);
                 string realFileName = Path.GetFileName(realPath);
 
