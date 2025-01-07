@@ -55,6 +55,12 @@ namespace Oxide.Core.Configuration
             /// </summary>
             [JsonProperty(PropertyName = "Enable Publicizer")]
             public bool? Publicize { get; set; } = true;
+
+            /// <summary>
+            /// List of references to ignore when publicizing
+            /// </summary>
+            [JsonProperty(PropertyName = "Ignored Publicizer References")]
+            public List<string> IgnoredPublicizerReferences { get; set; } = new List<string>();
         }
 
         [JsonObject]
@@ -242,6 +248,12 @@ namespace Oxide.Core.Configuration
             if (Compiler.Publicize == null)
             {
                 Compiler.Publicize = true;
+                changed = true;
+            }
+
+            if (Compiler.IgnoredPublicizerReferences == null)
+            {
+                Compiler.IgnoredPublicizerReferences = new List<string>();
                 changed = true;
             }
 
