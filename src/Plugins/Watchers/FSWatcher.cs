@@ -18,7 +18,7 @@ namespace Oxide.Core.Plugins.Watchers
     /// <summary>
     /// Represents a file system watcher
     /// </summary>
-    public sealed class FSWatcher : PluginChangeWatcher
+    public class FSWatcher : PluginChangeWatcher
     {
         private class QueuedChange
         {
