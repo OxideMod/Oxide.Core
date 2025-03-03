@@ -3,6 +3,9 @@ using System;
 
 namespace Oxide.Core.Tests.Plugins.Mocks
 {
+    /// <summary>
+    /// A fake plugin for testing purposes.
+    /// </summary>
     public class FakePlugin : Plugin
     {
         public FakePlugin()
@@ -14,6 +17,7 @@ namespace Oxide.Core.Tests.Plugins.Mocks
             Version = new VersionNumber(1, 0, 0);
         }
 
+        #region Methods
         public override void Load()
         {
             // Minimal load logic for testing.
@@ -21,9 +25,10 @@ namespace Oxide.Core.Tests.Plugins.Mocks
 
         protected override object OnCallHook(string hook, object[] args)
         {
-            // For testing purposes, simply return a string combining the hook name and the number of arguments.
+            // Optionally raise an error event for testing.
             int argCount = args != null ? args.Length : 0;
             return $"Hook: {hook}, Args: {argCount}";
         }
+        #endregion
     }
 }
