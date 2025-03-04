@@ -12,13 +12,13 @@ namespace Oxide.Core.Tests.Plugins
         [Fact]
         public void CSPlugin_DiscoverHooks_RegistersHookMethods()
         {
-            // Arrange: Create an instance of our test CSPlugin subclass.
+            // Arrange Create an instance of our test CSPlugin subclass.
             var plugin = new TestCSPlugin();
 
-            // Act: Call the hook "MyHook" with a value.
+            // Act Call the hook "MyHook" with a value.
             var result = plugin.CallHook("MyHook", 42);
 
-            // Assert: The hook method should be invoked and return the expected string.
+            // Assert The hook method should be invoked and return the expected string.
             Assert.Equal("Test hook called with value: 42", result);
         }
 

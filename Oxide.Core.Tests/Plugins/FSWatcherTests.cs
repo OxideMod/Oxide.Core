@@ -19,7 +19,7 @@ namespace Oxide.Core.Tests.Plugins
 
         public FSWatcherTests()
         {
-            // Arrange: Create a temporary directory and file.
+            // Arrange Create a temporary directory and file.
             testDir = Path.Combine(Path.GetTempPath(), "FSWatcherTests_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(testDir);
             testFile = Path.Combine(testDir, "test.cs");
@@ -40,13 +40,13 @@ namespace Oxide.Core.Tests.Plugins
         [Fact]
         public void FSWatcher_FiresPluginAdded_OnTrigger()
         {
-            // Act: Manually trigger the PluginAdded event.
+            // Act Manually trigger the PluginAdded event.
             watcher.TriggerPluginAdded("test");
 
             // Wait a short time to ensure asynchronous callbacks are processed.
             Thread.Sleep(50);
 
-            // Assert: Verify that the event was fired with the correct values.
+            // Assert Verify that the event was fired with the correct values.
             Assert.Equal("test", LastEventName);
             Assert.Equal(WatcherChangeTypes.Created, LastEventType);
         }
