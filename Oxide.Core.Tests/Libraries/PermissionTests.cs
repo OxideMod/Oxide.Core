@@ -9,7 +9,7 @@ using Oxide.Core;
 using Oxide.Core.Libraries;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Plugins;
-using Oxide.Core.Tests.Plugins.Mocks; 
+using Oxide.Core.Tests.Plugins.Mocks;
 
 namespace Oxide.Core.Tests.Libraries
 {
@@ -80,7 +80,7 @@ namespace Oxide.Core.Tests.Libraries
             var userData = permLib.GetUserData("userNick");
             userData.LastSeenNickname = "OldName";
             permLib.UpdateNickname("userNick", "NewName");
-            Assert.Equal("NewName", userData.LastSeenNickname);
+            Assert.Equal("NewName".Sanitize(), userData.LastSeenNickname);
         }
 
         [Fact]
@@ -508,6 +508,71 @@ namespace Oxide.Core.Tests.Libraries
             permLib.GrantGroupPermission("groupFormat", perm, plugin);
             var groups = permLib.GetPermissionGroups(perm);
             Assert.Contains("groupFormat", groups);
+        }
+
+        #endregion
+
+        #region Additional Permission Tests
+
+        [Fact]
+        public void UserExists_ReturnsFalseForNonExistentUser()
+        {
+            // Do not call GetUserData, so "nonexistentUser" should not exist.
+            Assert.False(permLib.UserExists("nonexistentUser"));
+        }
+
+        [Fact]
+        public void UserIdValid_ReturnsCorrectlyBasedOnValidationFunction()
+        {
+            // Without a registered validation function, any non-null string is considered valid.
+            Assert.True(permLib.UserIdValid("anyUser"));
+            // Register a validation function that only accepts user IDs starting with "valid".
+            permLib.RegisterValidate(id => id.StartsWith("valid"));
+            Assert.True(permLib.UserIdValid("validUser123"));
+            Assert.False(permLib.UserIdValid("invalidUser"));
+        }
+
+        [Fact]
+        public void CleanUp_RemovesInvalidUsers()
+        {
+            // Register a validation function that rejects user IDs not starting with "ok".
+            permLib.RegisterValidate(id => id.StartsWith("ok"));
+            // Add two users: one valid and one invalid.
+            var validUser = permLib.GetUserData("okUser");
+            validUser.LastSeenNickname = "Valid";
+            var invalidUser = permLib.GetUserData("badUser");
+            invalidUser.LastSeenNickname = "Bad";
+            // Before cleanup, both users exist.
+            Assert.True(permLib.UserExists("okUser"));
+            Assert.True(permLib.UserExists("badUser"));
+            // Run cleanup.
+            permLib.CleanUp();
+            // "badUser" should be removed.
+            Assert.True(permLib.UserExists("okUser"));
+            Assert.False(permLib.UserExists("badUser"));
+        }
+
+        [Fact]
+        public void UserHasPermission_ServerConsole_ReturnsTrue()
+        {
+            // Regardless of permission, "server_console" should always return true.
+            Assert.True(permLib.UserHasPermission("server_console", "any.permission"));
+        }
+
+        [Fact]
+        public void PermissionExists_ReturnsTrueForWildcardPermissions()
+        {
+            // Register two permissions for a fake plugin.
+            FakePlugin plugin = new FakePlugin();
+            string perm1 = $"{plugin.Name}.test1";
+            string perm2 = $"{plugin.Name}.test2";
+            permLib.RegisterPermission(perm1, plugin);
+            permLib.RegisterPermission(perm2, plugin);
+            // Check using a wildcard (e.g., "fakeplugin.test*").
+            string wildcard = $"{plugin.Name}.test*";
+            Assert.True(permLib.PermissionExists(wildcard));
+            // Also check with owner specified.
+            Assert.True(permLib.PermissionExists(wildcard, plugin));
         }
 
         #endregion
