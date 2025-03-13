@@ -2410,5 +2410,294 @@ namespace Oxide.Core.Tests.Libraries
                 Directory.Delete(tempInstanceDir, true);
             }
         }
+
+        [Fact]
+        public void VerifyGroupData_DuplicateGroups_MergesPermissions()
+        {
+            Dictionary<string, GroupData> testData = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            
+            // Create first group
+            var group1 = new GroupData();
+            group1.Perms.Add("test.perm1");
+            group1.Perms.Add("test.perm2");
+            testData.Add("testgroup", group1);
+            
+            // Create duplicate group with different casing and different permissions
+            var group2 = new GroupData();
+            group2.Perms.Add("test.perm3");
+            group2.Perms.Add("test.perm4");
+            testData.Add("TestGroup", group2);
+            
+            // Use reflection to access the private method
+            var method = typeof(Permission).GetMethod("VerifyGroupData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (Dictionary<string, GroupData>)method.Invoke(permLib, new object[] { testData });
+            
+            // Verify results
+            Assert.Single(result); // Should only have one group after merge
+            Assert.True(result.ContainsKey("testgroup"));
+            
+            // Should have all permissions merged
+            var mergedGroup = result["testgroup"];
+            Assert.Equal(4, mergedGroup.Perms.Count);
+            Assert.True(mergedGroup.Perms.Contains("test.perm1"));
+            Assert.True(mergedGroup.Perms.Contains("test.perm2"));
+            Assert.True(mergedGroup.Perms.Contains("test.perm3"));
+            Assert.True(mergedGroup.Perms.Contains("test.perm4"));
+        }
+
+        [Fact]
+        public void GrantUserPermission_WithWildcard_GrantsAllPermissions()
+        {
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("test.perm1", plugin);
+            permLib.RegisterPermission("test.perm2", plugin);
+            permLib.RegisterPermission("test.perm3", plugin);
+            permLib.RegisterPermission("other.perm1", plugin);
+            
+            // Grant using wildcard (*)
+            permLib.GrantUserPermission("testuser", "*", plugin);
+            
+            // Verify all permissions are granted
+            var userPerms = permLib.GetUserPermissions("testuser");
+            Assert.Contains("test.perm1", userPerms);
+            Assert.Contains("test.perm2", userPerms);
+            Assert.Contains("test.perm3", userPerms);
+            Assert.Contains("other.perm1", userPerms);
+        }
+
+        [Fact]
+        public void GrantUserPermission_WithSpecificWildcard_GrantsMatchingPermissions()
+        {
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("test.perm1", plugin);
+            permLib.RegisterPermission("test.perm2", plugin);
+            permLib.RegisterPermission("test.other.perm", plugin);
+            permLib.RegisterPermission("other.perm1", plugin);
+            
+            // Grant using specific prefix wildcard
+            permLib.GrantUserPermission("testuser", "test.*", plugin);
+            
+            // Verify only matching permissions are granted
+            var userPerms = permLib.GetUserPermissions("testuser");
+            Assert.Contains("test.perm1", userPerms);
+            Assert.Contains("test.perm2", userPerms);
+            Assert.Contains("test.other.perm", userPerms);
+            Assert.DoesNotContain("other.perm1", userPerms);
+        }
+
+        [Fact]
+        public void GrantUserPermission_WithWildcard_NoPluginOwner()
+        {
+            var plugin1 = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            var plugin2 = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            plugin2.Name = "FakePlugin2";
+            
+            permLib.RegisterPermission("plugin1.perm1", plugin1);
+            permLib.RegisterPermission("plugin1.perm2", plugin1);
+            permLib.RegisterPermission("plugin2.perm1", plugin2);
+            
+            // Grant using wildcard with null plugin owner
+            permLib.GrantUserPermission("testuser", "*", null);
+            
+            // Verify permissions from all plugins are granted
+            var userPerms = permLib.GetUserPermissions("testuser");
+            Assert.Contains("plugin1.perm1", userPerms);
+            Assert.Contains("plugin1.perm2", userPerms);
+            Assert.Contains("plugin2.perm1", userPerms);
+        }
+
+        // [Fact]
+        // public void GrantUserPermission_AlreadyGranted_DoesNotCallHook()
+        // {
+        //     var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+        //     permLib.RegisterPermission("test.perm", plugin);
+            
+        //     // Grant the permission first time
+        //     permLib.GrantUserPermission("testuser", "test.perm", plugin);
+            
+        //     // Now grant again - should not add or call hook
+        //     bool hookCalled = false;
+        //     Interface.Oxide.OnCallHook += (hook, args) => {
+        //         if (hook == "OnUserPermissionGranted" && (string)args[0] == "testuser" && (string)args[1] == "test.perm")
+        //             hookCalled = true;
+        //         return null;
+        //     };
+            
+        //     permLib.GrantUserPermission("testuser", "test.perm", plugin);
+            
+        //     // Verify hook was not called for duplicate grant
+        //     Assert.False(hookCalled);
+        // }
+
+        [Fact]
+        public void VerifyAndLoadUsersData_MergesDuplicateUsers()
+        {
+            // Create test user data file with duplicates
+            var testUsersData = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
+            
+            // First user entry
+            var user1 = new UserData();
+            user1.Perms.Add("test.perm1");
+            user1.Perms.Add("test.perm2");
+            user1.Groups.Add("group1");
+            testUsersData.Add("testuser", user1);
+            
+            // Duplicate user with different perms and groups
+            var user2 = new UserData();
+            user2.Perms.Add("test.perm3");
+            user2.Groups.Add("group2");
+            testUsersData.Add("TestUser", user2); // Same name different case
+            
+            // Save test data to file
+            ProtoStorage.Save(testUsersData, "oxide.users");
+            
+            // Create new permission instance to load the test data
+            var tempPermission = new Permission();
+            
+            // Verify user data was merged
+            var userData = tempPermission.GetUserData("testuser");
+            Assert.Equal(3, userData.Perms.Count);
+            Assert.Contains("test.perm1", userData.Perms);
+            Assert.Contains("test.perm2", userData.Perms);
+            Assert.Contains("test.perm3", userData.Perms);
+            
+            Assert.Equal(2, userData.Groups.Count);
+            Assert.Contains("group1", userData.Groups);
+            Assert.Contains("group2", userData.Groups);
+        }
+
+        [Fact]
+        public void VerifyAndLoadGroupsData_MergesDuplicateGroups()
+        {
+            // Create test group data with duplicates
+            var testGroupsData = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
+            
+            // First group entry
+            var group1 = new GroupData();
+            group1.Title = "Test Group";
+            group1.Rank = 1;
+            group1.Perms.Add("test.perm1");
+            group1.Perms.Add("test.perm2");
+            testGroupsData.Add("testgroup", group1);
+            
+            // Duplicate group with different perms
+            var group2 = new GroupData();
+            group2.Title = "Test Group 2"; // Different title
+            group2.Rank = 2; // Different rank
+            group2.Perms.Add("test.perm3");
+            testGroupsData.Add("TestGroup", group2); // Same name different case
+            
+            // Save test data to file
+            ProtoStorage.Save(testGroupsData, "oxide.groups");
+            
+            // Create new permission instance to load the test data
+            var tempPermission = new Permission();
+            
+            // Verify groups data was merged
+            var groupData = tempPermission.GetGroupData("testgroup");
+            Assert.NotNull(groupData);
+            Assert.Equal(3, groupData.Perms.Count);
+            Assert.Contains("test.perm1", groupData.Perms);
+            Assert.Contains("test.perm2", groupData.Perms);
+            Assert.Contains("test.perm3", groupData.Perms);
+        }
+
+        [Fact]
+        public void GrantGroupPermission_WithWildcard_GrantsAllPermissions()
+        {
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("test.perm1", plugin);
+            permLib.RegisterPermission("test.perm2", plugin);
+            permLib.RegisterPermission("other.perm", plugin);
+            
+            permLib.CreateGroup("testgroup", "Test Group", 1);
+            
+            // Grant using wildcard
+            permLib.GrantGroupPermission("testgroup", "*", plugin);
+            
+            // Verify all permissions are granted
+            var groupPerms = permLib.GetGroupPermissions("testgroup");
+            Assert.Contains("test.perm1", groupPerms);
+            Assert.Contains("test.perm2", groupPerms);
+            Assert.Contains("other.perm", groupPerms);
+        }
+
+        [Fact]
+        public void GrantGroupPermission_WithNullPlugin_GrantsPermissionsFromAllPlugins()
+        {
+            var plugin1 = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            var plugin2 = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            plugin2.Name = "FakePlugin2";
+            
+            permLib.RegisterPermission("plugin1.perm", plugin1);
+            permLib.RegisterPermission("plugin2.perm", plugin2);
+            
+            permLib.CreateGroup("testgroup", "Test Group", 1);
+            
+            // Grant using wildcard with null plugin
+            permLib.GrantGroupPermission("testgroup", "*", null);
+            
+            // Verify permissions from all plugins are granted
+            var groupPerms = permLib.GetGroupPermissions("testgroup");
+            Assert.Contains("plugin1.perm", groupPerms);
+            Assert.Contains("plugin2.perm", groupPerms);
+        }
+
+        [Fact]
+        public void ProtoStorage_SaveAndLoad_WithCorruptedData()
+        {
+            // Create valid test data
+            var testUsersData = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
+            var user = new UserData();
+            user.Perms.Add("test.perm");
+            testUsersData.Add("testuser", user);
+            
+            // Save valid data first
+            ProtoStorage.Save(testUsersData, "oxide.users");
+            
+            // Now corrupt the file by writing invalid data
+            string filePath = Path.Combine(Interface.Oxide.InstanceDirectory, "oxide.users.data");
+            File.WriteAllText(filePath, "This is not valid protobuf data");
+            
+            // Try to load the corrupted data
+            var loadedData = ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users");
+            
+            // Should handle gracefully and return null or empty
+            Assert.Null(loadedData);
+            
+            // Create new permission instance which should handle the corrupted data
+            var tempPermission = new Permission();
+            
+            // Should have created a new empty dictionary
+            Assert.NotNull(tempPermission.GetUserData("newuser"));
+        }
+
+        [Fact]
+        public void PermissionExists_ComplexWildcardScenarios()
+        {
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            
+            // Register some permissions with common prefixes
+            permLib.RegisterPermission("test.permission.one", plugin);
+            permLib.RegisterPermission("test.permission.two", plugin);
+            permLib.RegisterPermission("test.other.permission", plugin);
+            permLib.RegisterPermission("different.permission", plugin);
+            
+            // Test exact match
+            Assert.True(permLib.PermissionExists("test.permission.one"));
+            
+            // Test wildcard at end
+            Assert.True(permLib.PermissionExists("test.permission.*"));
+            Assert.True(permLib.PermissionExists("test.*"));
+            Assert.True(permLib.PermissionExists("*"));
+            
+            // Test wildcard with specific plugin
+            Assert.True(permLib.PermissionExists("test.permission.*", plugin));
+            Assert.False(permLib.PermissionExists("nonexistent.*", plugin));
+            
+            // Test with empty string
+            Assert.False(permLib.PermissionExists(""));
+            Assert.False(permLib.PermissionExists("", plugin));
+        }
     }
 }
