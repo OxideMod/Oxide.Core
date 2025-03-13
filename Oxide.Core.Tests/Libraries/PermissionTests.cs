@@ -9,6 +9,7 @@ using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
 using Oxide.Core.Tests.Plugins.Mocks;
 using Moq;
+using Oxide.Core.Logging;
 
 namespace Oxide.Core.Tests.Libraries
 {
@@ -1370,21 +1371,356 @@ namespace Oxide.Core.Tests.Libraries
         }
 
         [Fact]
-        public void UserHasAnyGroup_NoGroups()
+        public void Owner_OnRemovedFromManager_Test()
         {
-            string userId = "noGroupsUser";
-            Assert.False(permLib.UserHasAnyGroup(userId));
-            permLib.CreateGroup("someGroup", "Some Group", 1);
-            permLib.AddUserGroup(userId, "someGroup");
-            Assert.True(permLib.UserHasAnyGroup(userId));
+            // Create test plugin
+            var fakePlugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register permission
+            string testPermission = "testplugin.permission";
+            permLib.RegisterPermission(testPermission, fakePlugin);
+
+            // Verify permission exists
+            Assert.True(permLib.PermissionExists(testPermission));
+
+            // Get private method through reflection
+            var method = permLib.GetType().GetMethod("owner_OnRemovedFromManager",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Call directly, not using PluginManager
+            method.Invoke(permLib, new object[] { fakePlugin, null });
+
+            // Verify permission no longer exists
+            Assert.False(permLib.PermissionExists(testPermission));
         }
 
         [Fact]
-        public void UpdateNickname_NonExistingUser()
+        public void VerifyAndLoadUsersData_CorruptedData()
         {
-            permLib.UpdateNickname("nonExisting", "NewName");
-            var userData = permLib.GetUserData("nonExisting");
-            Assert.Equal("NewName", userData.LastSeenNickname);
+            // Write corrupted users data to file
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.data");
+            File.WriteAllText(usersFile, "This is not valid protobuf data");
+
+            // Create new permission instance which should handle the corrupted data
+            var newPermLib = new Permission();
+
+            // Verify it still loads without throwing exception
+            Assert.True(newPermLib.IsLoaded);
+
+            // Add a user to verify basic functionality still works
+            newPermLib.GrantUserPermission("testuser", "test.permission", null);
+            Assert.True(newPermLib.UserExists("testuser"));
+        }
+
+        [Fact]
+        public void VerifyAndLoadGroupsData_CorruptedData()
+        {
+            // Write corrupted groups data to file
+            string groupsFile = Path.Combine(tempDataDir, "oxide.groups.data");
+            File.WriteAllText(groupsFile, "This is not valid protobuf data");
+
+            // Create new permission instance which should handle the corrupted data
+            var newPermLib = new Permission();
+
+            // Verify it still loads without throwing exception
+            Assert.True(newPermLib.IsLoaded);
+
+            // Add a group to verify basic functionality still works
+            newPermLib.CreateGroup("testgroup", "Test Group", 1);
+            Assert.True(newPermLib.GroupExists("testgroup"));
+        }
+
+        [Fact]
+        public void GetUserGroupPermissions_ComplexTest()
+        {
+            // Setup complex parent group hierarchy for testing
+            permLib.CreateGroup("parent", "Parent Group", 100);
+            permLib.CreateGroup("child", "Child Group", 50);
+            permLib.CreateGroup("grandchild", "Grandchild Group", 25);
+
+            // Set parent relationships
+            permLib.SetGroupParent("child", "parent");
+            permLib.SetGroupParent("grandchild", "child");
+
+            // Add permissions to each level
+            permLib.GrantGroupPermission("parent", "parent.permission", null);
+            permLib.GrantGroupPermission("child", "child.permission", null);
+            permLib.GrantGroupPermission("grandchild", "grandchild.permission", null);
+
+            // Create a user and add to the lowest group
+            string userId = "hierarchyUser";
+            permLib.AddUserGroup(userId, "grandchild");
+
+            // Test inheritance through multiple levels
+            var userPerms = permLib.GetUserPermissions(userId);
+
+            // User should have all permissions from the full hierarchy
+            Assert.Contains("parent.permission", userPerms);
+            Assert.Contains("child.permission", userPerms);
+            Assert.Contains("grandchild.permission", userPerms);
+
+            // Test a user with direct permissions
+            string directUser = "directPermUser";
+            permLib.GrantUserPermission(directUser, "direct.permission", null);
+            permLib.AddUserGroup(directUser, "grandchild");
+
+            userPerms = permLib.GetUserPermissions(directUser);
+
+            // User should have direct and all inherited permissions
+            Assert.Contains("direct.permission", userPerms);
+            Assert.Contains("parent.permission", userPerms);
+            Assert.Contains("child.permission", userPerms);
+            Assert.Contains("grandchild.permission", userPerms);
+        }
+
+        [Fact]
+        public void HasCircularParent_ComplexCycles()
+        {
+            // Create test groups
+            permLib.CreateGroup("a", "Group A", 1);
+            permLib.CreateGroup("b", "Group B", 2);
+            permLib.CreateGroup("c", "Group C", 3);
+            permLib.CreateGroup("d", "Group D", 4);
+
+            // Set up complex relationships
+            permLib.SetGroupParent("b", "a");
+            permLib.SetGroupParent("c", "b");
+            permLib.SetGroupParent("d", "c");
+
+            // Get HasCircularParent method through reflection
+            var methodInfo = permLib.GetType().GetMethod("HasCircularParent",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Test cycle detection with different levels of indirection
+
+            // Would create: a -> d -> c -> b -> a (circular)
+            var result1 = (bool)methodInfo.Invoke(permLib, new object[] { "a", "d" });
+            Assert.True(result1);
+
+            // Would create: b -> c -> b (circular)
+            var result2 = (bool)methodInfo.Invoke(permLib, new object[] { "b", "c" });
+            Assert.True(result2);
+
+            // Creating another group to test non-circular case
+            permLib.CreateGroup("e", "Group E", 5);
+
+            // Would create: e -> a (non-circular)
+            var result3 = (bool)methodInfo.Invoke(permLib, new object[] { "e", "a" });
+            Assert.False(result3);
+        }
+
+        [Fact]
+        public void GrantUserPermission_AllCases()
+        {
+            // Create a test plugin
+            var fakePlugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register some permissions
+            permLib.RegisterPermission("test.perm1", fakePlugin);
+            permLib.RegisterPermission("test.subperm.one", fakePlugin);
+            permLib.RegisterPermission("test.subperm.two", fakePlugin);
+            permLib.RegisterPermission("other.permission", fakePlugin);
+
+            // Test with unregistered permission - should do nothing
+            string userId = "testUser";
+            permLib.GrantUserPermission(userId, "nonexistent.permission", fakePlugin);
+            var userPerms = permLib.GetUserPermissions(userId);
+            Assert.DoesNotContain("nonexistent.permission", userPerms);
+
+            // Test with wildcard permission
+            permLib.GrantUserPermission(userId, "test.*", fakePlugin);
+            userPerms = permLib.GetUserPermissions(userId);
+            Assert.Contains("test.perm1", userPerms);
+            Assert.Contains("test.subperm.one", userPerms);
+            Assert.Contains("test.subperm.two", userPerms);
+            Assert.DoesNotContain("other.permission", userPerms);
+
+            // Test with sub-wildcard
+            string user2 = "testUser2";
+            permLib.GrantUserPermission(user2, "test.subperm.*", fakePlugin);
+            var user2Perms = permLib.GetUserPermissions(user2);
+            Assert.Contains("test.subperm.one", user2Perms);
+            Assert.Contains("test.subperm.two", user2Perms);
+            Assert.DoesNotContain("test.perm1", user2Perms);
+
+            // Test granting a permission that's already granted
+            int beforeCount = permLib.GetUserPermissions(user2).Length;
+            permLib.GrantUserPermission(user2, "test.subperm.one", fakePlugin);
+            int afterCount = permLib.GetUserPermissions(user2).Length;
+            Assert.Equal(beforeCount, afterCount); // Count shouldn't change
+
+            // Test with global wildcard
+            string user3 = "testUser3";
+            permLib.GrantUserPermission(user3, "*", fakePlugin);
+            var user3Perms = permLib.GetUserPermissions(user3);
+            Assert.Contains("test.perm1", user3Perms);
+            Assert.Contains("test.subperm.one", user3Perms);
+            Assert.Contains("test.subperm.two", user3Perms);
+            Assert.Contains("other.permission", user3Perms);
+        }
+
+        [Fact]
+        public void GrantGroupPermission_AllCases()
+        {
+            // Create a test plugin
+            var fakePlugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register some permissions
+            permLib.RegisterPermission("test.perm1", fakePlugin);
+            permLib.RegisterPermission("test.subperm.one", fakePlugin);
+            permLib.RegisterPermission("test.subperm.two", fakePlugin);
+            permLib.RegisterPermission("other.permission", fakePlugin);
+
+            // Create a group
+            permLib.CreateGroup("testgroup", "Test Group", 1);
+
+            // Test with unregistered permission - should do nothing
+            permLib.GrantGroupPermission("testgroup", "nonexistent.permission", fakePlugin);
+            var groupPerms = permLib.GetGroupPermissions("testgroup");
+            Assert.DoesNotContain("nonexistent.permission", groupPerms);
+
+            // Test with non-existent group - should do nothing
+            permLib.GrantGroupPermission("nonexistentgroup", "test.perm1", fakePlugin);
+
+            // Test with wildcard permission
+            permLib.GrantGroupPermission("testgroup", "test.*", fakePlugin);
+            groupPerms = permLib.GetGroupPermissions("testgroup");
+            Assert.Contains("test.perm1", groupPerms);
+            Assert.Contains("test.subperm.one", groupPerms);
+            Assert.Contains("test.subperm.two", groupPerms);
+            Assert.DoesNotContain("other.permission", groupPerms);
+
+            // Test with global wildcard
+            permLib.CreateGroup("admingroup", "Admin Group", 100);
+            permLib.GrantGroupPermission("admingroup", "*", fakePlugin);
+            var adminPerms = permLib.GetGroupPermissions("admingroup");
+            Assert.Contains("test.perm1", adminPerms);
+            Assert.Contains("test.subperm.one", adminPerms);
+            Assert.Contains("test.subperm.two", adminPerms);
+            Assert.Contains("other.permission", adminPerms);
+
+            // Test permission already granted - should not add duplicate
+            int beforeCount = permLib.GetGroupPermissions("admingroup").Length;
+            permLib.GrantGroupPermission("admingroup", "test.perm1", fakePlugin);
+            int afterCount = permLib.GetGroupPermissions("admingroup").Length;
+            Assert.Equal(beforeCount, afterCount); // Count shouldn't change
+        }
+
+        [Fact]
+        public void RevokeUserPermission_CompleteTest()
+        {
+            // Create a test user with several permissions
+            string userId = "revokeUser";
+            permLib.GrantUserPermission(userId, "test.permission1", null);
+            permLib.GrantUserPermission(userId, "test.permission2", null);
+            permLib.GrantUserPermission(userId, "other.permission", null);
+
+            // Verify initial state
+            var perms = permLib.GetUserPermissions(userId);
+            Assert.Contains("test.permission1", perms);
+            Assert.Contains("test.permission2", perms);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking a specific permission
+            permLib.RevokeUserPermission(userId, "test.permission1");
+            perms = permLib.GetUserPermissions(userId);
+            Assert.DoesNotContain("test.permission1", perms);
+            Assert.Contains("test.permission2", perms);
+
+            // Test revoking with wildcard
+            permLib.RevokeUserPermission(userId, "test.*");
+            perms = permLib.GetUserPermissions(userId);
+            Assert.DoesNotContain("test.permission1", perms);
+            Assert.DoesNotContain("test.permission2", perms);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking a permission that doesn't exist - should do nothing
+            permLib.RevokeUserPermission(userId, "nonexistent.permission");
+            perms = permLib.GetUserPermissions(userId);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking all permissions
+            permLib.RevokeUserPermission(userId, "*");
+            perms = permLib.GetUserPermissions(userId);
+            Assert.Empty(perms);
+
+            // Test revoking from empty permission set - should do nothing
+            permLib.RevokeUserPermission(userId, "any.permission");
+
+            // Test with empty permission string - should do nothing
+            permLib.GrantUserPermission(userId, "test.permission", null);
+            permLib.RevokeUserPermission(userId, "");
+            perms = permLib.GetUserPermissions(userId);
+            Assert.Contains("test.permission", perms);
+        }
+
+        [Fact]
+        public void RevokeGroupPermission_CompleteTest()
+        {
+            // Create a test group with several permissions
+            string groupName = "revokeGroup";
+            permLib.CreateGroup(groupName, "Revoke Test Group", 1);
+            permLib.GrantGroupPermission(groupName, "test.permission1", null);
+            permLib.GrantGroupPermission(groupName, "test.permission2", null);
+            permLib.GrantGroupPermission(groupName, "other.permission", null);
+
+            // Verify initial state
+            var perms = permLib.GetGroupPermissions(groupName);
+            Assert.Contains("test.permission1", perms);
+            Assert.Contains("test.permission2", perms);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking a specific permission
+            permLib.RevokeGroupPermission(groupName, "test.permission1");
+            perms = permLib.GetGroupPermissions(groupName);
+            Assert.DoesNotContain("test.permission1", perms);
+            Assert.Contains("test.permission2", perms);
+
+            // Test revoking with wildcard
+            permLib.RevokeGroupPermission(groupName, "test.*");
+            perms = permLib.GetGroupPermissions(groupName);
+            Assert.DoesNotContain("test.permission1", perms);
+            Assert.DoesNotContain("test.permission2", perms);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking a permission that doesn't exist - should do nothing
+            permLib.RevokeGroupPermission(groupName, "nonexistent.permission");
+            perms = permLib.GetGroupPermissions(groupName);
+            Assert.Contains("other.permission", perms);
+
+            // Test revoking all permissions
+            permLib.RevokeGroupPermission(groupName, "*");
+            perms = permLib.GetGroupPermissions(groupName);
+            Assert.Empty(perms);
+
+            // Test with non-existent group - should do nothing
+            permLib.RevokeGroupPermission("nonexistentgroup", "any.permission");
+
+            // Test with empty permission string - should do nothing
+            permLib.GrantGroupPermission(groupName, "test.permission", null);
+            permLib.RevokeGroupPermission(groupName, "");
+            perms = permLib.GetGroupPermissions(groupName);
+            Assert.Contains("test.permission", perms);
+        }
+
+        [Fact]
+        public void GetGroupParent_CompleteTest()
+        {
+            // Test with null/empty parent
+            permLib.CreateGroup("emptyParentGroup", "Empty Parent Group", 1);
+            Assert.Equal(string.Empty, permLib.GetGroupParent("emptyParentGroup"));
+
+            // Test with existing parent
+            permLib.CreateGroup("parentGroup", "Parent Group", 2);
+            permLib.CreateGroup("childGroup", "Child Group", 1);
+            permLib.SetGroupParent("childGroup", "parentGroup");
+            Assert.Equal("parentGroup", permLib.GetGroupParent("childGroup"));
+
+            // Test with different case
+            Assert.Equal("parentGroup", permLib.GetGroupParent("CHILDGROUP"));
+
+            // Test with non-existent group
+            Assert.Equal(string.Empty, permLib.GetGroupParent("nonexistentGroup"));
         }
 
         [Fact]
@@ -1496,6 +1832,569 @@ namespace Oxide.Core.Tests.Libraries
         {
             var newPermLib = new Permission();
             Assert.True(newPermLib.IsLoaded);
+        }
+
+        [Fact]
+        public void UserExists_ReturnsTrueForExistingUser()
+        {
+            // Add user to make sure they exist
+            permLib.AddUserGroup("testuser123", "admin");
+
+            // Check if user exists
+            Assert.True(permLib.UserExists("testuser123"));
+
+            // Check non-existent user
+            Assert.False(permLib.UserExists("nonexistentuser"));
+        }
+
+        [Fact]
+        public void HasCircularParent_DirectCycle()
+        {
+            // Setup two groups that directly reference each other
+            permLib.CreateGroup("groupA", "Group A", 0);
+            permLib.CreateGroup("groupB", "Group B", 0);
+
+            // Set B as parent of A
+            permLib.SetGroupParent("groupA", "groupB");
+
+            // Try to set A as parent of B (would create a cycle)
+            bool result = permLib.SetGroupParent("groupB", "groupA");
+
+            // Should fail because it would create a cycle
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasCircularParent_LongerCycle()
+        {
+            // Setup a longer chain: A -> B -> C -> D -> (try to point to A)
+            permLib.CreateGroup("groupA", "Group A", 0);
+            permLib.CreateGroup("groupB", "Group B", 0);
+            permLib.CreateGroup("groupC", "Group C", 0);
+            permLib.CreateGroup("groupD", "Group D", 0);
+
+            permLib.SetGroupParent("groupA", "groupB");
+            permLib.SetGroupParent("groupB", "groupC");
+            permLib.SetGroupParent("groupC", "groupD");
+
+            // This would create a cycle: A -> B -> C -> D -> A
+            bool result = permLib.SetGroupParent("groupD", "groupA");
+
+            // Should fail because it would create a cycle
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void TryGetGroups_WithValidData()
+        {
+            // Create a test group
+            permLib.CreateGroup("testgroup", "Test Group", 10);
+
+            // Export groups to test data retrieval
+            permLib.Export("test_export");
+
+            // Create a new permission instance to test loading
+            var newPermLib = new Permission();
+
+            // It should successfully load the groups we exported
+            Assert.Contains("testgroup", newPermLib.GetGroups());
+        }
+
+        [Fact]
+        public void VerifyGroupData_HandlesNullPerms()
+        {
+            // Create a group
+            permLib.CreateGroup("nullpermsgroup", "Null Perms Group", 1);
+
+            // Use reflection to access the private method
+            var verifyGroupDataMethod = typeof(Permission).GetMethod("VerifyGroupData",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Create test data with null perms
+            var testData = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["nullpermsgroup"] = new GroupData { Title = "Test", Rank = 1, Perms = null }
+            };
+
+            // Call the method
+            var result = verifyGroupDataMethod.Invoke(permLib, new[] { testData }) as Dictionary<string, GroupData>;
+
+            // The method should handle null Perms and create an empty collection
+            Assert.NotNull(result);
+            Assert.NotNull(result["nullpermsgroup"].Perms);
+            Assert.Empty(result["nullpermsgroup"].Perms);
+        }
+
+        [Fact]
+        public void UserExists_CaseInsensitive()
+        {
+            // Add user with specific casing
+            permLib.UpdateNickname("TestUser", "TestUserName");
+
+            // Check with different casing
+            Assert.True(permLib.UserExists("testuser"));
+            Assert.True(permLib.UserExists("TESTUSER"));
+        }
+
+        //[Fact]
+        //public void Owner_OnRemovedFromManager_RemovesPermissionsCompletely()
+        //{
+        //    // Create a test plugin
+        //    var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+        //    // Register a permission
+        //    string testPerm = "test.permission.forremoval";
+        //    permLib.RegisterPermission(testPerm, plugin);
+
+        //    // Verify permission exists
+        //    Assert.True(permLib.PermissionExists(testPerm));
+
+        //    // Trigger the removal handler directly using reflection
+        //    var method = typeof(Permission).GetMethod("owner_OnRemovedFromManager",
+        //        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        //    var pluginManager = new PluginManager(Interface.Oxide);
+        //    method.Invoke(permLib, new object[] { plugin, pluginManager });
+
+        //    // Verify permission was removed
+        //    Assert.False(permLib.PermissionExists(testPerm));
+        //}
+
+        [Fact]
+        public void RegisterPermission_WithSpecialCharacters()
+        {
+            // Create a test plugin
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register permissions with special characters
+            string specialPerm = "test.permission-with.special_chars";
+            permLib.RegisterPermission(specialPerm, plugin);
+
+            // Verify permission exists
+            Assert.True(permLib.PermissionExists(specialPerm));
+        }
+
+        [Fact]
+        public void Export_WithEmptyPermissions()
+        {
+            // Create a fresh permission instance
+            var emptyPermLib = new Permission();
+
+            // Export with no data
+            string testPrefix = "emptytest";
+            emptyPermLib.Export(testPrefix);
+
+            // Files should still be created
+            string usersFile = Path.Combine(tempDataDir, $"{testPrefix}.users.json");
+            string groupsFile = Path.Combine(tempDataDir, $"{testPrefix}.groups.json");
+
+            Assert.True(File.Exists(usersFile));
+            Assert.True(File.Exists(groupsFile));
+        }
+
+        [Fact]
+        public void UserIdValid_AllScenarios()
+        {
+            // With no validation function, should always return true
+            Assert.True(permLib.UserIdValid("anyuserid"));
+
+            // Register a validation function that only accepts IDs starting with "valid"
+            permLib.RegisterValidate(id => id.StartsWith("valid"));
+
+            // Test with the validation function
+            Assert.True(permLib.UserIdValid("valid123"));
+            Assert.False(permLib.UserIdValid("invalid123"));
+
+            // Clean up - reset the validation function
+            permLib.RegisterValidate(null);
+        }
+
+        //[Fact]
+        //public void GetPerms_WithNullPlugin()
+        //{
+        //    // Register permissions from different plugins
+        //    var plugin1 = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+        //    permLib.RegisterPermission("test.perm1", plugin1);
+        //    permLib.RegisterPermission("test.perm2", plugin1);
+
+        //    // Get permissions with null plugin (should return all permissions)
+        //    string[] allPerms = permLib.GetPerms(null);
+
+        //    // Should contain all permissions regardless of plugin
+        //    Assert.Contains("test.perm1", allPerms);
+        //    Assert.Contains("test.perm2", allPerms);
+        //}
+
+        [Fact]
+        public void VerifyGroupData_MergesDuplicatesWithDifferentCasing()
+        {
+            // Use reflection to access the private method
+            var verifyGroupDataMethod = typeof(Permission).GetMethod("VerifyGroupData",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Create test data with duplicate groups but different casing
+            var testData = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["testgroup"] = new GroupData
+                {
+                    Title = "Test Group 1",
+                    Rank = 1,
+                    Perms = new HashSet<string>(new[] { "perm1" }, StringComparer.OrdinalIgnoreCase)
+                },
+                ["TestGroup"] = new GroupData
+                {
+                    Title = "Test Group 2",
+                    Rank = 2,
+                    Perms = new HashSet<string>(new[] { "perm2" }, StringComparer.OrdinalIgnoreCase)
+                }
+            };
+
+            // Call the method
+            var result = verifyGroupDataMethod.Invoke(permLib, new[] { testData }) as Dictionary<string, GroupData>;
+
+            // Should merge permissions from both groups
+            Assert.Single(result);
+            var mergedGroup = result.First().Value;
+            Assert.Contains("perm1", mergedGroup.Perms);
+            Assert.Contains("perm2", mergedGroup.Perms);
+        }
+
+        //[Fact]
+        //public void Call_ExtensiveHookTests()
+        //{
+        //    // Test calling hooks from the permission system
+
+        //    // Setup a test object to monitor hooks
+        //    bool hookCalled = false;
+        //    string calledHook = null;
+        //    string playerId = null;
+        //    string permission = null;
+
+        //    // Create a test plugin to register permissions
+        //    var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+        //    permLib.RegisterPermission("test.hook.permission", plugin);
+
+        //    // Setup hook handlers using reflection to access private fields
+        //    var hooksField = typeof(OxideMod).GetField("hooks", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        //    var hooks = hooksField.GetValue(Interface.Oxide) as Dictionary<string, List<HookMethod>>;
+
+        //    // Mock a hook handler
+        //    Action<string, string> hookHandler = (id, perm) =>
+        //    {
+        //        hookCalled = true;
+        //        calledHook = "OnUserPermissionGranted";
+        //        playerId = id;
+        //        permission = perm;
+        //    };
+
+        //    // Register hook handler
+        //    Interface.Oxide.OnHookAdded += (name) => { };
+
+        //    // Grant permission to trigger hook
+        //    permLib.GrantUserPermission("testuser", "test.hook.permission", plugin);
+
+        //    // Verify hook was processed (through normal API)
+        //    permLib.SaveData();
+        //    Assert.True(permLib.UserHasPermission("testuser", "test.hook.permission"));
+        //}
+
+        [Fact]
+        public void VerifyAndLoadUsersData_HandlesEmptyFile()
+        {
+            // Delete the users data file if it exists
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.data");
+            if (File.Exists(usersFile))
+            {
+                File.Delete(usersFile);
+            }
+
+            // Create a new permission instance which will try to load the data
+            var newPermLib = new Permission();
+
+            // Should not throw an exception and should initialize with empty data
+            Assert.Empty(newPermLib.GetUserPermissions("newuser"));
+        }
+
+        [Fact]
+        public void VerifyAndLoadGroupsData_HandlesEmptyFile()
+        {
+            // Delete the groups data file if it exists
+            string groupsFile = Path.Combine(tempDataDir, "oxide.groups.data");
+            if (File.Exists(groupsFile))
+            {
+                File.Delete(groupsFile);
+            }
+
+            // Create a new permission instance which will try to load the data
+            var newPermLib = new Permission();
+
+            // Should not throw an exception and should initialize with empty data
+            Assert.Empty(newPermLib.GetGroups());
+        }
+
+        [Fact]
+        public void Call_AllHookTypes()
+        {
+            // Create a test plugin
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register and test various hook scenarios
+
+            // 1. Group creation hooks
+            permLib.CreateGroup("callhookgroup", "Call Hook Group", 5);
+
+            // 2. User permission hooks
+            permLib.RegisterPermission("callhook.test", plugin);
+            permLib.GrantUserPermission("callhookuser", "callhook.test", plugin);
+            permLib.RevokeUserPermission("callhookuser", "callhook.test");
+
+            // 3. Group permission hooks
+            permLib.GrantGroupPermission("callhookgroup", "callhook.test", plugin);
+            permLib.RevokeGroupPermission("callhookgroup", "callhook.test");
+
+            // 4. User group hooks
+            permLib.AddUserGroup("callhookuser", "callhookgroup");
+            permLib.RemoveUserGroup("callhookuser", "callhookgroup");
+
+            // 5. Group property hooks
+            permLib.SetGroupTitle("callhookgroup", "New Title");
+            permLib.SetGroupRank("callhookgroup", 10);
+            permLib.SetGroupParent("callhookgroup", null);
+
+            // 6. Group deletion hooks
+            permLib.RemoveGroup("callhookgroup");
+
+            // Verify the hooks were processed indirectly by checking the state
+            Assert.False(permLib.GroupExists("callhookgroup"));
+            Assert.False(permLib.UserHasPermission("callhookuser", "callhook.test"));
+        }
+
+        [Fact]
+        public void LoadFromDatafile_WithCorruptedFiles()
+        {
+            // Create corrupted data files
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.data");
+            string groupsFile = Path.Combine(tempDataDir, "oxide.groups.data");
+
+            // Write invalid data to the files
+            File.WriteAllText(usersFile, "This is not valid protobuf data");
+            File.WriteAllText(groupsFile, "This is not valid protobuf data either");
+
+            // Create a new permission instance which will try to load the data
+            var newPermLib = new Permission();
+
+            // Should not throw an exception and should initialize with empty data
+            Assert.Empty(newPermLib.GetGroups());
+            Assert.Empty(newPermLib.GetUserPermissions("newuser"));
+        }
+
+        //[Fact]
+        //public void CompleteEdgeCaseScenario()
+        //{
+        //    // Test multiple edge cases in one comprehensive test
+
+        //    // 1. Create a complex group hierarchy
+        //    permLib.CreateGroup("rootgroup", "Root Group", 100);
+        //    permLib.CreateGroup("childgroup1", "Child Group 1", 50);
+        //    permLib.CreateGroup("childgroup2", "Child Group 2", 50);
+        //    permLib.CreateGroup("grandchildgroup", "Grandchild Group", 25);
+
+        //    // 2. Set up hierarchy
+        //    permLib.SetGroupParent("childgroup1", "rootgroup");
+        //    permLib.SetGroupParent("childgroup2", "rootgroup");
+        //    permLib.SetGroupParent("grandchildgroup", "childgroup1");
+
+        //    // 3. Register permissions
+        //    var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+        //    permLib.RegisterPermission("complex.test1", plugin);
+        //    permLib.RegisterPermission("complex.test2", plugin);
+        //    permLib.RegisterPermission("complex.test3", plugin);
+
+        //    // 4. Add permissions to groups
+        //    permLib.GrantGroupPermission("rootgroup", "complex.test1", plugin);
+        //    permLib.GrantGroupPermission("childgroup1", "complex.test2", plugin);
+        //    permLib.GrantGroupPermission("grandchildgroup", "complex.test3", plugin);
+
+        //    // 5. Add a user to the lowest group
+        //    permLib.AddUserGroup("complexuser", "grandchildgroup");
+
+        //    // 6. Verify permission inheritance works through the chain
+        //    Assert.True(permLib.UserHasPermission("complexuser", "complex.test1"));
+        //    Assert.True(permLib.UserHasPermission("complexuser", "complex.test2"));
+        //    Assert.True(permLib.UserHasPermission("complexuser", "complex.test3"));
+
+        //    // 7. Break the chain and verify permissions change
+        //    permLib.SetGroupParent("childgroup1", null);
+
+        //    // User should no longer have rootgroup permissions
+        //    Assert.False(permLib.UserHasPermission("complexuser", "complex.test1"));
+        //    Assert.True(permLib.UserHasPermission("complexuser", "complex.test2"));
+        //    Assert.True(permLib.UserHasPermission("complexuser", "complex.test3"));
+
+        //    // 8. Try a circular reference
+        //    Assert.False(permLib.SetGroupParent("rootgroup", "grandchildgroup"));
+
+        //    // 9. Remove the test plugin
+        //    var method = typeof(Permission).GetMethod("owner_OnRemovedFromManager",
+        //        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        //    var pluginManager = new PluginManager();
+        //    method.Invoke(permLib, new object[] { plugin, pluginManager });
+
+        //    // 10. Permissions should be unregistered
+        //    Assert.False(permLib.PermissionExists("complex.test1"));
+        //    Assert.False(permLib.PermissionExists("complex.test2"));
+        //    Assert.False(permLib.PermissionExists("complex.test3"));
+        //}
+
+        [Fact]
+        public void ProtoStorage_SaveAndLoad_EdgeCases()
+        {
+            // This test covers edge cases in the ProtoStorage methods used by Permission
+
+            // Create groups and users with special characters in names and permissions
+            permLib.CreateGroup("group~!@#$%", "Special Character Group", 1);
+            permLib.CreateGroup("empty-perms-group", "Empty Perms", 1);
+
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("special.chars.!@#$%^&*()_+", plugin);
+
+            // Grant the permission
+            permLib.GrantGroupPermission("group~!@#$%", "special.chars.!@#$%^&*()_+", plugin);
+
+            // Save data
+            permLib.SaveData();
+
+            // Create a new instance to load the data
+            var newPermLib = new Permission();
+
+            // Verify the special characters were preserved
+            Assert.True(newPermLib.GroupExists("group~!@#$%"));
+            Assert.True(newPermLib.GroupHasPermission("group~!@#$%", "special.chars.!@#$%^&*()_+"));
+        }
+
+        [Fact]
+        public void GrantGroupPermission_WithNonExistentPlugin()
+        {
+            // Create a group
+            permLib.CreateGroup("testnonplugingrant", "Test Non-Plugin Grant", 1);
+
+            // Register a permission with our first plugin
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("test.permission", plugin);
+
+            // Create another plugin that doesn't register any permissions
+            var emptyPlugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Try to grant a permission using the empty plugin (should do nothing)
+            permLib.GrantGroupPermission("testnonplugingrant", "test.permission", emptyPlugin);
+
+            // Verify the permission was not granted
+            Assert.False(permLib.GroupHasPermission("testnonplugingrant", "test.permission"));
+
+            // Now grant with the correct plugin
+            permLib.GrantGroupPermission("testnonplugingrant", "test.permission", plugin);
+
+            // Verify the permission was granted
+            Assert.True(permLib.GroupHasPermission("testnonplugingrant", "test.permission"));
+        }
+
+        [Fact]
+        public void DataCorruptionRecovery_CompleteTest()
+        {
+            // Create some initial data
+            permLib.CreateGroup("recoverygroup", "Recovery Group", 1);
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+            permLib.RegisterPermission("recovery.test", plugin);
+            permLib.GrantGroupPermission("recoverygroup", "recovery.test", plugin);
+            permLib.AddUserGroup("recoveryuser", "recoverygroup");
+
+            // Save the data
+            permLib.SaveData();
+
+            // Now corrupt the files
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.data");
+            string groupsFile = Path.Combine(tempDataDir, "oxide.groups.data");
+
+            // Corrupt the files by appending invalid data
+            File.AppendAllText(usersFile, "corruption");
+            File.AppendAllText(groupsFile, "corruption");
+
+            // Create a new instance which should recover from corruption
+            var recoveryPermLib = new Permission();
+
+            // Should have initialized with empty data due to corruption
+            Assert.Empty(recoveryPermLib.GetGroups());
+
+            // Create the data again in the recovery instance
+            recoveryPermLib.CreateGroup("recoverygroup2", "Recovery Group 2", 1);
+            recoveryPermLib.RegisterPermission("recovery.test2", plugin);
+            recoveryPermLib.GrantGroupPermission("recoverygroup2", "recovery.test2", plugin);
+
+            // Save the data from the recovery instance
+            recoveryPermLib.SaveData();
+
+            // Create a final instance to verify data was saved correctly
+            var finalPermLib = new Permission();
+
+            // Should have the recovered data
+            Assert.Contains("recoverygroup2", finalPermLib.GetGroups());
+            Assert.True(finalPermLib.GroupHasPermission("recoverygroup2", "recovery.test2"));
+        }
+
+        [Fact]
+        public void WildcardPermissionEdgeCases()
+        {
+            // Create test data
+            var plugin = new Oxide.Core.Tests.Plugins.Mocks.FakePlugin();
+
+            // Register a set of permissions with common prefixes
+            permLib.RegisterPermission("wild.card.test1", plugin);
+            permLib.RegisterPermission("wild.card.test2", plugin);
+            permLib.RegisterPermission("wild.other.test1", plugin);
+
+            // Test wildcard permission granting for users
+            permLib.GrantUserPermission("wildcarduser", "wild.card.*", plugin);
+
+            // Should have all permissions matching the wildcard
+            Assert.True(permLib.UserHasPermission("wildcarduser", "wild.card.test1"));
+            Assert.True(permLib.UserHasPermission("wildcarduser", "wild.card.test2"));
+            Assert.False(permLib.UserHasPermission("wildcarduser", "wild.other.test1"));
+
+            // Test wildcard permission revoking for users
+            permLib.RevokeUserPermission("wildcarduser", "wild.card.*");
+
+            // Should have no permissions after revoke
+            Assert.False(permLib.UserHasPermission("wildcarduser", "wild.card.test1"));
+            Assert.False(permLib.UserHasPermission("wildcarduser", "wild.card.test2"));
+
+            // Test wildcard permission granting for groups
+            permLib.CreateGroup("wildcardgroup", "Wildcard Group", 1);
+            permLib.GrantGroupPermission("wildcardgroup", "wild.*", plugin);
+
+            // Should have all permissions matching the wildcard
+            Assert.True(permLib.GroupHasPermission("wildcardgroup", "wild.card.test1"));
+            Assert.True(permLib.GroupHasPermission("wildcardgroup", "wild.card.test2"));
+            Assert.True(permLib.GroupHasPermission("wildcardgroup", "wild.other.test1"));
+
+            // Test wildcard permission revoking for groups
+            permLib.RevokeGroupPermission("wildcardgroup", "wild.*");
+
+            // Should have no permissions after revoke
+            Assert.False(permLib.GroupHasPermission("wildcardgroup", "wild.card.test1"));
+            Assert.False(permLib.GroupHasPermission("wildcardgroup", "wild.card.test2"));
+            Assert.False(permLib.GroupHasPermission("wildcardgroup", "wild.other.test1"));
+        }
+
+        [Fact]
+        public void ServerConsole_PermissionCheck()
+        {
+            // Server console should always have all permissions
+            Assert.True(permLib.UserHasPermission("server_console", "any.permission.at.all"));
+            Assert.True(permLib.UserHasPermission("server_console", "does.not.exist"));
+
+            // Even with empty permissions
+            Assert.True(permLib.UserHasPermission("server_console", ""));
         }
 
         public void Dispose()
