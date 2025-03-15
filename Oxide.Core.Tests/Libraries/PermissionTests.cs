@@ -2699,5 +2699,470 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(permLib.PermissionExists(""));
             Assert.False(permLib.PermissionExists("", plugin));
         }
+
+        [Fact]
+        public void RevokeGroupPermission_AllEdgeCases()
+        {
+            // Setup a test group with permissions
+            permLib.CreateGroup("testGroup", "Test Group", 0);
+            permLib.GrantGroupPermission("testGroup", "test.permission1", null);
+            permLib.GrantGroupPermission("testGroup", "test.permission2", null);
+            permLib.GrantGroupPermission("testGroup", "other.permission", null);
+
+            // Test with non-existing group
+            permLib.RevokeGroupPermission("nonExistingGroup", "test.permission1");
+
+            // Test with empty permission
+            permLib.RevokeGroupPermission("testGroup", "");
+            
+            // Test with null permission
+            permLib.RevokeGroupPermission("testGroup", null);
+
+            // Test revoking a permission that doesn't exist in the group
+            permLib.RevokeGroupPermission("testGroup", "nonexistent.permission");
+            
+            // Test with wildcard (*) on empty group
+            var emptyGroup = "emptyGroup";
+            permLib.CreateGroup(emptyGroup, "Empty Group", 0);
+            permLib.RevokeGroupPermission(emptyGroup, "*");
+            
+            // Test removing permissions with wildcard pattern
+            permLib.RevokeGroupPermission("testGroup", "test.*");
+            
+            // Verify the non-matching permission remains
+            var permissions = permLib.GetGroupPermissions("testGroup");
+            Assert.Single(permissions);
+            Assert.Contains("other.permission", permissions);
+            
+            // Test removing all remaining permissions
+            permLib.RevokeGroupPermission("testGroup", "*");
+            
+            // Verify all permissions are removed
+            Assert.Empty(permLib.GetGroupPermissions("testGroup"));
+        }
+
+        [Fact]
+        public void HasCircularParent_AdditionalEdgeCases()
+        {
+            // Setup a more complex group hierarchy
+            permLib.CreateGroup("a", "Group A", 1);
+            permLib.CreateGroup("b", "Group B", 2);
+            permLib.CreateGroup("c", "Group C", 3);
+            permLib.CreateGroup("d", "Group D", 4);
+            permLib.CreateGroup("e", "Group E", 5);
+            permLib.CreateGroup("f", "Group F", 6);
+            
+            // Set up some parent relationships
+            permLib.SetGroupParent("b", "a");
+            permLib.SetGroupParent("c", "b");
+            permLib.SetGroupParent("d", "c");
+            
+            // Get HasCircularParent method through reflection
+            var methodInfo = permLib.GetType().GetMethod("HasCircularParent",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                
+            // Test with non-existent parent group
+            var result1 = (bool)methodInfo.Invoke(permLib, new object[] { "e", "nonexistent" });
+            Assert.False(result1);
+            
+            // Test with parent being the same as child (direct circular reference)
+            var result2 = (bool)methodInfo.Invoke(permLib, new object[] { "f", "f" });
+            Assert.True(result2);
+            
+            // Create a nested circular reference: e -> d -> c -> b -> a -> e
+            permLib.SetGroupParent("e", "d");
+            permLib.SetGroupParent("a", "e");
+            
+            // Check for circular reference from each point in the chain
+            var result3 = (bool)methodInfo.Invoke(permLib, new object[] { "a", "b" });
+            Assert.True(result3);
+            
+            var result4 = (bool)methodInfo.Invoke(permLib, new object[] { "b", "c" });
+            Assert.True(result4);
+            
+            var result5 = (bool)methodInfo.Invoke(permLib, new object[] { "c", "d" });
+            Assert.True(result5);
+            
+            var result6 = (bool)methodInfo.Invoke(permLib, new object[] { "d", "e" });
+            Assert.True(result6);
+            
+            var result7 = (bool)methodInfo.Invoke(permLib, new object[] { "e", "a" });
+            Assert.True(result7);
+            
+            // Create an isolated group with no parent
+            permLib.CreateGroup("isolated", "Isolated", 10);
+            
+            // Test isolated group with no parent
+            var result8 = (bool)methodInfo.Invoke(permLib, new object[] { "isolated", "nonexistent" });
+            Assert.False(result8);
+        }
+
+        [Fact]
+        public void GroupHasPermission_CompleteEdgeCases()
+        {
+            // Test with null or empty group name and permission
+            Assert.False(permLib.GroupHasPermission(null, "test.permission"));
+            Assert.False(permLib.GroupHasPermission("", "test.permission"));
+            Assert.False(permLib.GroupHasPermission("someGroup", null));
+            Assert.False(permLib.GroupHasPermission("someGroup", ""));
+            
+            // Test with non-existent group
+            Assert.False(permLib.GroupHasPermission("nonExistentGroup", "test.permission"));
+            
+            // Setup parent-child group hierarchy with permissions
+            permLib.CreateGroup("parentGroup", "Parent Group", 1);
+            permLib.CreateGroup("childGroup", "Child Group", 2);
+            permLib.SetGroupParent("childGroup", "parentGroup");
+            
+            // Grant permission to parent only
+            permLib.GrantGroupPermission("parentGroup", "parent.permission", null);
+            
+            // Child group should inherit parent's permission
+            Assert.True(permLib.GroupHasPermission("childGroup", "parent.permission"));
+            
+            // Parent should not have child's permissions
+            permLib.GrantGroupPermission("childGroup", "child.permission", null);
+            Assert.False(permLib.GroupHasPermission("parentGroup", "child.permission"));
+            
+            // Create a broken parent reference (parent doesn't exist)
+            permLib.CreateGroup("brokenParentGroup", "Broken Parent Group", 3);
+            
+            // Use reflection to set an invalid parent reference
+            var groupData = permLib.GetGroupData("brokenParentGroup");
+            var parentGroupField = groupData.GetType().GetProperty("ParentGroup");
+            parentGroupField.SetValue(groupData, "nonExistentParent");
+            
+            // Should not throw exception and return false
+            Assert.False(permLib.GroupHasPermission("brokenParentGroup", "anything"));
+            
+            // Test with a multi-level hierarchy
+            permLib.CreateGroup("grandparentGroup", "Grandparent Group", 4);
+            permLib.CreateGroup("parentGroup2", "Parent Group 2", 5);
+            permLib.CreateGroup("childGroup2", "Child Group 2", 6);
+            
+            permLib.SetGroupParent("parentGroup2", "grandparentGroup");
+            permLib.SetGroupParent("childGroup2", "parentGroup2");
+            
+            // Grant permission only to grandparent
+            permLib.GrantGroupPermission("grandparentGroup", "inheritance.test", null);
+            
+            // Permission should be inherited through multiple levels
+            Assert.True(permLib.GroupHasPermission("childGroup2", "inheritance.test"));
+            Assert.True(permLib.GroupHasPermission("parentGroup2", "inheritance.test"));
+        }
+
+        [Fact]
+        public void GroupTitleAndRank_CompleteEdgeCases()
+        {
+            // Test with null, empty, or non-existent group
+            Assert.Empty(permLib.GetGroupTitle(null));
+            Assert.Empty(permLib.GetGroupTitle(""));
+            Assert.Empty(permLib.GetGroupTitle("nonExistentGroup"));
+            
+            Assert.Equal(0, permLib.GetGroupRank(null));
+            Assert.Equal(0, permLib.GetGroupRank(""));
+            Assert.Equal(0, permLib.GetGroupRank("nonExistentGroup"));
+            
+            Assert.False(permLib.SetGroupTitle(null, "Any Title"));
+            Assert.False(permLib.SetGroupTitle("", "Any Title"));
+            Assert.False(permLib.SetGroupTitle("nonExistentGroup", "Any Title"));
+            
+            Assert.False(permLib.SetGroupRank(null, 100));
+            Assert.False(permLib.SetGroupRank("", 100));
+            Assert.False(permLib.SetGroupRank("nonExistentGroup", 100));
+            
+            // Create a test group and verify normal operations
+            permLib.CreateGroup("testGroup", "Original Title", 5);
+            
+            // Verify initial values
+            Assert.Equal("Original Title", permLib.GetGroupTitle("testGroup"));
+            Assert.Equal(5, permLib.GetGroupRank("testGroup"));
+            
+            // Update title and verify
+            Assert.True(permLib.SetGroupTitle("testGroup", "New Title"));
+            Assert.Equal("New Title", permLib.GetGroupTitle("testGroup"));
+            
+            // Update title to null or empty and verify
+            Assert.True(permLib.SetGroupTitle("testGroup", null));
+            Assert.Equal("", permLib.GetGroupTitle("testGroup"));
+            
+            Assert.True(permLib.SetGroupTitle("testGroup", ""));
+            Assert.Equal("", permLib.GetGroupTitle("testGroup"));
+            
+            // Reset to a valid title
+            permLib.SetGroupTitle("testGroup", "Reset Title");
+            
+            // Update rank and verify
+            Assert.True(permLib.SetGroupRank("testGroup", 10));
+            Assert.Equal(10, permLib.GetGroupRank("testGroup"));
+            
+            // Update rank to negative value and verify it's accepted
+            Assert.True(permLib.SetGroupRank("testGroup", -5));
+            Assert.Equal(-5, permLib.GetGroupRank("testGroup"));
+            
+            // Test case insensitivity
+            Assert.Equal("Reset Title", permLib.GetGroupTitle("TESTGROUP"));
+            Assert.Equal(-5, permLib.GetGroupRank("testgroup"));
+            Assert.True(permLib.SetGroupTitle("TestGroup", "Case Insensitive"));
+            Assert.True(permLib.SetGroupRank("TESTgroup", 42));
+            Assert.Equal("Case Insensitive", permLib.GetGroupTitle("testGROUP"));
+            Assert.Equal(42, permLib.GetGroupRank("testgroup"));
+        }
+
+        [Fact]
+        public void GrantPermission_AdditionalEdgeCases()
+        {
+            // Create test plugin
+            var mockPlugin = new FakePlugin();
+            
+            // Register test permissions
+            permLib.RegisterPermission("test.permission1", mockPlugin);
+            permLib.RegisterPermission("test.permission2", mockPlugin);
+            permLib.RegisterPermission("test.sub.permission1", mockPlugin);
+            permLib.RegisterPermission("test.sub.permission2", mockPlugin);
+            permLib.RegisterPermission("other.permission", mockPlugin);
+            
+            // User permission edge cases
+            
+            // Test with null or empty user/permission
+            permLib.GrantUserPermission(null, "test.permission1", mockPlugin);
+            permLib.GrantUserPermission("", "test.permission1", mockPlugin);
+            permLib.GrantUserPermission("testUser", null, mockPlugin);
+            permLib.GrantUserPermission("testUser", "", mockPlugin);
+            
+            // Test with unregistered permission
+            permLib.GrantUserPermission("testUser", "unregistered.permission", mockPlugin);
+            var userPerms = permLib.GetUserPermissions("testUser");
+            Assert.DoesNotContain("unregistered.permission", userPerms);
+            
+            // Test with wildcard permission but no matching registered permissions
+            permLib.GrantUserPermission("testUser", "nomatch.*", mockPlugin);
+            userPerms = permLib.GetUserPermissions("testUser");
+            Assert.DoesNotContain("nomatch.*", userPerms);
+            
+            // Test with subwildcard permission pattern
+            permLib.GrantUserPermission("testUser", "test.sub.*", mockPlugin);
+            userPerms = permLib.GetUserPermissions("testUser");
+            Assert.Contains("test.sub.permission1", userPerms);
+            Assert.Contains("test.sub.permission2", userPerms);
+            Assert.DoesNotContain("test.permission1", userPerms);
+            
+            // Group permission edge cases
+            
+            // Create test group
+            permLib.CreateGroup("testGroupPerms", "Test Group", 0);
+            
+            // Test with null or empty group/permission
+            permLib.GrantGroupPermission(null, "test.permission1", mockPlugin);
+            permLib.GrantGroupPermission("", "test.permission1", mockPlugin);
+            permLib.GrantGroupPermission("testGroupPerms", null, mockPlugin);
+            permLib.GrantGroupPermission("testGroupPerms", "", mockPlugin);
+            
+            // Test with non-existent group
+            permLib.GrantGroupPermission("nonExistentGroup", "test.permission1", mockPlugin);
+            
+            // Test with unregistered permission
+            permLib.GrantGroupPermission("testGroupPerms", "unregistered.permission", mockPlugin);
+            var groupPerms = permLib.GetGroupPermissions("testGroupPerms");
+            Assert.DoesNotContain("unregistered.permission", groupPerms);
+            
+            // Test with wildcard permission but no matching registered permissions
+            permLib.GrantGroupPermission("testGroupPerms", "nomatch.*", mockPlugin);
+            groupPerms = permLib.GetGroupPermissions("testGroupPerms");
+            Assert.DoesNotContain("nomatch.*", groupPerms);
+            
+            // Test with subwildcard permission pattern
+            permLib.GrantGroupPermission("testGroupPerms", "test.sub.*", mockPlugin);
+            groupPerms = permLib.GetGroupPermissions("testGroupPerms");
+            Assert.Contains("test.sub.permission1", groupPerms);
+            Assert.Contains("test.sub.permission2", groupPerms);
+            Assert.DoesNotContain("test.permission1", groupPerms);
+            
+            // Test with null plugin
+            var anotherPlugin = new FakePlugin();
+            permLib.RegisterPermission("plugin.specific", anotherPlugin);
+            permLib.GrantUserPermission("testUser", "plugin.specific", null);
+            userPerms = permLib.GetUserPermissions("testUser");
+            Assert.Contains("plugin.specific", userPerms);
+            
+            permLib.GrantGroupPermission("testGroupPerms", "plugin.specific", null);
+            groupPerms = permLib.GetGroupPermissions("testGroupPerms");
+            Assert.Contains("plugin.specific", groupPerms);
+        }
+
+        [Fact]
+        public void RevokeUserPermission_ExtendedEdgeCases()
+        {
+            // Create test plugin
+            var mockPlugin = new FakePlugin();
+            
+            // Register test permissions
+            permLib.RegisterPermission("test.permission1", mockPlugin);
+            permLib.RegisterPermission("test.permission2", mockPlugin);
+            permLib.RegisterPermission("test.sub.permission1", mockPlugin);
+            permLib.RegisterPermission("test.sub.permission2", mockPlugin);
+            permLib.RegisterPermission("other.permission", mockPlugin);
+            
+            // Set up a user with permissions
+            var testUser = "revokeTestUser";
+            permLib.GrantUserPermission(testUser, "test.permission1", mockPlugin);
+            permLib.GrantUserPermission(testUser, "test.permission2", mockPlugin);
+            permLib.GrantUserPermission(testUser, "test.sub.permission1", mockPlugin);
+            permLib.GrantUserPermission(testUser, "test.sub.permission2", mockPlugin);
+            permLib.GrantUserPermission(testUser, "other.permission", mockPlugin);
+            
+            // Test with null/empty values
+            permLib.RevokeUserPermission(null, "test.permission1");
+            permLib.RevokeUserPermission("", "test.permission1");
+            permLib.RevokeUserPermission(testUser, null);
+            permLib.RevokeUserPermission(testUser, "");
+            
+            // Verify permissions are still intact
+            var userPerms = permLib.GetUserPermissions(testUser);
+            Assert.Contains("test.permission1", userPerms);
+            Assert.Contains("test.permission2", userPerms);
+            Assert.Contains("test.sub.permission1", userPerms);
+            Assert.Contains("test.sub.permission2", userPerms);
+            Assert.Contains("other.permission", userPerms);
+            
+            // Test with non-existent user
+            permLib.RevokeUserPermission("nonExistentUser", "test.permission1");
+            
+            // Test revoking a permission the user doesn't have
+            permLib.RevokeUserPermission(testUser, "nonexistent.permission");
+            
+            // Test revoking with wildcard but no matching permissions
+            permLib.RevokeUserPermission(testUser, "nomatch.*");
+            
+            // Verify permissions are still intact
+            userPerms = permLib.GetUserPermissions(testUser);
+            Assert.Contains("test.permission1", userPerms);
+            Assert.Contains("test.permission2", userPerms);
+            
+            // Test revoking with subwildcard
+            permLib.RevokeUserPermission(testUser, "test.sub.*");
+            
+            // Verify only matching permissions are removed
+            userPerms = permLib.GetUserPermissions(testUser);
+            Assert.Contains("test.permission1", userPerms);
+            Assert.Contains("test.permission2", userPerms);
+            Assert.DoesNotContain("test.sub.permission1", userPerms);
+            Assert.DoesNotContain("test.sub.permission2", userPerms);
+            Assert.Contains("other.permission", userPerms);
+            
+            // Test revoking with global wildcard
+            permLib.RevokeUserPermission(testUser, "*");
+            
+            // Verify all permissions are removed
+            userPerms = permLib.GetUserPermissions(testUser);
+            Assert.Empty(userPerms);
+        }
+        
+        [Fact]
+        public void SetGroupParent_ExtendedEdgeCases()
+        {
+            permLib.CreateGroup("parentGroup", "Parent Group", 1);
+            permLib.CreateGroup("childGroup", "Child Group", 2);
+            permLib.CreateGroup("anotherGroup", "Another Group", 3);
+            
+            Assert.False(permLib.SetGroupParent(null, "parentGroup"));
+            Assert.False(permLib.SetGroupParent("", "parentGroup"));
+            Assert.False(permLib.SetGroupParent("childGroup", null));
+            
+            Assert.False(permLib.SetGroupParent("nonExistentGroup", "parentGroup"));
+            
+            Assert.False(permLib.SetGroupParent("childGroup", "nonExistentParent"));
+            
+            Assert.False(permLib.SetGroupParent("parentGroup", "parentGroup"));
+            
+            Assert.True(permLib.SetGroupParent("childGroup", "parentGroup"));
+            Assert.Equal("parentGroup", permLib.GetGroupParent("childGroup"));
+            
+            Assert.True(permLib.SetGroupParent("childGroup", ""));
+            Assert.Empty(permLib.GetGroupParent("childGroup"));
+            
+            Assert.True(permLib.SetGroupParent("childGroup", "parentGroup"));
+            Assert.True(permLib.SetGroupParent("anotherGroup", "childGroup"));
+            
+            Assert.False(permLib.SetGroupParent("parentGroup", "anotherGroup"));
+            
+            Assert.Empty(permLib.GetGroupParent("parentGroup"));
+            
+            Assert.True(permLib.SetGroupParent("CHILDGROUP", "PARENTGROUP"));
+            Assert.Equal("parentgroup", permLib.GetGroupParent("childGroup").ToLower());
+        }
+
+        [Fact]
+        public void GetGroupPermissions_ExhaustiveTests()
+        {
+            var mockPlugin = new FakePlugin();
+            
+            permLib.RegisterPermission("test.permission1", mockPlugin);
+            permLib.RegisterPermission("test.permission2", mockPlugin);
+            permLib.RegisterPermission("parent.permission", mockPlugin);
+            permLib.RegisterPermission("child.permission", mockPlugin);
+            
+            Assert.Empty(permLib.GetGroupPermissions(null));
+            Assert.Empty(permLib.GetGroupPermissions(""));
+            Assert.Empty(permLib.GetGroupPermissions("nonExistentGroup"));
+            
+            permLib.CreateGroup("parentGroup", "Parent Group", 1);
+            permLib.CreateGroup("childGroup", "Child Group", 2);
+            
+            Assert.Empty(permLib.GetGroupPermissions("parentGroup"));
+            Assert.Empty(permLib.GetGroupPermissions("childGroup"));
+            
+            permLib.GrantGroupPermission("parentGroup", "parent.permission", mockPlugin);
+            permLib.GrantGroupPermission("parentGroup", "test.permission1", mockPlugin);
+            
+            var parentPerms = permLib.GetGroupPermissions("parentGroup");
+            Assert.Equal(2, parentPerms.Length);
+            Assert.Contains("parent.permission", parentPerms);
+            Assert.Contains("test.permission1", parentPerms);
+            
+            permLib.SetGroupParent("childGroup", "parentGroup");
+            
+            permLib.GrantGroupPermission("childGroup", "child.permission", mockPlugin);
+            permLib.GrantGroupPermission("childGroup", "test.permission2", mockPlugin);
+            
+            var childPerms = permLib.GetGroupPermissions("childGroup", false);
+            Assert.Equal(2, childPerms.Length);
+            Assert.Contains("child.permission", childPerms);
+            Assert.Contains("test.permission2", childPerms);
+            Assert.DoesNotContain("parent.permission", childPerms);
+            Assert.DoesNotContain("test.permission1", childPerms);
+            
+            var childWithParentPerms = permLib.GetGroupPermissions("childGroup", true);
+            Assert.Equal(4, childWithParentPerms.Length);
+            Assert.Contains("child.permission", childWithParentPerms);
+            Assert.Contains("test.permission2", childWithParentPerms);
+            Assert.Contains("parent.permission", childWithParentPerms);
+            Assert.Contains("test.permission1", childWithParentPerms);
+            
+            permLib.CreateGroup("brokenParentGroup", "Broken Parent Group", 3);
+            
+            var groupData = permLib.GetGroupData("brokenParentGroup");
+            var parentGroupField = groupData.GetType().GetProperty("ParentGroup");
+            parentGroupField.SetValue(groupData, "nonExistentParent");
+            
+            permLib.GrantGroupPermission("brokenParentGroup", "test.permission1", mockPlugin);
+            
+            var brokenParentPerms = permLib.GetGroupPermissions("brokenParentGroup", true);
+            Assert.Single(brokenParentPerms);
+            Assert.Contains("test.permission1", brokenParentPerms);
+            
+            permLib.CreateGroup("grandparentGroup", "Grandparent Group", 4);
+            permLib.GrantGroupPermission("grandparentGroup", "grandparent.permission", mockPlugin);
+            
+            permLib.SetGroupParent("parentGroup", "grandparentGroup");
+            
+            var multiLevelPerms = permLib.GetGroupPermissions("childGroup", true);
+            Assert.Equal(5, multiLevelPerms.Length);
+            Assert.Contains("child.permission", multiLevelPerms);
+            Assert.Contains("test.permission2", multiLevelPerms);
+            Assert.Contains("parent.permission", multiLevelPerms);
+            Assert.Contains("test.permission1", multiLevelPerms);
+            Assert.Contains("grandparent.permission", multiLevelPerms);
+        }
     }
 }
