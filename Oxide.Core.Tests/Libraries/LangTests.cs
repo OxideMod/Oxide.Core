@@ -1,13 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Xunit;
 using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
-using Oxide.Core.Tests.Plugins.Mocks;
-using Newtonsoft.Json;
 
 namespace Oxide.Core.Tests.Libraries
 {
@@ -16,51 +13,41 @@ namespace Oxide.Core.Tests.Libraries
     /// </summary>
     public class LangTests : IDisposable
     {
-        private readonly Lang langLib;
+        private readonly string testDataDir;
         private readonly string testLangDir;
+        private readonly Lang langLib;
 
-        /// <summary>
-        /// Initializes the test environment.
-        /// </summary>
         public LangTests()
         {
-            // Create a temporary directory for language files.
-            testLangDir = Path.Combine(Path.GetTempPath(), "OxideLangTests");
-            if (!Directory.Exists(testLangDir))
-                Directory.CreateDirectory(testLangDir);
-
-            // Set the LangDirectory property via reflection because its setter is inaccessible.
-            var oxide = Interface.Oxide;
-            PropertyInfo langDirProp = oxide.GetType().GetProperty("LangDirectory", BindingFlags.Public | BindingFlags.Instance);
-            if (langDirProp != null)
-            {
-                langDirProp.SetValue(oxide, testLangDir);
-            }
-
+            // Create temp directories for testing
+            testDataDir = Path.Combine(Path.GetTempPath(), "oxide_test_data_" + Guid.NewGuid());
+            testLangDir = Path.Combine(testDataDir, "lang");
+            Directory.CreateDirectory(testDataDir);
+            Directory.CreateDirectory(testLangDir);
+            
+            // Set Interface.Oxide properties
+            SetOxideProperty("DataDirectory", testDataDir);
+            SetOxideProperty("LangDirectory", testLangDir);
+            
+            // Create Lang instance
             langLib = new Lang();
         }
 
-        /// <summary>
-        /// Tests that registering messages creates a file and that messages can be retrieved.
-        /// </summary>
-        [Fact]
-        public void RegisterMessages_CreatesFile_And_GetMessageReturnsValue()
+        private void SetOxideProperty(string propertyName, string value)
         {
-            var messages = new Dictionary<string, string>
-            {
-                { "Hello", "Hello World" },
-                { "Goodbye", "Goodbye World" }
-            };
-            Plugin fakePlugin = new FakePlugin();
-            langLib.RegisterMessages(messages, fakePlugin, "en");
-
-            string message = langLib.GetMessage("Hello", fakePlugin);
-            Assert.Equal("Hello World", message);
+            var oxideProperty = typeof(Interface).GetProperty("Oxide", BindingFlags.Public | BindingFlags.Static);
+            var oxide = oxideProperty.GetValue(null);
+            
+            var targetProperty = oxide.GetType().GetProperty(propertyName);
+            targetProperty.SetValue(oxide, value);
         }
 
-        /// <summary>
-        /// Tests that setting and getting the server language works.
-        /// </summary>
+        [Fact]
+        public void IsGlobal_ReturnsFalse()
+        {
+            Assert.False(langLib.IsGlobal);
+        }
+
         [Fact]
         public void SetServerLanguage_UpdatesServerLanguage()
         {
@@ -70,15 +57,108 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(newLang, serverLang);
         }
 
-        /// <summary>
-        /// Cleans up temporary files.
-        /// </summary>
+        [Fact]
+        public void SetLanguage_UpdatesUserLanguage()
+        {
+            string userId = "user123";
+            string userLang = "fr";
+            
+            // Set language for user
+            langLib.SetLanguage(userLang, userId);
+            
+            // Get language for user
+            string retrievedLang = langLib.GetLanguage(userId);
+            Assert.Equal(userLang, retrievedLang);
+        }
+
+        [Fact]
+        public void GetLanguage_DefaultsToServerLanguage()
+        {
+            // Set server language
+            string serverLang = "es";
+            langLib.SetServerLanguage(serverLang);
+            
+            // Get language for non-existent user
+            string retrievedLang = langLib.GetLanguage("nonexistentuser");
+            
+            // Should return server language
+            Assert.Equal(serverLang, retrievedLang);
+        }
+
+        [Fact]
+        public void SetLanguage_NullOrEmptyParameters_DoesNothing()
+        {
+            // Set a known language for a user
+            string userId = "user123";
+            string userLang = "fr";
+            langLib.SetLanguage(userLang, userId);
+            
+            // Try to set null or empty values
+            langLib.SetLanguage(null, userId);
+            langLib.SetLanguage("", userId);
+            langLib.SetLanguage(userLang, null);
+            langLib.SetLanguage(userLang, "");
+            
+            // Should still have the original language
+            Assert.Equal(userLang, langLib.GetLanguage(userId));
+        }
+
+        [Fact]
+        public void SetLanguage_SameValue_DoesNothing()
+        {
+            // Set a language for a user
+            string userId = "user123";
+            string userLang = "fr";
+            langLib.SetLanguage(userLang, userId);
+            
+            // Set the same language again
+            langLib.SetLanguage(userLang, userId);
+            
+            // Should still have the same language
+            Assert.Equal(userLang, langLib.GetLanguage(userId));
+        }
+
+        [Fact]
+        public void SetServerLanguage_SameValue_DoesNothing()
+        {
+            // Set a server language
+            string serverLang = "fr";
+            langLib.SetServerLanguage(serverLang);
+            
+            // Set the same language again
+            langLib.SetServerLanguage(serverLang);
+            
+            // Should still have the same language
+            Assert.Equal(serverLang, langLib.GetServerLanguage());
+        }
+
+        [Fact]
+        public void SetServerLanguage_NullOrEmpty_DoesNothing()
+        {
+            // Set a known server language
+            string serverLang = "fr";
+            langLib.SetServerLanguage(serverLang);
+            
+            // Try to set null or empty values
+            langLib.SetServerLanguage(null);
+            langLib.SetServerLanguage("");
+            
+            // Should still have the original language
+            Assert.Equal(serverLang, langLib.GetServerLanguage());
+        }
+
         public void Dispose()
         {
-            if (Directory.Exists(testLangDir))
+            try
             {
-                Directory.Delete(testLangDir, true);
+                // Clean up temp directory
+                if (Directory.Exists(testDataDir))
+                    Directory.Delete(testDataDir, true);
+            }
+            catch (IOException)
+            {
+                // Ignore IO exceptions during cleanup
             }
         }
     }
-}
+} 

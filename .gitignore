@@ -68,3 +68,24 @@ _TeamCity*
 .deploy
 
 src/Debug.cs
+
+# Coverage reports and tools
+coverage/
+coverage-reports/
+.coverage
+*.coverage
+coverage*.json
+coverage*.xml
+*.cobertura.xml
+coverage*.html
+**/coverage/
+**/coveragereport/
+lcov.info
+coverage.info
+*.opencover.xml
+**/*.coveragexml
+tools/coverage/
+**/*.lcov
+coverage.runsettings
+parse_coverage.ps1
+run_coverage.cmd
