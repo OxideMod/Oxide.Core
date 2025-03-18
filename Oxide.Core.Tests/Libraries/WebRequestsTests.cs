@@ -243,5 +243,38 @@ namespace Oxide.Core.Tests.Libraries
             SetPropertyViaReflection(testObj, dateProperty, dateString);
             Assert.Equal(expectedDate, testObj.DateProperty);
         }
+
+        [Fact]
+        public void SetRawHeader_WithDateTimeHeader_SetsDateTimeProperty()
+        {
+            // Create a HttpWebRequest
+            var request = (HttpWebRequest)WebRequest.Create("http://example.com");
+            
+            // Date header uses DateTime property - RFC 1123 format
+            string dateValue = "Wed, 25 Oct 2023 10:15:30 GMT";
+            request.SetRawHeader("Date", dateValue);
+            
+            // Verify the Date property was correctly set with parsed DateTime
+            Assert.Equal(DateTime.Parse(dateValue), request.Date);
+        }
+        
+        [Fact]
+        public void SetRawHeader_WithBooleanHeader_SetsBoolProperty()
+        {
+            // Create a HttpWebRequest
+            var request = (HttpWebRequest)WebRequest.Create("http://example.com");
+            
+            // Set KeepAlive header which uses a boolean property
+            request.SetRawHeader("Keep-Alive", "true");
+            
+            // Verify the KeepAlive property was correctly set to true
+            Assert.True(request.KeepAlive);
+            
+            // Test setting it to false
+            request.SetRawHeader("Keep-Alive", "false");
+            
+            // Verify the KeepAlive property was correctly set to false
+            Assert.False(request.KeepAlive);
+        }
     }
 }
