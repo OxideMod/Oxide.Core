@@ -89,3 +89,5 @@ tools/coverage/
 coverage.runsettings
 parse_coverage.ps1
 run_coverage.cmd
+/Oxide.Core.Tests/coverage-report
+/Oxide.Core.Tests/coverage-report-covalence
