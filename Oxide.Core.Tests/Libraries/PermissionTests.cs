@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -2276,5 +2276,242 @@ namespace Oxide.Core.Tests.Libraries
         }
 
         #endregion
+
+        [Fact]
+        public void VerifyAndLoadGroupsData_WithCorruptedData_RecoversGracefully()
+        {
+            // Setup: Create a corrupted groups file with partial JSON
+            string groupsFile = Path.Combine(tempDataDir, "oxide.groups.json");
+            File.WriteAllText(groupsFile, @"{""testGroup"": {""Title"": ""Test Group"", ""Rank"": ""invalid""}}");
+            
+            // Access the private method through reflection
+            var method = typeof(Permission).GetMethod("VerifyAndLoadGroupsData", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Execute the method
+            method.Invoke(permLib, null);
+            
+            // Verify we can still access and use groups
+            Assert.NotNull(permLib.GetGroupData("testGroup"));
+            Assert.Equal("Test Group", permLib.GetGroupTitle("testGroup"));
+        }
+        
+        [Fact]
+        public void VerifyAndLoadUsersData_WithCorruptedPermissions_FixesPermissionsField()
+        {
+            // Setup: Create a users file with corrupted permissions
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.json");
+            string json = @"{""testUser"":{""LastSeenNickname"":""TestNick"",""Perms"":null}}";
+            File.WriteAllText(usersFile, json);
+            
+            // Access the private method through reflection
+            var method = typeof(Permission).GetMethod("VerifyAndLoadUsersData", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Execute the method
+            method.Invoke(permLib, null);
+            
+            // Verify the user data was fixed
+            var userData = permLib.GetUserData("testUser");
+            Assert.NotNull(userData.Perms);
+            Assert.Empty(userData.Perms);
+        }
+        
+        [Fact]
+        public void SetGroupRank_WithNonExistentGroup_ReturnsFalse()
+        {
+            // Test with a non-existent group
+            bool result = permLib.SetGroupRank("nonExistentGroup", 10);
+            
+            // Verify result
+            Assert.False(result);
+        }
+        
+        [Fact]
+        public void SetGroupRank_WithNegativeRank_HandlesProperly()
+        {
+            // Create a test group
+            permLib.CreateGroup("negativeRankGroup", "Negative Rank Group", 5);
+            
+            // Set a negative rank
+            bool result = permLib.SetGroupRank("negativeRankGroup", -10);
+            
+            // Verify rank was set
+            Assert.True(result);
+            Assert.Equal(-10, permLib.GetGroupRank("negativeRankGroup"));
+        }
+        
+        [Fact]
+        public void SetGroupTitle_WithNonExistentGroup_ReturnsFalse()
+        {
+            // Test with a non-existent group
+            bool result = permLib.SetGroupTitle("nonExistentGroup", "New Title");
+            
+            // Verify result
+            Assert.False(result);
+        }
+        
+        [Fact]
+        public void SetGroupTitle_WithNullOrEmptyTitle_HandlesProperly()
+        {
+            // Create test group
+            permLib.CreateGroup("emptyTitleGroup", "Original Title", 1);
+            
+            // Set null title
+            bool nullResult = permLib.SetGroupTitle("emptyTitleGroup", null);
+            Assert.True(nullResult);
+            
+            // Verify title was set to empty string
+            string title = permLib.GetGroupTitle("emptyTitleGroup");
+            Assert.Equal("", title);
+            
+            // Set empty title
+            bool emptyResult = permLib.SetGroupTitle("emptyTitleGroup", "");
+            Assert.True(emptyResult);
+            
+            // Verify title remains empty
+            title = permLib.GetGroupTitle("emptyTitleGroup");
+            Assert.Equal("", title);
+        }
+        
+        [Fact]
+        public void GroupHasPermission_WithNonExistentGroup_ReturnsFalse()
+        {
+            // Test getting permission for non-existent group
+            bool result = permLib.GroupHasPermission("nonExistentGroup", "some.permission");
+            
+            // Verify result
+            Assert.False(result);
+        }
+        
+        [Fact]
+        public void GroupHasPermission_WithNullOrEmptyPermission_ReturnsFalse()
+        {
+            // Create test group
+            permLib.CreateGroup("permTestGroup", "Permission Test Group", 1);
+            
+            // Test with null permission
+            bool nullResult = permLib.GroupHasPermission("permTestGroup", null);
+            Assert.False(nullResult);
+            
+            // Test with empty permission
+            bool emptyResult = permLib.GroupHasPermission("permTestGroup", "");
+            Assert.False(emptyResult);
+        }
+        
+        [Fact]
+        public void VerifyAndLoadUsersData_WithMissingLastSeenNickname_FixesField()
+        {
+            // Setup: Create a users file with missing LastSeenNickname
+            string usersFile = Path.Combine(tempDataDir, "oxide.users.json");
+            string json = @"{""missingNickUser"":{""Groups"":[],""Perms"":[]}}";
+            File.WriteAllText(usersFile, json);
+            
+            // Access the private method through reflection
+            var method = typeof(Permission).GetMethod("VerifyAndLoadUsersData", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Execute the method
+            method.Invoke(permLib, null);
+            
+            // Verify the user data was fixed
+            var userData = permLib.GetUserData("missingNickUser");
+            Assert.NotNull(userData);
+            Assert.Equal("Unnamed", userData.LastSeenNickname);
+        }
+        
+        [Fact]
+        public void RevokeUserPermission_WithNonExistentUser_DoesNothing()
+        {
+            // Setup a permission
+            string permission = $"{testPlugin.Name}.testperm";
+            permLib.RegisterPermission(permission, testPlugin);
+            
+            // Revoke permission for non-existent user
+            permLib.RevokeUserPermission("nonExistentUser", permission);
+            
+            // Verify no exceptions were thrown
+            // This is a negative test case - we're verifying the behavior is correct when given invalid input
+        }
+        
+        [Fact]
+        public void RevokeUserPermission_WithSpecificPluginWildcard_OnlyRevokesMatchingPluginPermissions()
+        {
+            // Setup: Create user with permissions from two different plugins
+            string userId = "multiPluginUser";
+            string testPerm1 = $"{testPlugin.Name}.perm1";
+            string testPerm2 = $"{testPlugin.Name}.perm2";
+            
+            var mockPlugin = new FakePlugin();
+            mockPlugin.Name = "OtherPlugin";
+            string otherPerm = $"{mockPlugin.Name}.perm";
+            
+            permLib.RegisterPermission(testPerm1, testPlugin);
+            permLib.RegisterPermission(testPerm2, testPlugin);
+            permLib.RegisterPermission(otherPerm, mockPlugin);
+            
+            permLib.GrantUserPermission(userId, testPerm1, testPlugin);
+            permLib.GrantUserPermission(userId, testPerm2, testPlugin);
+            permLib.GrantUserPermission(userId, otherPerm, mockPlugin);
+            
+            // Act: Revoke only permissions from testPlugin
+            permLib.RevokeUserPermission(userId, $"{testPlugin.Name}.*");
+            
+            // Verify: Only permissions from testPlugin are revoked
+            var userData = permLib.GetUserData(userId);
+            Assert.DoesNotContain(testPerm1, userData.Perms);
+            Assert.DoesNotContain(testPerm2, userData.Perms);
+            Assert.Contains(otherPerm, userData.Perms);
+        }
+        
+        [Fact]
+        public void SetGroupParent_WithSameParent_ReturnsEarly()
+        {
+            // Setup: Create groups
+            permLib.CreateGroup("parentGroup", "Parent Group", 10);
+            permLib.CreateGroup("childGroup", "Child Group", 5);
+            
+            // Set parent initially
+            permLib.SetGroupParent("childGroup", "parentGroup");
+            
+            // Set same parent again
+            bool result = permLib.SetGroupParent("childGroup", "parentGroup");
+            
+            // Verify it was handled correctly
+            Assert.True(result);
+            Assert.Equal("parentGroup", permLib.GetGroupParent("childGroup"));
+        }
+        
+        [Fact]
+        public void GetGroupPermissions_WithDeepNestedInheritance_IncludesAllAncestorPermissions()
+        {
+            // Setup: Create deep group hierarchy with permissions
+            string perm1 = $"{testPlugin.Name}.level1";
+            string perm2 = $"{testPlugin.Name}.level2";
+            string perm3 = $"{testPlugin.Name}.level3";
+            
+            permLib.RegisterPermission(perm1, testPlugin);
+            permLib.RegisterPermission(perm2, testPlugin);
+            permLib.RegisterPermission(perm3, testPlugin);
+            
+            permLib.CreateGroup("group1", "Level 1", 10);
+            permLib.CreateGroup("group2", "Level 2", 5);
+            permLib.CreateGroup("group3", "Level 3", 1);
+            
+            permLib.GrantGroupPermission("group1", perm1, testPlugin);
+            permLib.GrantGroupPermission("group2", perm2, testPlugin);
+            permLib.GrantGroupPermission("group3", perm3, testPlugin);
+            
+            permLib.SetGroupParent("group2", "group1");
+            permLib.SetGroupParent("group3", "group2");
+            
+            // Get all permissions for the deepest group
+            var permissions = permLib.GetGroupPermissions("group3", true);
+            
+            // Verify all permissions from all levels are included
+            Assert.Contains(perm1, permissions);
+            Assert.Contains(perm2, permissions);
+            Assert.Contains(perm3, permissions);
+        }
     }
 }
