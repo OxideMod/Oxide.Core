@@ -8,7 +8,7 @@
     <Authors>Oxide Team and Contributors</Authors>
     <Copyright>(c) 2013-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
     <Description>Core component for the Oxide modding framework</Description>
-    <RepositoryUrl>https://github.com/OxideMod/Oxide.CSharp</RepositoryUrl>
+    <RepositoryUrl>https://github.com/OxideMod/Oxide.Core</RepositoryUrl>
     <PackageIconUrl>icon.png</PackageIconUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
