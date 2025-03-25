@@ -91,3 +91,31 @@ parse_coverage.ps1
 run_coverage.cmd
 /Oxide.Core.Tests/coverage-report
 /Oxide.Core.Tests/coverage-report-covalence
+
+# Additional coverage files from reports directory
+extract_coverage.ps1
+extract_coverage_opencover.ps1
+test_summary.md
+output.txt
+output.*.txt
+cmdhandler_*.xml
+covalence_*.xml
+covalence_coverage.json
+combined_coverage.json
+*_coverage.json
+*_coverage.xml
+*_final_coverage.xml
+*_specific.xml
+formatter_*.xml
+null_plugin_coverage.xml
+prefix_coverage.xml
+simple_coverage.json
+specific_coverage.json
+unknown_plugin_coverage.json
+exact_line_test.xml
+full_covalence_coverage.json
+initialize_coverage.json
+
+# Test results directory content
+TestResults/
+coverage_previous.xml

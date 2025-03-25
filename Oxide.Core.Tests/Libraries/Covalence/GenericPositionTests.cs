@@ -169,10 +169,10 @@ namespace Oxide.Core.Tests.Libraries.Covalence
         }
         
         /// <summary>
-        /// Tests the multiplication operator.
+        /// Tests the multiplication operator (position * scalar).
         /// </summary>
         [Fact]
-        public void MultiplicationOperator_MultipliesCorrectly()
+        public void MultiplicationOperator_PositionTimesScalar_MultipliesCorrectly()
         {
             // Arrange
             var position = new GenericPosition(2f, 3f, 4f);
@@ -180,6 +180,25 @@ namespace Oxide.Core.Tests.Libraries.Covalence
             
             // Act
             var result = position * scalar;
+            
+            // Assert
+            Assert.Equal(4f, result.X);
+            Assert.Equal(6f, result.Y);
+            Assert.Equal(8f, result.Z);
+        }
+        
+        /// <summary>
+        /// Tests the multiplication operator (scalar * position).
+        /// </summary>
+        [Fact]
+        public void MultiplicationOperator_ScalarTimesPosition_MultipliesCorrectly()
+        {
+            // Arrange
+            var position = new GenericPosition(2f, 3f, 4f);
+            var scalar = 2f;
+            
+            // Act
+            var result = scalar * position;
             
             // Assert
             Assert.Equal(4f, result.X);
@@ -204,6 +223,41 @@ namespace Oxide.Core.Tests.Libraries.Covalence
             Assert.Equal(2f, result.X);
             Assert.Equal(3f, result.Y);
             Assert.Equal(4f, result.Z);
+        }
+        
+        /// <summary>
+        /// Tests the equality operator with null values.
+        /// </summary>
+        [Fact]
+        public void EqualityOperator_WithNullValues_HandlesProperly()
+        {
+            // Arrange
+            GenericPosition position = new GenericPosition(1f, 2f, 3f);
+            GenericPosition nullPosition = null;
+            
+            // Act & Assert
+            Assert.False(position == nullPosition);
+            Assert.False(nullPosition == position);
+            Assert.True(nullPosition == nullPosition);
+            
+            Assert.True(position != nullPosition);
+            Assert.True(nullPosition != position);
+            Assert.False(nullPosition != nullPosition);
+        }
+        
+        /// <summary>
+        /// Tests the equality operator with the same reference.
+        /// </summary>
+        [Fact]
+        public void EqualityOperator_WithSameReference_ReturnsTrue()
+        {
+            // Arrange
+            GenericPosition position = new GenericPosition(1f, 2f, 3f);
+            GenericPosition sameReference = position;
+            
+            // Act & Assert
+            Assert.True(position == sameReference);
+            Assert.False(position != sameReference);
         }
     }
 } 

@@ -10,12 +10,9 @@ namespace Oxide.Core.Tests.Plugins
     /// </summary>
     public class CSPluginTests
     {
-        [Fact]
+        [Fact(Skip = "Skip test due to dependencies that are hard to set up in tests")]
         public void Plugin_CallHook_ReturnsExpectedResult()
-        {
-            // Skip test due to dependencies that are hard to set up in tests
-            return;
-            
+        {            
             // Arrange - Create a FakePlugin (which is a simple Plugin subclass)
             var plugin = new FakePlugin();
             
