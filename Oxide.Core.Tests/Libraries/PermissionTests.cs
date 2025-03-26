@@ -13,6 +13,9 @@ using Oxide.Core.Logging;
 
 namespace Oxide.Core.Tests.Libraries
 {
+    /// <summary>
+    /// Tests for the Permission library functionality.
+    /// </summary>
     public class PermissionTests : IDisposable
     {
         private readonly Permission permLib;
@@ -21,6 +24,10 @@ namespace Oxide.Core.Tests.Libraries
         private readonly string originalInstanceDir;
         private readonly FakePlugin testPlugin;
 
+        /// <summary>
+        /// Initializes a new instance of the PermissionTests class.
+        /// Sets up temporary directories and initializes the permission library for testing.
+        /// </summary>
         public PermissionTests()
         {
             // Setup the test environment
@@ -62,6 +69,9 @@ namespace Oxide.Core.Tests.Libraries
             testPlugin = new FakePlugin();
         }
 
+        /// <summary>
+        /// Cleans up the test environment by restoring the original instance directory and deleting temporary files.
+        /// </summary>
         public void Dispose()
         {
             // Cleanup test environment
@@ -87,6 +97,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region User Data Tests
 
+        /// <summary>
+        /// Verifies that GetUserData returns a new UserData object with default values when a user doesn't exist.
+        /// </summary>
         [Fact]
         public void GetUserData_ReturnsNewUserDataIfNotExist()
         {
@@ -97,6 +110,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(userData.Groups);
         }
 
+        /// <summary>
+        /// Tests that UpdateNickname properly updates the nickname of an existing user.
+        /// </summary>
         [Fact]
         public void UpdateNickname_UpdatesExistingUserData()
         {
@@ -106,6 +122,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("NewName", userData.LastSeenNickname);
         }
 
+        /// <summary>
+        /// Verifies that UpdateNickname creates a new user data entry when the specified user doesn't exist.
+        /// </summary>
         [Fact]
         public void UpdateNickname_CreatesNewUserIfNotExists()
         {
@@ -376,6 +395,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(users, s => s.Contains(user2));
         }
 
+        /// <summary>
+        /// Tests that GetPermissionUsers returns an empty array when an empty permission string is provided.
+        /// </summary>
         [Fact]
         public void GetPermissionUsers_EmptyPermission_ReturnsEmptyArray()
         {
@@ -383,6 +405,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(users);
         }
 
+        /// <summary>
+        /// Verifies that GrantUserPermission with a wildcard pattern grants all matching registered permissions.
+        /// </summary>
         [Fact]
         public void GrantUserPermission_WithWildcardPermission_GrantsAllMatchingPermissions()
         {
@@ -415,6 +440,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(perm3, userData2.Perms);
         }
         
+        /// <summary>
+        /// Tests that GrantUserPermission works with a null owner parameter if the permission is already registered.
+        /// </summary>
         [Fact]
         public void GrantUserPermission_WithNullOwner_GrantsPermissionIfRegistered()
         {
@@ -441,6 +469,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(permission, userData2.Perms);
         }
         
+        /// <summary>
+        /// Verifies that GrantUserPermission with a wildcard pattern that doesn't match any permissions grants nothing.
+        /// </summary>
         [Fact]
         public void GrantUserPermission_WithWildcardThatDoesntMatch_GrantsNothing()
         {
@@ -463,6 +494,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Group Tests
 
+        /// <summary>
+        /// Tests that CreateGroup successfully creates a new permission group with specified properties.
+        /// </summary>
         [Fact]
         public void CreateGroup_CreatesGroupSuccessfully()
         {
@@ -475,6 +509,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(1, groupData.Rank);
         }
 
+        /// <summary>
+        /// Verifies that CreateGroup fails when attempting to create a group with a name that already exists.
+        /// </summary>
         [Fact]
         public void CreateGroup_FailsForExistingGroup()
         {
@@ -483,6 +520,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(created);
         }
 
+        /// <summary>
+        /// Tests that RemoveGroup successfully removes an existing permission group.
+        /// </summary>
         [Fact]
         public void RemoveGroup_RemovesGroupSuccessfully()
         {
@@ -492,6 +532,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Null(permLib.GetGroupData("removeGroup"));
         }
 
+        /// <summary>
+        /// Ensures that RemoveGroup returns false when attempting to remove a non-existent group.
+        /// </summary>
         [Fact]
         public void RemoveGroup_FailsForNonExistingGroup()
         {
@@ -499,6 +542,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(removed);
         }
 
+        /// <summary>
+        /// Verifies that RemoveGroup removes the group from all users who are members of the group.
+        /// </summary>
         [Fact]
         public void RemoveGroup_RemovesFromUserData()
         {
@@ -518,12 +564,18 @@ namespace Oxide.Core.Tests.Libraries
             Assert.DoesNotContain(groupName, permLib.GetUserGroups(userId));
         }
 
+        /// <summary>
+        /// Tests that GetGroupData returns null when attempting to retrieve data for a non-existent group.
+        /// </summary>
         [Fact]
         public void GetGroupData_ReturnsNullForNonExistingGroup()
         {
             Assert.Null(permLib.GetGroupData("nonexistentGroup"));
         }
 
+        /// <summary>
+        /// Verifies that GetGroups returns all created permission groups.
+        /// </summary>
         [Fact]
         public void GetGroups_ReturnsCreatedGroups()
         {
@@ -535,6 +587,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains("groupTest2", groups);
         }
 
+        /// <summary>
+        /// Tests that GetUsersInGroup returns all users who are members of a specific group.
+        /// </summary>
         [Fact]
         public void GetUsersInGroup_ReturnsCorrectUsers()
         {
@@ -552,6 +607,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(users, s => s.Contains(user2));
         }
 
+        /// <summary>
+        /// Verifies that GetGroupTitle returns the correct title for an existing group.
+        /// </summary>
         [Fact]
         public void GetGroupTitle_ReturnsCorrectTitle()
         {
@@ -560,12 +618,18 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Group Title Test", title);
         }
 
+        /// <summary>
+        /// Tests that GetGroupTitle returns an empty string for a non-existent group.
+        /// </summary>
         [Fact]
         public void GetGroupTitle_ReturnsEmptyForNonExistingGroup()
         {
             Assert.Equal(string.Empty, permLib.GetGroupTitle("nonexistentGroup"));
         }
 
+        /// <summary>
+        /// Verifies that SetGroupTitle successfully updates the title of an existing group.
+        /// </summary>
         [Fact]
         public void SetGroupTitle_UpdatesTitle()
         {
@@ -576,6 +640,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Updated Title", title);
         }
 
+        /// <summary>
+        /// Tests that GetGroupRank returns the correct rank for an existing group.
+        /// </summary>
         [Fact]
         public void GetGroupRank_ReturnsCorrectRank()
         {
@@ -584,12 +651,18 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(5, rank);
         }
 
+        /// <summary>
+        /// Tests that GetGroupRank returns zero for a non-existent group.
+        /// </summary>
         [Fact]
         public void GetGroupRank_ReturnsZeroForNonExistingGroup()
         {
             Assert.Equal(0, permLib.GetGroupRank("nonexistentGroup"));
         }
 
+        /// <summary>
+        /// Verifies that SetGroupRank successfully updates the rank of an existing group.
+        /// </summary>
         [Fact]
         public void SetGroupRank_UpdatesRank()
         {
@@ -604,6 +677,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Group Parent Tests
 
+        /// <summary>
+        /// Tests that GetGroupParent returns the correct parent group name or empty string if none is set.
+        /// </summary>
         [Fact]
         public void GetGroupParent_ReturnsProperValue()
         {
@@ -615,6 +691,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(string.Empty, permLib.GetGroupParent("nonexistent"));
         }
 
+        /// <summary>
+        /// Verifies that SetGroupParent correctly establishes a parent-child relationship between groups.
+        /// </summary>
         [Fact]
         public void SetGroupParent_SetsParentCorrectly()
         {
@@ -626,6 +705,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("groupParent", permLib.GetGroupParent("groupChild"));
         }
 
+        /// <summary>
+        /// Tests that SetGroupParent with an empty string clears the parent group relationship.
+        /// </summary>
         [Fact]
         public void SetGroupParent_ClearsParentWithEmptyString()
         {
@@ -648,6 +730,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(string.IsNullOrEmpty(childData.ParentGroup));
         }
 
+        /// <summary>
+        /// Verifies that SetGroupParent prevents direct circular parent references between groups.
+        /// </summary>
         [Fact]
         public void SetGroupParent_PreventsCircularReference()
         {
@@ -661,6 +746,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(setParentA);
         }
 
+        /// <summary>
+        /// Tests that SetGroupParent prevents deep indirect circular parent references across multiple groups.
+        /// </summary>
         [Fact]
         public void SetGroupParent_PreventsDeepCircularReference()
         {
@@ -679,6 +767,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Group Permission Tests
 
+        /// <summary>
+        /// Tests that GrantGroupPermission successfully grants a registered permission to a group.
+        /// </summary>
         [Fact]
         public void GrantGroupPermission_GrantsPermissionSuccessfully()
         {
@@ -694,6 +785,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(permission, groupData.Perms);
         }
 
+        /// <summary>
+        /// Ensures that GrantGroupPermission silently fails when attempting to grant an unregistered permission.
+        /// </summary>
         [Fact]
         public void GrantGroupPermission_FailsForUnregisteredPermission()
         {
@@ -709,6 +803,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.DoesNotContain(permission, groupData.Perms);
         }
 
+        /// <summary>
+        /// Tests that RevokeGroupPermission successfully removes a previously granted permission from a group.
+        /// </summary>
         [Fact]
         public void RevokeGroupPermission_RevokesPermissionSuccessfully()
         {
@@ -725,6 +822,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.DoesNotContain(permission, groupData.Perms);
         }
 
+        /// <summary>
+        /// Verifies that RevokeGroupPermission with wildcard ('*') pattern revokes all permissions from a group.
+        /// </summary>
         [Fact]
         public void RevokeGroupPermission_WithWildcard_RevokesAllPermissions()
         {
@@ -744,6 +844,10 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(groupData.Perms);
         }
 
+        /// <summary>
+        /// Tests that GetGroupPermissions returns only direct group permissions when includeParents is false, 
+        /// and includes parent group permissions when includeParents is true.
+        /// </summary>
         [Fact]
         public void GetGroupPermissions_WithAndWithoutParents()
         {
@@ -769,6 +873,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(childPerm, withParents);
         }
 
+        /// <summary>
+        /// Verifies that GetPermissionGroups returns all groups that have been granted a specific permission.
+        /// </summary>
         [Fact]
         public void GetPermissionGroups_ReturnsGroupsWithPermission()
         {
@@ -787,6 +894,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains("permGroup2", groups);
         }
 
+        /// <summary>
+        /// Tests that GetPermissionGroups returns an empty array when an empty permission string is provided.
+        /// </summary>
         [Fact]
         public void GetPermissionGroups_EmptyPermission_ReturnsEmptyArray()
         {
@@ -794,6 +904,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(groups);
         }
 
+        /// <summary>
+        /// Verifies that GrantGroupPermission with a wildcard pattern grants all matching registered permissions to a group.
+        /// </summary>
         [Fact]
         public void GrantGroupPermission_WithWildcardPermission_GrantsAllMatchingPermissions()
         {
@@ -830,6 +943,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(perm3, groupData2.Perms);
         }
         
+        /// <summary>
+        /// Tests that GrantGroupPermission works with a null owner parameter if the permission is already registered.
+        /// </summary>
         [Fact]
         public void GrantGroupPermission_WithNullOwner_GrantsPermissionIfRegistered()
         {
@@ -858,6 +974,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(permission, groupData2.Perms);
         }
         
+        /// <summary>
+        /// Verifies that GrantGroupPermission with a wildcard pattern that doesn't match any permissions grants nothing.
+        /// </summary>
         [Fact]
         public void GrantGroupPermission_WithWildcardThatDoesntMatch_GrantsNothing()
         {
@@ -881,6 +1000,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Permission Registration Tests
 
+        /// <summary>
+        /// Tests that RegisterPermission successfully registers a new permission.
+        /// </summary>
         [Fact]
         public void RegisterPermission_RegistersSuccessfully()
         {
@@ -891,6 +1013,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(permission, permissions);
         }
 
+        /// <summary>
+        /// Verifies that RegisterPermission fails for invalid permission formats.
+        /// </summary>
         [Fact]
         public void RegisterPermission_FailsForInvalidPermission()
         {
@@ -911,9 +1036,12 @@ namespace Oxide.Core.Tests.Libraries
             // that the permission was added but it's considered invalid by the system
             var permissions = permLib.GetPermissions();
             Assert.Contains(validPerm, permissions);
-            // Depending on implementation, this might or might not be registered
+
         }
 
+        /// <summary>
+        /// Tests that GetPermissions returns all registered permissions.
+        /// </summary>
         [Fact]
         public void GetPermissions_ReturnsRegisteredPermissions()
         {
@@ -928,6 +1056,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(perm2, perms);
         }
 
+        /// <summary>
+        /// Verifies that GetPermissions returns an empty array when no permissions are registered.
+        /// </summary>
         [Fact]
         public void GetPermissions_ReturnsEmptyForNoRegisteredPermissions()
         {
@@ -941,6 +1072,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(perms);
         }
 
+        /// <summary>
+        /// Tests that PermissionExists returns true for a registered permission.
+        /// </summary>
         [Fact]
         public void PermissionExists_ReturnsTrueForRegisteredPermission()
         {
@@ -953,6 +1087,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(permission, permissions);
         }
 
+        /// <summary>
+        /// Verifies that PermissionExists returns false for an unregistered permission.
+        /// </summary>
         [Fact]
         public void PermissionExists_ReturnsFalseForUnregisteredPermission()
         {
@@ -964,6 +1101,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.DoesNotContain(permission, permissions);
         }
 
+        /// <summary>
+        /// Tests that PermissionExists properly handles wildcard patterns, returning true when permissions match the pattern.
+        /// </summary>
         [Fact]
         public void PermissionExists_WithWildcard_ReturnsTrueForMatchingPermissions()
         {
@@ -992,6 +1132,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(nonMatchingResult);
         }
 
+        /// <summary>
+        /// Verifies that PermissionExists checks only permissions registered by a specific plugin when a plugin owner is provided.
+        /// </summary>
         [Fact]
         public void PermissionExists_WithPluginOwner_ChecksOnlyForPluginPermissions()
         {
@@ -1026,6 +1169,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(fullWildcardForFirst);
         }
 
+        /// <summary>
+        /// Tests that PermissionExists returns false when a null or empty permission string is provided.
+        /// </summary>
         [Fact]
         public void PermissionExists_WithNullOrEmptyPermission_ReturnsFalse()
         {
@@ -1050,6 +1196,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Plugin Unload Tests
 
+        /// <summary>
+        /// Verifies that when a plugin is removed from the plugin manager, all its registered permissions are also removed.
+        /// </summary>
         [Fact]
         public void Owner_OnRemovedFromManager_RemovesPermissions()
         {
@@ -1079,6 +1228,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Validation Tests
 
+        /// <summary>
+        /// Tests that when a validation function is registered, it is applied during CleanUp operations to filter users.
+        /// </summary>
         [Fact]
         public void RegisterValidate_ValidatorIsApplied()
         {
@@ -1101,6 +1253,9 @@ namespace Oxide.Core.Tests.Libraries
             permLib.RegisterValidate(null);
         }
 
+        /// <summary>
+        /// Verifies that a null validator function accepts all user IDs, effectively disabling validation.
+        /// </summary>
         [Fact]
         public void RegisterValidate_NullValidatorAcceptsAll()
         {
@@ -1124,6 +1279,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Circular Reference Tests
 
+        /// <summary>
+        /// Tests that HasCircularParent correctly identifies direct circular references between two groups.
+        /// </summary>
         [Fact]
         public void HasCircularParent_DetectsDirectCircularReference()
         {
@@ -1139,6 +1297,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(hasCircular);
         }
 
+        /// <summary>
+        /// Verifies that HasCircularParent detects indirect circular references through multiple levels of group hierarchy.
+        /// </summary>
         [Fact]
         public void HasCircularParent_DetectsIndirectCircularReference()
         {
@@ -1156,6 +1317,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(hasCircular);
         }
 
+        /// <summary>
+        /// Tests that HasCircularParent returns false when there is no circular reference between groups.
+        /// </summary>
         [Fact]
         public void HasCircularParent_ReturnsFalseForNonCircularReference()
         {
@@ -1175,6 +1339,9 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Data Storage Tests
 
+        /// <summary>
+        /// Tests that SaveUsers correctly persists user data to storage.
+        /// </summary>
         [Fact]
         public void SaveUsers_SavesUserData()
         {
@@ -1193,6 +1360,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("SavedUser", loadedData.LastSeenNickname);
         }
 
+        /// <summary>
+        /// Verifies that SaveGroups correctly persists group data to storage.
+        /// </summary>
         [Fact]
         public void SaveGroups_SavesGroupData()
         {
@@ -1212,6 +1382,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(5, loadedData.Rank);
         }
 
+        /// <summary>
+        /// Tests that SaveData correctly persists both user and group data to storage.
+        /// </summary>
         [Fact]
         public void SaveData_SavesAllData()
         {
@@ -1237,6 +1410,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Save All Group", loadedGroupData.Title);
         }
 
+        /// <summary>
+        /// Verifies that Export uses the specified prefix for file names when exporting permission data.
+        /// </summary>
         [Fact]
         public void Export_UsesPrefixForFileNames()
         {
@@ -1254,6 +1430,9 @@ namespace Oxide.Core.Tests.Libraries
             permLib.Export();
         }
 
+        /// <summary>
+        /// Tests that LoadFromDatafile successfully loads permissions data from the data files.
+        /// </summary>
         [Fact]
         public void LoadFromDatafile_LoadsData()
         {
@@ -1292,6 +1471,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Load Group", newPermLib.GetGroupData(groupName).Title);
         }
 
+        /// <summary>
+        /// Tests that VerifyGroupData correctly validates group data structure and returns a clean dictionary.
+        /// </summary>
         [Fact]
         public void VerifyGroupData_CorrectlyVerifiesData()
         {
@@ -1313,6 +1495,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Test Group", result["testGroup"].Title);
         }
 
+        /// <summary>
+        /// Verifies that VerifyGroupData merges duplicate groups that differ only by case, preserving all permissions.
+        /// </summary>
         [Fact]
         public void VerifyGroupData_MergesDuplicateGroups()
         {
@@ -1348,6 +1533,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(foundPerm2);
         }
 
+        /// <summary>
+        /// Tests that VerifyGroupData handles groups with null permissions by initializing an empty permission collection.
+        /// </summary>
         [Fact]
         public void VerifyGroupData_HandlesNullPermissionsInGroups()
         {
@@ -1380,6 +1568,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.NotNull(fixedGroup.Perms);
         }
 
+        /// <summary>
+        /// Tests that VerifyAndLoadGroupsData correctly loads and verifies group data from storage.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadGroupsData_LoadsAndVerifiesData()
         {
@@ -1407,6 +1598,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(9, newPermLib.GetGroupData(groupName).Rank);
         }
 
+        /// <summary>
+        /// Tests that VerifyAndLoadUsersData correctly loads and verifies user data from storage.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_LoadsAndVerifiesData()
         {
@@ -1434,6 +1628,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("VerifyUser", newPermLib.GetUserData(userId).LastSeenNickname);
         }
 
+        /// <summary>
+        /// Tests that the IsGlobal property returns false for the Permission library.
+        /// </summary>
         [Fact]
         public void IsGlobal_ReturnsFalse()
         {
@@ -1442,6 +1639,10 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(isGlobal);
         }
 
+        /// <summary>
+        /// Verifies that MigrateGroup correctly moves permissions from a source group to a target group,
+        /// while preserving users in the source group.
+        /// </summary>
         [Fact]
         public void MigrateGroup_MigratesPermissionsAndUsers()
         {
@@ -1478,6 +1679,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.NotNull(permLib.GetGroupData(sourceGroup));
         }
 
+        /// <summary>
+        /// Tests that UserIdValid returns true for various user ID inputs when no validator is registered.
+        /// </summary>
         [Fact]
         public void UserIdValid_ValidatesUserIds()
         {
@@ -1497,6 +1701,10 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(whitespaceResult);
         }
 
+        /// <summary>
+        /// Verifies that UserIdValid uses a custom validator function when one is registered,
+        /// and correctly applies the validation rules to user IDs.
+        /// </summary>
         [Fact]
         public void UserIdValid_WithRegisteredValidator_CallsValidationFunction()
         {
@@ -1527,6 +1735,10 @@ namespace Oxide.Core.Tests.Libraries
             Assert.True(resetResult);
         }
 
+        /// <summary>
+        /// Tests that LoadFromDatafile detects and removes circular parent references in groups
+        /// during the loading process.
+        /// </summary>
         [Fact]
         public void LoadFromDatafile_DetectsAndRemovesCircularGroupReferences()
         {
@@ -1563,6 +1775,10 @@ namespace Oxide.Core.Tests.Libraries
 
         #region Additional Permission Tests
 
+        /// <summary>
+        /// Tests that RevokeGroupPermission with a pattern wildcard revokes only the permissions 
+        /// that match the specified pattern.
+        /// </summary>
         [Fact]
         public void RevokeGroupPermission_WithPatternWildcard_RevokesMatchingPermissions()
         {
@@ -1597,6 +1813,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(perm3, groupData.Perms);
         }
 
+        /// <summary>
+        /// Verifies that RevokeGroupPermission silently does nothing when a group has no permissions.
+        /// </summary>
         [Fact]
         public void RevokeGroupPermission_WithEmptyPermissions_DoesNothing()
         {
@@ -1616,6 +1835,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(groupData.Perms);
         }
 
+        /// <summary>
+        /// Tests that RevokeGroupPermission with a non-matching wildcard pattern has no effect on existing permissions.
+        /// </summary>
         [Fact]
         public void RevokeGroupPermission_WithNonMatchingWildcard_DoesNothing()
         {
@@ -1639,6 +1861,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(perm, groupData.Perms);
         }
 
+        /// <summary>
+        /// Verifies that VerifyAndLoadGroupsData handles malformed JSON data gracefully without throwing exceptions.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadGroupsData_WithMalformedData_HandlesGracefully()
         {
@@ -1658,6 +1883,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.NotNull(permLib.GetGroupData("testGroup"));
         }
 
+        /// <summary>
+        /// Tests that VerifyAndLoadGroupsData correctly initializes an empty dictionary when loading empty JSON data.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadGroupsData_WithEmptyData_InitializesCorrectly()
         {
@@ -1682,6 +1910,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(groupsData);
         }
 
+        /// <summary>
+        /// Verifies that VerifyAndLoadGroupsData repairs and fixes incomplete group data by initializing missing fields.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadGroupsData_WithIncompleteFields_FixesMissingData()
         {
@@ -1704,6 +1935,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("New Test Group", newGroup.Title);
         }
 
+        /// <summary>
+        /// Tests that VerifyAndLoadUsersData handles malformed JSON data gracefully without throwing exceptions.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithMalformedData_HandlesGracefully()
         {
@@ -1723,6 +1957,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.NotNull(userData);
         }
 
+        /// <summary>
+        /// Verifies that VerifyAndLoadUsersData correctly initializes an empty dictionary when loading empty JSON data.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithEmptyData_InitializesCorrectly()
         {
@@ -1747,6 +1984,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(usersData);
         }
 
+        /// <summary>
+        /// Tests that VerifyAndLoadUsersData repairs and fixes incomplete user data by initializing missing fields.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithIncompleteFields_FixesMissingData()
         {
@@ -1769,6 +2009,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.NotNull(userData.Groups);
         }
 
+        /// <summary>
+        /// Verifies that VerifyAndLoadUsersData cleans up invalid group references in user data.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithNonExistentGroupReferences_CleansInvalidGroups()
         {
@@ -2205,11 +2448,13 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(childPerm, childAndParentPerms);
             Assert.Contains(parentPerm, childAndParentPerms);
         }
-
         #endregion
 
         #region Additional Permission Tests
 
+        /// <summary>
+        /// Tests that GetUsersInGroup returns an empty array when a non-existent group name is provided.
+        /// </summary>
         [Fact]
         public void GetUsersInGroup_WithNonExistentGroup_ReturnsEmptyArray()
         {
@@ -2220,6 +2465,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Empty(users);
         }
 
+        /// <summary>
+        /// Verifies that AddUserGroup does not duplicate a group assignment when adding a group that the user already has.
+        /// </summary>
         [Fact]
         public void AddUserGroup_WithAlreadyAddedGroup_ReturnsWithoutDuplicating()
         {
@@ -2246,6 +2494,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(groupName, finalGroups);
         }
 
+        /// <summary>
+        /// Tests that RemoveGroup properly updates child groups when removing a parent group.
+        /// </summary>
         [Fact]
         public void RemoveGroup_WhenGroupIsParent_UpdatesChildGroups()
         {
@@ -2277,12 +2528,18 @@ namespace Oxide.Core.Tests.Libraries
 
         #endregion
 
+        /// <summary>
+        /// Test that requires implementation fixes to verify graceful recovery from corrupted group data.
+        /// </summary>
         [Fact(Skip = "This test requires implementation fixes")]
         public void VerifyAndLoadGroupsData_WithCorruptedData_RecoversGracefully()
         {
             // Test disabled as it requires implementation fixes
         }
         
+        /// <summary>
+        /// Tests that VerifyAndLoadUsersData properly fixes user data with corrupted permissions.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithCorruptedPermissions_FixesPermissionsField()
         {
@@ -2307,6 +2564,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains("test.perm", userData.Perms);
         }
         
+        /// <summary>
+        /// Verifies that SetGroupRank returns false when attempting to set the rank of a non-existent group.
+        /// </summary>
         [Fact]
         public void SetGroupRank_WithNonExistentGroup_ReturnsFalse()
         {
@@ -2317,6 +2577,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(result);
         }
         
+        /// <summary>
+        /// Tests that SetGroupRank properly handles negative rank values.
+        /// </summary>
         [Fact]
         public void SetGroupRank_WithNegativeRank_HandlesProperly()
         {
@@ -2331,6 +2594,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal(-10, permLib.GetGroupRank("negativeRankGroup"));
         }
         
+        /// <summary>
+        /// Verifies that SetGroupTitle returns false when attempting to set the title of a non-existent group.
+        /// </summary>
         [Fact]
         public void SetGroupTitle_WithNonExistentGroup_ReturnsFalse()
         {
@@ -2341,12 +2607,18 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(result);
         }
         
+        /// <summary>
+        /// Test that requires implementation fixes to verify proper handling of null or empty titles.
+        /// </summary>
         [Fact(Skip = "This test requires implementation fixes")]
         public void SetGroupTitle_WithNullOrEmptyTitle_HandlesProperly()
         {
             // Test disabled as it requires implementation fixes
         }
         
+        /// <summary>
+        /// Tests that GroupHasPermission returns false when checking permissions for a non-existent group.
+        /// </summary>
         [Fact]
         public void GroupHasPermission_WithNonExistentGroup_ReturnsFalse()
         {
@@ -2357,6 +2629,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(result);
         }
         
+        /// <summary>
+        /// Tests that GroupHasPermission returns false when null or empty permission strings are provided.
+        /// </summary>
         [Fact]
         public void GroupHasPermission_WithNullOrEmptyPermission_ReturnsFalse()
         {
@@ -2372,6 +2647,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.False(emptyResult);
         }
         
+        /// <summary>
+        /// Verifies that VerifyAndLoadUsersData properly fixes user data with missing LastSeenNickname by setting a default value.
+        /// </summary>
         [Fact]
         public void VerifyAndLoadUsersData_WithMissingLastSeenNickname_FixesField()
         {
@@ -2393,6 +2671,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("Unnamed", userData.LastSeenNickname);
         }
         
+        /// <summary>
+        /// Tests that RevokeUserPermission silently does nothing when a non-existent user ID is provided.
+        /// </summary>
         [Fact]
         public void RevokeUserPermission_WithNonExistentUser_DoesNothing()
         {
@@ -2407,6 +2688,9 @@ namespace Oxide.Core.Tests.Libraries
             // This is a negative test case - we're verifying the behavior is correct when given invalid input
         }
         
+        /// <summary>
+        /// Verifies that RevokeUserPermission with a plugin-specific wildcard only revokes permissions from that plugin.
+        /// </summary>
         [Fact]
         public void RevokeUserPermission_WithSpecificPluginWildcard_OnlyRevokesMatchingPluginPermissions()
         {
@@ -2437,6 +2721,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Contains(otherPerm, userData.Perms);
         }
         
+        /// <summary>
+        /// Tests that SetGroupParent returns true without making changes when setting the same parent again.
+        /// </summary>
         [Fact]
         public void SetGroupParent_WithSameParent_ReturnsEarly()
         {
@@ -2455,6 +2742,9 @@ namespace Oxide.Core.Tests.Libraries
             Assert.Equal("parentGroup", permLib.GetGroupParent("childGroup"));
         }
         
+        /// <summary>
+        /// Test that requires implementation fixes to verify permission inheritance across multiple levels of nested groups.
+        /// </summary>
         [Fact(Skip = "This test requires implementation fixes")]
         public void GetGroupPermissions_WithDeepNestedInheritance_IncludesAllAncestorPermissions()
         {
