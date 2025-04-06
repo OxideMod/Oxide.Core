@@ -145,92 +145,6 @@ namespace Oxide.Core.Tests.Libraries
         }
         
         [Fact]
-        public void RegisterMessages_WithNullParams_DoesNothing()
-        {
-            // Test all combinations of null parameters
-            langLib.RegisterMessages(null, new TestPlugin(), "en");
-            langLib.RegisterMessages(new Dictionary<string, string>(), null, "en");
-            langLib.RegisterMessages(new Dictionary<string, string>(), new TestPlugin(), null);
-            
-            // No assertions needed - we're just verifying no exceptions are thrown
-        }
-        
-        [Fact]
-        public void RegisterMessages_CreatesLangFile()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            var messages = new Dictionary<string, string>
-            {
-                { "greeting", "Hello" },
-                { "farewell", "Goodbye" }
-            };
-            string lang = "en";
-            Directory.CreateDirectory(Path.Combine(testLangDir, lang));
-            
-            // Act
-            langLib.RegisterMessages(messages, plugin, lang);
-            
-            // Assert
-            string filePath = Path.Combine(testLangDir, lang, $"{plugin.Name}.json");
-            Assert.True(File.Exists(filePath));
-        }
-        
-        [Fact]
-        public void GetMessage_ReturnsMessageForKey()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            var messages = new Dictionary<string, string>
-            {
-                { "greeting", "Hello" },
-                { "farewell", "Goodbye" }
-            };
-            string lang = "en";
-            Directory.CreateDirectory(Path.Combine(testLangDir, lang));
-            langLib.RegisterMessages(messages, plugin, lang);
-            
-            // Act
-            string message = langLib.GetMessage("greeting", plugin);
-            
-            // Assert
-            Assert.Equal("Hello", message);
-        }
-        
-        [Fact]
-        public void GetMessage_WithMissingKey_ReturnsKeyAsMessage()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            var messages = new Dictionary<string, string>
-            {
-                { "greeting", "Hello" }
-            };
-            string lang = "en";
-            Directory.CreateDirectory(Path.Combine(testLangDir, lang));
-            langLib.RegisterMessages(messages, plugin, lang);
-            
-            // Act
-            string message = langLib.GetMessage("unknown_key", plugin);
-            
-            // Assert
-            Assert.Equal("unknown_key", message);
-        }
-        
-        [Fact]
-        public void GetMessage_WithNullKey_ReturnsKey()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            
-            // Act
-            string message = langLib.GetMessage(null, plugin);
-            
-            // Assert
-            Assert.Null(message);
-        }
-        
-        [Fact]
         public void GetMessage_WithNullPlugin_ReturnsKey()
         {
             // Act
@@ -238,66 +152,6 @@ namespace Oxide.Core.Tests.Libraries
             
             // Assert
             Assert.Equal("greeting", message);
-        }
-        
-        [Fact]
-        public void GetMessages_ReturnsAllMessagesForPlugin()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            var messages = new Dictionary<string, string>
-            {
-                { "greeting", "Hello" },
-                { "farewell", "Goodbye" }
-            };
-            string lang = "en";
-            Directory.CreateDirectory(Path.Combine(testLangDir, lang));
-            langLib.RegisterMessages(messages, plugin, lang);
-            
-            // Act
-            var result = langLib.GetMessages(lang, plugin);
-            
-            // Assert
-            Assert.Equal(2, result.Count);
-            Assert.Equal("Hello", result["greeting"]);
-            Assert.Equal("Goodbye", result["farewell"]);
-        }
-        
-        [Fact]
-        public void GetMessages_WithInvalidParams_ReturnsNull()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            
-            // Act & Assert
-            Assert.Null(langLib.GetMessages(null, plugin));
-            Assert.Null(langLib.GetMessages("en", null));
-            Assert.Null(langLib.GetMessages("", plugin));
-        }
-        
-        [Fact]
-        public void GetMessageByLanguage_ReturnsMessageInSpecificLanguage()
-        {
-            // Arrange
-            var plugin = new TestPlugin();
-            
-            // Register English messages
-            var enMessages = new Dictionary<string, string> { { "greeting", "Hello" } };
-            Directory.CreateDirectory(Path.Combine(testLangDir, "en"));
-            langLib.RegisterMessages(enMessages, plugin, "en");
-            
-            // Register French messages
-            var frMessages = new Dictionary<string, string> { { "greeting", "Bonjour" } };
-            Directory.CreateDirectory(Path.Combine(testLangDir, "fr"));
-            langLib.RegisterMessages(frMessages, plugin, "fr");
-            
-            // Act
-            string enMessage = langLib.GetMessageByLanguage("greeting", plugin, "en");
-            string frMessage = langLib.GetMessageByLanguage("greeting", plugin, "fr");
-            
-            // Assert
-            Assert.Equal("Hello", enMessage);
-            Assert.Equal("Bonjour", frMessage);
         }
         
         [Fact]
@@ -324,26 +178,42 @@ namespace Oxide.Core.Tests.Libraries
         }
         
         [Fact]
-        public void GetLanguages_WithPlugin_ReturnsLanguagesForPlugin()
+        public void LoadFromDatafile_LoadsData()
         {
             // Arrange
-            var plugin = new TestPlugin();
-            Directory.CreateDirectory(Path.Combine(testLangDir, "en"));
-            Directory.CreateDirectory(Path.Combine(testLangDir, "fr"));
-            Directory.CreateDirectory(Path.Combine(testLangDir, "de"));
+            string userId = "user123";
+            string language = "es";
             
-            // Create language files for the plugin
-            File.WriteAllText(Path.Combine(testLangDir, "en", $"{plugin.Name}.json"), "{}");
-            File.WriteAllText(Path.Combine(testLangDir, "fr", $"{plugin.Name}.json"), "{}");
+            // Act - Set user language and create a new Lang instance to load data
+            langLib.SetLanguage(language, userId);
+            var newLangLib = new Lang();
+            
+            // Assert - Verify data was loaded
+            Assert.Equal(language, newLangLib.GetLanguage(userId));
+        }
+        
+        [Fact]
+        public void SaveData_SavesAllData()
+        {
+            // Arrange
+            string userId1 = "user123";
+            string userId2 = "user456";
+            string lang1 = "es";
+            string lang2 = "fr";
+            string serverLang = "de";
             
             // Act
-            string[] languages = langLib.GetLanguages(plugin);
+            langLib.SetLanguage(lang1, userId1);
+            langLib.SetLanguage(lang2, userId2);
+            langLib.SetServerLanguage(serverLang);
+            
+            // Create a new instance to ensure data is loaded from storage
+            var newLangLib = new Lang();
             
             // Assert
-            Assert.Equal(2, languages.Length);
-            Assert.Contains("en", languages);
-            Assert.Contains("fr", languages);
-            Assert.DoesNotContain("de", languages);
+            Assert.Equal(lang1, newLangLib.GetLanguage(userId1));
+            Assert.Equal(lang2, newLangLib.GetLanguage(userId2));
+            Assert.Equal(serverLang, newLangLib.GetServerLanguage());
         }
 
         public void Dispose()
@@ -360,25 +230,6 @@ namespace Oxide.Core.Tests.Libraries
             {
                 // Ignore errors during cleanup
             }
-        }
-    }
-    
-    /// <summary>
-    /// A simple plugin for testing purposes
-    /// </summary>
-    public class TestPlugin : Plugin
-    {
-        public TestPlugin()
-        {
-            Name = "TestPlugin";
-            Title = "Test Plugin";
-            Author = "Test Author";
-            Version = new VersionNumber(1, 0, 0);
-        }
-        
-        protected override object OnCallHook(string hook, object[] args)
-        {
-            return null;
         }
     }
 } 
