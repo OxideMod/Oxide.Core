@@ -13,6 +13,10 @@
     <SingleHit>false</SingleHit>
     <UseSourceLink>true</UseSourceLink>
     <IncludeTestAssembly>false</IncludeTestAssembly>
+    <ReportGeneratorReportTypes>Html;HtmlInline;HtmlInline_AzurePipelines;Cobertura</ReportGeneratorReportTypes>
+    <ReportGeneratorReportContent>Full</ReportGeneratorReportContent>
+    <ReportGeneratorReportStyle>ProjectView</ReportGeneratorReportStyle>
+    <ReportGeneratorBaseBranch>develop</ReportGeneratorBaseBranch>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +33,10 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ReportGenerator" Version="5.2.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

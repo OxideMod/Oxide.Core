@@ -154,6 +154,53 @@ namespace Oxide.Core.Tests.Libraries.Covalence
         }
         
         /// <summary>
+        /// Test for the scenario when a command already exists and is registered with a null plugin
+        /// </summary>
+        [Fact]
+        public void RegisterCommand_WithNullPluginName_CommandAlreadyExists_UsesUnknownPluginName()
+        {
+            // Create a mock interface and logger
+            var mockInterface = new MockInterface();
+            var mockLogger = new MockLogger();
+            mockInterface.RootLogger = mockLogger;
+            
+            try
+            {
+                // Setup the mock interface
+                mockInterface.SetupForTesting();
+                
+                // Create a new instance of CovalenceLib
+                var covalence = new CovalenceLib();
+                
+                // Use reflection to set the logger field
+                var loggerField = typeof(CovalenceLib).GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance);
+                loggerField.SetValue(covalence, mockLogger);
+                
+                // Create a command system that always throws CommandAlreadyExistsException
+                var throwingCmdSystem = new ThrowingCommandSystem();
+                var cmdSystemField = typeof(CovalenceLib).GetField("cmdSystem", BindingFlags.NonPublic | BindingFlags.Instance);
+                cmdSystemField.SetValue(covalence, throwingCmdSystem);
+                
+                // Call RegisterCommand with null plugin and a command name
+                CommandCallback callback = (player, cmd, args) => true;
+                covalence.RegisterCommand("testCommand", null, callback);
+                
+                // Verify the log message contains "An unknown plugin" and the correct command name
+                bool containsUnknownPlugin = mockLogger.LogMessages.Any(msg => 
+                    msg.Contains("An unknown plugin") && 
+                    msg.Contains("tried to register command") &&
+                    msg.Contains("'testCommand'"));
+                
+                Assert.True(containsUnknownPlugin, "Error log should contain 'An unknown plugin' text and the command name when plugin is null");
+            }
+            finally
+            {
+                // Clean up
+                mockInterface.ResetForTesting();
+            }
+        }
+        
+        /// <summary>
         /// A simple mock plugin for testing
         /// </summary>
         private class MockPlugin : Plugin
