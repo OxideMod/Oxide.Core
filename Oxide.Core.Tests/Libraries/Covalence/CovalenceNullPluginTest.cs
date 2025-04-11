@@ -2,22 +2,79 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Oxide.Core;
+using Oxide.Core.Libraries;
 using Oxide.Core.Libraries.Covalence;
-using Xunit;
 using Oxide.Core.Logging;
+using Oxide.Core.Plugins;
+using Xunit;
+using System.IO;
 using System.Globalization;
 using CovalenceLib = Oxide.Core.Libraries.Covalence.Covalence;
-using Oxide.Core.Plugins;
 
 namespace Oxide.Core.Tests.Libraries.Covalence
 {
     /// <summary>
-    /// Specific test for the null plugin name handling in RegisterCommand
+    /// Tests for how CovalenceLib handles null plugin references
     /// </summary>
-    public class CovalenceNullPluginTest
+    public class CovalenceNullPluginTest : IDisposable
     {
+        private readonly string tempInstanceDir;
+        private readonly string originalInstanceDir;
+
+        public CovalenceNullPluginTest()
+        {
+            // Setup the test environment
+            var oxide = Interface.Oxide;
+            var instanceDirProp = oxide.GetType().GetProperty("InstanceDirectory", BindingFlags.Public | BindingFlags.Instance);
+            originalInstanceDir = instanceDirProp?.GetValue(oxide) as string;
+            
+            tempInstanceDir = Path.Combine(Path.GetTempPath(), "OxideCovalenceTest", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempInstanceDir);
+            
+            if (instanceDirProp != null)
+            {
+                instanceDirProp.SetValue(oxide, tempInstanceDir);
+            }
+            
+            string tempDataDir = Path.Combine(tempInstanceDir, "data");
+            Directory.CreateDirectory(tempDataDir);
+            
+            string tempLangDir = Path.Combine(tempInstanceDir, "lang");
+            Directory.CreateDirectory(tempLangDir);
+            
+            string tempConfigDir = Path.Combine(tempInstanceDir, "config");
+            Directory.CreateDirectory(tempConfigDir);
+            
+            Interface.Initialize();
+            Interface.Oxide.Load();
+        }
+
+        public void Dispose()
+        {
+            // Cleanup test environment
+            var oxide = Interface.Oxide;
+            var instanceDirProp = oxide.GetType().GetProperty("InstanceDirectory", BindingFlags.Public | BindingFlags.Instance);
+            if (instanceDirProp != null)
+            {
+                instanceDirProp.SetValue(oxide, originalInstanceDir);
+            }
+            
+            try
+            {
+                if (Directory.Exists(tempInstanceDir))
+                {
+                    Directory.Delete(tempInstanceDir, true);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+        
         /// <summary>
-        /// Mock Logger for testing
+        /// Mock logger for testing
         /// </summary>
         private class MockLogger : Logger
         {
@@ -29,13 +86,14 @@ namespace Oxide.Core.Tests.Libraries.Covalence
             
             public override void Write(LogType type, string format, params object[] args)
             {
-                string message = string.Format(CultureInfo.InvariantCulture, format, args);
+                string message = string.Format(format, args);
                 LogMessages.Add(message);
+                // No need to call base as it would write to console
             }
         }
         
         /// <summary>
-        /// Command system that always throws CommandAlreadyExistsException
+        /// A command system that always throws CommandAlreadyExistsException
         /// </summary>
         private class ThrowingCommandSystem : ICommandSystem
         {
@@ -46,12 +104,12 @@ namespace Oxide.Core.Tests.Libraries.Covalence
             
             public void UnregisterCommand(string command, Plugin plugin)
             {
-                // Not needed for our test
+                // Do nothing
             }
         }
         
         /// <summary>
-        /// A minimal mock for Interface.Oxide to allow testing of Covalence
+        /// Mock interface for testing
         /// </summary>
         private class MockInterface
         {
@@ -62,78 +120,51 @@ namespace Oxide.Core.Tests.Libraries.Covalence
             
             public void SetupForTesting()
             {
-                var field = typeof(Interface).GetField("Oxide", BindingFlags.Static | BindingFlags.Public);
-                if (field != null)
-                {
-                    var oxideMod = new MockOxideMod(RootLogger);
-                    field.SetValue(null, oxideMod);
-                }
+                // Store the current interface
+                _instance = this;
+                
+                // No need to try and replace the entire Interface.Oxide object
+                // The Covalence tests only need a logger that we can check later
             }
             
             public void ResetForTesting()
             {
-                var field = typeof(Interface).GetField("Oxide", BindingFlags.Static | BindingFlags.Public);
-                field?.SetValue(null, null);
+                // Reset the instance
+                _instance = null;
             }
         }
         
         /// <summary>
-        /// Mock OxideMod for testing
-        /// </summary>
-        private class MockOxideMod
-        {
-            public Logger RootLogger { get; }
-            
-            public MockOxideMod(Logger logger)
-            {
-                RootLogger = logger;
-            }
-        }
-        
-        /// <summary>
-        /// Test for the line "string pluginName = plugin?.Name ?? "An unknown plugin";"
+        /// Test for the scenario when a command is registered with a null plugin
         /// </summary>
         [Fact]
         public void RegisterCommand_NullPlugin_UsesUnknownPluginName()
         {
-            // Create a mock interface and logger
-            var mockInterface = new MockInterface();
+            // Create a mock logger to capture log messages
             var mockLogger = new MockLogger();
-            mockInterface.RootLogger = mockLogger;
             
-            try
-            {
-                // Setup the mock interface
-                mockInterface.SetupForTesting();
-                
-                // Create a new instance of CovalenceLib
-                var covalence = new CovalenceLib();
-                
-                // Use reflection to set the logger field
-                var loggerField = typeof(CovalenceLib).GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance);
-                loggerField.SetValue(covalence, mockLogger);
-                
-                // Create a command system that always throws CommandAlreadyExistsException
-                var throwingCmdSystem = new ThrowingCommandSystem();
-                var cmdSystemField = typeof(CovalenceLib).GetField("cmdSystem", BindingFlags.NonPublic | BindingFlags.Instance);
-                cmdSystemField.SetValue(covalence, throwingCmdSystem);
-                
-                // Call RegisterCommand with null plugin to hit the null plugin case
-                CommandCallback callback = (player, cmd, args) => true;
-                covalence.RegisterCommand("test", null, callback);
-                
-                // Verify the log message contains "An unknown plugin"
-                bool containsUnknownPlugin = mockLogger.LogMessages.Any(msg => 
-                    msg.Contains("An unknown plugin") && 
-                    msg.Contains("tried to register command"));
-                
-                Assert.True(containsUnknownPlugin, "Error log should contain 'An unknown plugin' text when plugin is null");
-            }
-            finally
-            {
-                // Clean up
-                mockInterface.ResetForTesting();
-            }
+            // Create a new instance of CovalenceLib
+            var covalence = new CovalenceLib();
+            
+            // Use reflection to set the logger field
+            var loggerField = typeof(CovalenceLib).GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance);
+            loggerField.SetValue(covalence, mockLogger);
+            
+            // Create a command system that always throws CommandAlreadyExistsException
+            var throwingCmdSystem = new ThrowingCommandSystem();
+            var cmdSystemField = typeof(CovalenceLib).GetField("cmdSystem", BindingFlags.NonPublic | BindingFlags.Instance);
+            cmdSystemField.SetValue(covalence, throwingCmdSystem);
+            
+            // Call RegisterCommand with null plugin to hit the null plugin case
+            CommandCallback callback = (player, cmd, args) => true;
+            covalence.RegisterCommand("test", null, callback);
+            
+            // Verify the log message contains "An unknown plugin"
+            bool containsUnknownPlugin = mockLogger.LogMessages.Any(msg => 
+                msg.Contains("An unknown plugin") && 
+                msg.Contains("tried to register command"));
+            
+            Assert.True(containsUnknownPlugin, "Error log should contain 'An unknown plugin' text when plugin is null");
         }
         
         /// <summary>
@@ -159,45 +190,32 @@ namespace Oxide.Core.Tests.Libraries.Covalence
         [Fact]
         public void RegisterCommand_WithNullPluginName_CommandAlreadyExists_UsesUnknownPluginName()
         {
-            // Create a mock interface and logger
-            var mockInterface = new MockInterface();
+            // Create a mock logger to capture log messages
             var mockLogger = new MockLogger();
-            mockInterface.RootLogger = mockLogger;
             
-            try
-            {
-                // Setup the mock interface
-                mockInterface.SetupForTesting();
-                
-                // Create a new instance of CovalenceLib
-                var covalence = new CovalenceLib();
-                
-                // Use reflection to set the logger field
-                var loggerField = typeof(CovalenceLib).GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance);
-                loggerField.SetValue(covalence, mockLogger);
-                
-                // Create a command system that always throws CommandAlreadyExistsException
-                var throwingCmdSystem = new ThrowingCommandSystem();
-                var cmdSystemField = typeof(CovalenceLib).GetField("cmdSystem", BindingFlags.NonPublic | BindingFlags.Instance);
-                cmdSystemField.SetValue(covalence, throwingCmdSystem);
-                
-                // Call RegisterCommand with null plugin and a command name
-                CommandCallback callback = (player, cmd, args) => true;
-                covalence.RegisterCommand("testCommand", null, callback);
-                
-                // Verify the log message contains "An unknown plugin" and the correct command name
-                bool containsUnknownPlugin = mockLogger.LogMessages.Any(msg => 
-                    msg.Contains("An unknown plugin") && 
-                    msg.Contains("tried to register command") &&
-                    msg.Contains("'testCommand'"));
-                
-                Assert.True(containsUnknownPlugin, "Error log should contain 'An unknown plugin' text and the command name when plugin is null");
-            }
-            finally
-            {
-                // Clean up
-                mockInterface.ResetForTesting();
-            }
+            // Create a new instance of CovalenceLib
+            var covalence = new CovalenceLib();
+            
+            // Use reflection to set the logger field
+            var loggerField = typeof(CovalenceLib).GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance);
+            loggerField.SetValue(covalence, mockLogger);
+            
+            // Create a command system that always throws CommandAlreadyExistsException
+            var throwingCmdSystem = new ThrowingCommandSystem();
+            var cmdSystemField = typeof(CovalenceLib).GetField("cmdSystem", BindingFlags.NonPublic | BindingFlags.Instance);
+            cmdSystemField.SetValue(covalence, throwingCmdSystem);
+            
+            // Call RegisterCommand with null plugin and a command name
+            CommandCallback callback = (player, cmd, args) => true;
+            covalence.RegisterCommand("testCommand", null, callback);
+            
+            // Verify the log message contains information about the command already being registered
+            bool containsCommandExists = mockLogger.LogMessages.Any(msg => 
+                msg.Contains("An unknown plugin") && 
+                msg.Contains("tried to register command") && 
+                msg.Contains("which is already registered"));
+            
+            Assert.True(containsCommandExists, "Error log should contain message about command already being registered");
         }
         
         /// <summary>

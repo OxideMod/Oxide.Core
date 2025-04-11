@@ -3,14 +3,69 @@ using Oxide.Core.Plugins;
 using System.Reflection;
 using Oxide.Core.Tests.Plugins.Mocks;
 using System;
+using System.IO;
 
 namespace Oxide.Core.Tests.Plugins
 {
     /// <summary>
     /// Tests for the PluginManager.SubscriptionChange struct
     /// </summary>
-    public class PluginManagerSubscriptionChangeTests
+    public class PluginManagerSubscriptionChangeTests : IDisposable
     {
+        private readonly string tempInstanceDir;
+        private readonly string originalInstanceDir;
+
+        public PluginManagerSubscriptionChangeTests()
+        {
+            // Setup the test environment
+            var oxide = Interface.Oxide;
+            var instanceDirProp = oxide.GetType().GetProperty("InstanceDirectory", BindingFlags.Public | BindingFlags.Instance);
+            originalInstanceDir = instanceDirProp?.GetValue(oxide) as string;
+            
+            tempInstanceDir = Path.Combine(Path.GetTempPath(), "OxidePluginTest", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempInstanceDir);
+            
+            if (instanceDirProp != null)
+            {
+                instanceDirProp.SetValue(oxide, tempInstanceDir);
+            }
+            
+            string tempDataDir = Path.Combine(tempInstanceDir, "data");
+            Directory.CreateDirectory(tempDataDir);
+            
+            string tempLangDir = Path.Combine(tempInstanceDir, "lang");
+            Directory.CreateDirectory(tempLangDir);
+            
+            string tempConfigDir = Path.Combine(tempInstanceDir, "config");
+            Directory.CreateDirectory(tempConfigDir);
+            
+            Interface.Initialize();
+            Interface.Oxide.Load();
+        }
+
+        public void Dispose()
+        {
+            // Cleanup test environment
+            var oxide = Interface.Oxide;
+            var instanceDirProp = oxide.GetType().GetProperty("InstanceDirectory", BindingFlags.Public | BindingFlags.Instance);
+            if (instanceDirProp != null)
+            {
+                instanceDirProp.SetValue(oxide, originalInstanceDir);
+            }
+            
+            try
+            {
+                if (Directory.Exists(tempInstanceDir))
+                {
+                    Directory.Delete(tempInstanceDir, true);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+
         /// <summary>
         /// Tests that SubscriptionChange constructor sets properties correctly
         /// </summary>
