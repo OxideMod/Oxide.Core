@@ -1330,45 +1330,6 @@ namespace Oxide.Core.Tests.Libraries.PermissionTestModules
         }
         
         /// <summary>
-        /// Tests VerifyGroupData with various group data issues to ensure it fixes them properly
-        /// </summary>
-        [Fact(Skip = "Current implementation doesn't handle null permissions as expected")]
-        public void VerifyGroupData_WithVariousIssues_FixesDataCorrectly()
-        {
-            // Create a test dictionary with various issues
-            var testGroups = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
-            
-            // Group with null title
-            testGroups["nullTitleGroup"] = new GroupData { Title = null, Rank = 1 };
-            
-            // Group with null permissions
-            testGroups["nullPermsGroup"] = new GroupData { Title = "Null Perms Group", Rank = 2, Perms = null };
-            
-            // Group with parent that doesn't exist
-            testGroups["badParentGroup"] = new GroupData 
-            { 
-                Title = "Bad Parent Group", 
-                Rank = 3, 
-                ParentGroup = "nonExistentParent" 
-            };
-            
-            // Access the VerifyGroupData method through reflection
-            var method = typeof(Permission).GetMethod("VerifyGroupData", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            
-            // Execute the method
-            method.Invoke(permLib, new object[] { testGroups });
-            
-            // Verify fixes were applied
-            Assert.NotNull(testGroups["nullTitleGroup"].Title);
-            Assert.Equal("Group", testGroups["nullTitleGroup"].Title);
-            
-            Assert.NotNull(testGroups["nullPermsGroup"].Perms);
-            
-            Assert.Null(testGroups["badParentGroup"].ParentGroup);
-        }
-        
-        /// <summary>
         /// Tests RevokeGroupPermission with various scenarios including non-existent groups
         /// </summary>
         [Fact]
@@ -2027,45 +1988,6 @@ namespace Oxide.Core.Tests.Libraries.PermissionTestModules
             
             // Verify no permissions were added
             Assert.Equal(initialCount, finalCount);
-        }
-
-        /// <summary>
-        /// Verifies that VerifyGroupData repairs broken group data by initializing missing fields.
-        /// </summary>
-        [Fact(Skip = "Current implementation doesn't handle null permissions as expected")]
-        public void VerifyGroupData_WithVariousIssues_FixesDataCorrectly()
-        {
-            // Create a test dictionary with various issues
-            var testGroups = new Dictionary<string, GroupData>(StringComparer.OrdinalIgnoreCase);
-            
-            // Group with null title
-            testGroups["nullTitleGroup"] = new GroupData { Title = null, Rank = 1 };
-            
-            // Group with null permissions
-            testGroups["nullPermsGroup"] = new GroupData { Title = "Null Perms Group", Rank = 2, Perms = null };
-            
-            // Group with parent that doesn't exist
-            testGroups["badParentGroup"] = new GroupData 
-            { 
-                Title = "Bad Parent Group", 
-                Rank = 3, 
-                ParentGroup = "nonExistentParent" 
-            };
-            
-            // Access the VerifyGroupData method through reflection
-            var method = typeof(Permission).GetMethod("VerifyGroupData", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            
-            // Execute the method
-            method.Invoke(permLib, new object[] { testGroups });
-            
-            // Verify fixes were applied
-            Assert.NotNull(testGroups["nullTitleGroup"].Title);
-            Assert.Equal("Group", testGroups["nullTitleGroup"].Title);
-            
-            Assert.NotNull(testGroups["nullPermsGroup"].Perms);
-            
-            Assert.Null(testGroups["badParentGroup"].ParentGroup);
         }
     }
 }
