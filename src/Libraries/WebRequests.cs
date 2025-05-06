@@ -36,6 +36,8 @@ namespace Oxide.Core.Libraries
         /// <summary>
         /// Specifies the HTTP request decompression support
         /// </summary>
+        [Obsolete("AllowDecompression is deprecated, use Enqueue with DecompressionMode instead")]
+
         public static bool AllowDecompression = false;
 
         /// <summary>
@@ -88,6 +90,11 @@ namespace Oxide.Core.Libraries
             /// </summary>
             public Dictionary<string, string> RequestHeaders { get; set; }
 
+            /// <summary>
+            /// Gets the decompression type for web requests
+            /// </summary>
+            public DecompressionMethods DecompressionMethod { get; set; } = DecompressionMethods.None;
+
             private HttpWebRequest request;
             private WaitHandle waitHandle;
             private RegisteredWaitHandle registeredWaitHandle;
@@ -121,7 +128,17 @@ namespace Oxide.Core.Libraries
                     request.Proxy = null; // Make sure no proxy is set
                     request.KeepAlive = false;
                     request.Timeout = (int)Math.Round((Timeout.Equals(0f) ? WebRequests.Timeout : Timeout) * 1000f);
-                    request.AutomaticDecompression = AllowDecompression ? DecompressionMethods.GZip | DecompressionMethods.Deflate : DecompressionMethods.None;
+
+                    // Backward compatibility
+                    if (AllowDecompression && DecompressionMethod == DecompressionMethods.None)
+                    {
+                        request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                    }
+                    else
+                    {
+                        request.AutomaticDecompression = DecompressionMethod;
+                    }
+
                     request.ServicePoint.MaxIdleTime = request.Timeout;
                     request.ServicePoint.Expect100Continue = ServicePointManager.Expect100Continue;
                     request.ServicePoint.ConnectionLimit = ServicePointManager.DefaultConnectionLimit;
@@ -488,10 +505,11 @@ namespace Oxide.Core.Libraries
         /// <param name="method"></param>
         /// <param name="headers"></param>
         /// <param name="timeout"></param>
+        /// <param name="decompressionMethod"></param>
         [LibraryFunction("Enqueue")]
-        public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+        public void Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, DecompressionMethods decompressionMethod = DecompressionMethods.None)
         {
-            WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body };
+            WebRequest request = new WebRequest(url, callback, owner) { Method = method.ToString(), RequestHeaders = headers, Timeout = timeout, Body = body, DecompressionMethod = decompressionMethod };
             lock (syncroot)
             {
                 queue.Enqueue(request);
