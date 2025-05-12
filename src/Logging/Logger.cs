@@ -1,4 +1,4 @@
-﻿using Oxide.Core.RemoteConsole;
+using Oxide.Core.RemoteConsole;
 using System;
 using System.Collections.Generic;
 
@@ -35,17 +35,17 @@ namespace Oxide.Core.Logging
         protected Queue<LogMessage> MessageQueue;
 
         // Should messages be processed immediately and on the same thread?
-        private bool processImediately;
+        private bool processImmediately;
 
         /// <summary>
         /// Initializes a new instance of the Logger class
         /// </summary>
-        /// <param name="processImediately"></param>
-        protected Logger(bool processImediately)
+        /// <param name="processImmediately"></param>
+        protected Logger(bool processImmediately)
         {
             // Initialize
-            this.processImediately = processImediately;
-            if (!processImediately)
+            this.processImmediately = processImmediately;
+            if (!processImmediately)
             {
                 MessageQueue = new Queue<LogMessage>();
             }
@@ -149,7 +149,7 @@ namespace Oxide.Core.Logging
         internal virtual void Write(LogMessage message)
         {
             // If we're set to process immediately, do so, otherwise enqueue
-            if (processImediately)
+            if (processImmediately)
             {
                 ProcessMessage(message);
             }
