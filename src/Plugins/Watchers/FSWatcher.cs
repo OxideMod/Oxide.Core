@@ -120,6 +120,10 @@ namespace Oxide.Core.Plugins.Watchers
                 watcher.IncludeSubdirectories = false;
                 watcher.EnableRaisingEvents = true;
             }
+            catch (Exception e)
+            {
+                Interface.Oxide.LogException(path, e);
+            }
             finally
             {
                 StringPool.Return(str);
