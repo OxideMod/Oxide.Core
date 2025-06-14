@@ -85,7 +85,8 @@ namespace Oxide.Core.Plugins.Watchers
 #endif
         private void LoadWatcherSymlink(string path)
         {
-            StringBuilder str = new StringBuilder() { Capacity = 256 };
+            StringBuilder str = StringPool.Take();
+            str.Capacity = 4096;
             try
             {
                 int count = Syscall.readlink(path, str);
@@ -104,7 +105,7 @@ namespace Oxide.Core.Plugins.Watchers
                     }
                 }
 
-                string realPath = str.ToString();
+                string realPath = str.ToString(0, count);
                 string realDirName = Path.GetDirectoryName(realPath);
                 string realFileName = Path.GetFileName(realPath);
 
@@ -120,9 +121,9 @@ namespace Oxide.Core.Plugins.Watchers
                 watcher.IncludeSubdirectories = false;
                 watcher.EnableRaisingEvents = true;
             }
-            catch (Exception e)
+            finally
             {
-                Interface.Oxide.LogException(path, e);
+                StringPool.Return(str);
             }
         }
 
