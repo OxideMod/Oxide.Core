@@ -86,6 +86,7 @@ namespace Oxide.Core.Plugins.Watchers
         private void LoadWatcherSymlink(string path)
         {
             StringBuilder str = StringPool.Take();
+            str.Capacity = 4096;
             try
             {
                 int count = Syscall.readlink(path, str);
@@ -124,7 +125,6 @@ namespace Oxide.Core.Plugins.Watchers
             {
                 StringPool.Return(str);
             }
-
         }
 
         /// <summary>
