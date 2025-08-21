@@ -166,117 +166,197 @@ namespace Oxide.Core.Plugins.Watchers
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private readonly object changeQueueLock = new object();
+
         private void watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            FileSystemWatcher watcher = (FileSystemWatcher)sender;
-            int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
-            string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
-
-            if (!changeQueue.TryGetValue(subPath, out QueuedChange change))
+            try
             {
-                change = new QueuedChange();
-                changeQueue[subPath] = change;
-            }
-            change.timer?.Destroy();
-            change.timer = null;
+#if DEBUG
+                Interface.Oxide.LogInfo("[FSWatcher] Event received: {0} {1}", e.ChangeType, e.FullPath);
+#endif
 
-            switch (e.ChangeType)
-            {
-                case WatcherChangeTypes.Changed:
-                    if (change.type != WatcherChangeTypes.Created)
-                    {
-                        change.type = WatcherChangeTypes.Changed;
-                    }
-                    break;
+                FileSystemWatcher watcher = (FileSystemWatcher)sender;
+                int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
+                string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
 
-                case WatcherChangeTypes.Created:
-                    if (change.type == WatcherChangeTypes.Deleted)
-                    {
-                        change.type = WatcherChangeTypes.Changed;
-                    }
-                    else
-                    {
-                        change.type = WatcherChangeTypes.Created;
-                    }
-                    break;
+#if DEBUG
+                Interface.Oxide.LogInfo("[FSWatcher] SubPath resolved: {0}", subPath);
+#endif
 
-                case WatcherChangeTypes.Deleted:
-                    if (change.type == WatcherChangeTypes.Created)
-                    {
-                        changeQueue.Remove(subPath);
-                        return;
-                    }
-
-                    change.type = WatcherChangeTypes.Deleted;
-                    break;
-            }
-
-            Interface.Oxide.NextTick(() =>
-            {
-                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                QueuedChange change;
+                lock (changeQueueLock)
                 {
+                    if (!changeQueue.TryGetValue(subPath, out change))
+                    {
+                        change = new QueuedChange();
+                        changeQueue[subPath] = change;
+#if DEBUG
+                        Interface.Oxide.LogInfo("[FSWatcher] New change queued for: {0}", subPath);
+#endif
+                    }
+
+                    change.timer?.Destroy();
+                    change.timer = null;
+
                     switch (e.ChangeType)
                     {
-                        case WatcherChangeTypes.Created:
-                            if (IsFileSymlink(e.FullPath))
+                        case WatcherChangeTypes.Changed:
+                            if (change.type != WatcherChangeTypes.Created)
                             {
-                                LoadWatcherSymlink(e.FullPath);
+                                change.type = WatcherChangeTypes.Changed;
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] ChangeType set to Changed for: {0}", subPath);
+#endif
                             }
                             break;
 
+                        case WatcherChangeTypes.Created:
+                            change.type = change.type == WatcherChangeTypes.Deleted
+                                ? WatcherChangeTypes.Changed
+                                : WatcherChangeTypes.Created;
+#if DEBUG
+                            Interface.Oxide.LogInfo("[FSWatcher] ChangeType set to Created for: {0}", subPath);
+#endif
+                            break;
+
                         case WatcherChangeTypes.Deleted:
-                            if (m_symlinkWatchers.ContainsKey(e.FullPath))
+                            if (change.type == WatcherChangeTypes.Created)
                             {
-                                m_symlinkWatchers.TryGetValue(e.FullPath, out FileSystemWatcher symlinkWatcher);
-                                symlinkWatcher?.Dispose();
-                                m_symlinkWatchers.Remove(e.FullPath);
+                                changeQueue.Remove(subPath);
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] Deleted before processing, removed from queue: {0}", subPath);
+#endif
+                                return;
                             }
+
+                            change.type = WatcherChangeTypes.Deleted;
+#if DEBUG
+                            Interface.Oxide.LogInfo("[FSWatcher] ChangeType set to Deleted for: {0}", subPath);
+#endif
                             break;
                     }
                 }
 
-                change.timer?.Destroy();
-                change.timer = timers.Once(.2f, () =>
+                Interface.Oxide.NextTick(() =>
                 {
-                    change.timer = null;
-                    changeQueue.Remove(subPath);
+#if DEBUG
+                    Interface.Oxide.LogInfo("[FSWatcher] NextTick started for: {0}", subPath);
+#endif
 
-                    if (Regex.Match(subPath, @"include\\", RegexOptions.IgnoreCase).Success)
+                    if (Environment.OSVersion.Platform == PlatformID.Unix)
                     {
-                        if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
+                        switch (e.ChangeType)
                         {
-                            FirePluginSourceChanged(subPath);
+                            case WatcherChangeTypes.Created:
+                                if (IsFileSymlink(e.FullPath))
+                                {
+#if DEBUG
+                                    Interface.Oxide.LogInfo("[FSWatcher] Loading symlink: {0}", e.FullPath);
+#endif
+                                    LoadWatcherSymlink(e.FullPath);
+                                }
+                                break;
+
+                            case WatcherChangeTypes.Deleted:
+                                if (m_symlinkWatchers.ContainsKey(e.FullPath))
+                                {
+                                    m_symlinkWatchers.TryGetValue(e.FullPath, out FileSystemWatcher symlinkWatcher);
+                                    symlinkWatcher?.Dispose();
+                                    m_symlinkWatchers.Remove(e.FullPath);
+#if DEBUG
+                                    Interface.Oxide.LogInfo("[FSWatcher] Symlink watcher disposed: {0}", e.FullPath);
+#endif
+                                }
+                                break;
+                        }
+                    }
+
+                    change.timer?.Destroy();
+                    change.timer = timers.Once(0.6f, () =>
+                    {
+#if DEBUG
+                        Interface.Oxide.LogInfo("[FSWatcher] Timer fired for: {0}", subPath);
+#endif
+
+                        lock (changeQueueLock)
+                        {
+                            change.timer = null;
+                            changeQueue.Remove(subPath);
+#if DEBUG
+                            Interface.Oxide.LogInfo("[FSWatcher] Removed from changeQueue: {0}", subPath);
+#endif
                         }
 
-                        return;
-                    }
-
-                    switch (change.type)
-                    {
-                        case WatcherChangeTypes.Changed:
-                            if (watchedPlugins.Contains(subPath))
+                        if (Regex.Match(subPath, @"include\\", RegexOptions.IgnoreCase).Success)
+                        {
+#if DEBUG
+                            Interface.Oxide.LogInfo("[FSWatcher] Include path detected: {0}", subPath);
+#endif
+                            if (change.type == WatcherChangeTypes.Created || change.type == WatcherChangeTypes.Changed)
                             {
                                 FirePluginSourceChanged(subPath);
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] FirePluginSourceChanged called for include: {0}", subPath);
+#endif
                             }
-                            else
-                            {
+                            return;
+                        }
+
+                        switch (change.type)
+                        {
+                            case WatcherChangeTypes.Changed:
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] Handling Changed for: {0}", subPath);
+#endif
+                                if (watchedPlugins.Contains(subPath))
+                                {
+                                    FirePluginSourceChanged(subPath);
+#if DEBUG
+                                    Interface.Oxide.LogInfo("[FSWatcher] FirePluginSourceChanged called for: {0}", subPath);
+#endif
+                                }
+                                else
+                                {
+                                    FirePluginAdded(subPath);
+#if DEBUG
+                                    Interface.Oxide.LogInfo("[FSWatcher] FirePluginAdded called for: {0}", subPath);
+#endif
+                                }
+                                break;
+
+                            case WatcherChangeTypes.Created:
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] Handling Created for: {0}", subPath);
+#endif
                                 FirePluginAdded(subPath);
-                            }
-                            break;
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] FirePluginAdded called for: {0}", subPath);
+#endif
+                                break;
 
-                        case WatcherChangeTypes.Created:
-                            FirePluginAdded(subPath);
-                            break;
-
-                        case WatcherChangeTypes.Deleted:
-                            if (watchedPlugins.Contains(subPath))
-                            {
-                                FirePluginRemoved(subPath);
-                            }
-                            break;
-                    }
+                            case WatcherChangeTypes.Deleted:
+#if DEBUG
+                                Interface.Oxide.LogInfo("[FSWatcher] Handling Deleted for: {0}", subPath);
+#endif
+                                if (watchedPlugins.Contains(subPath))
+                                {
+                                    FirePluginRemoved(subPath);
+#if DEBUG
+                                    Interface.Oxide.LogInfo("[FSWatcher] FirePluginRemoved called for: {0}", subPath);
+#endif
+                                }
+                                break;
+                        }
+                    });
                 });
-            });
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Interface.Oxide.LogError("[FSWatcher] Exception in watcher_Changed: {0}", ex);
+#endif
+            }
         }
 
         private void watcher_Error(object sender, ErrorEventArgs e)
