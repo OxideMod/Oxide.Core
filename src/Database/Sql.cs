@@ -74,17 +74,16 @@ namespace Oxide.Core.Database
 
         public Sql Append(Sql sql)
         {
-            if (_rhs != null)
+            Sql last = this;
+            while (last._rhs != null)
             {
-                _rhs.Append(sql);
+                last = last._rhs;
             }
-            else
-            {
-                _rhs = sql;
-            }
+            last._rhs = sql;
 
             return this;
         }
+
 
         public Sql Append(string sql, params object[] args)
         {

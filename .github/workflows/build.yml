@@ -1,0 +1,18 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build solution
+    uses: OxideMod/Actions/.github/workflows/project-build.yml@main
+    with:
+      branch-postfix: ${{ github.ref_name != 'master' && format('-{0}', github.ref_name) || '' }}
+      version-prefix: '2.0'
+      project-name: Oxide.Core
+    secrets:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      REPO_ACCESS_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}

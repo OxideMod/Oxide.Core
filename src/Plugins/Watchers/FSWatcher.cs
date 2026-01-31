@@ -34,6 +34,7 @@ namespace Oxide.Core.Plugins.Watchers
 
         // Changes are buffered briefly to avoid duplicate events
         private Dictionary<string, QueuedChange> changeQueue;
+        private readonly object changeQueueLock = new object();
 
         private Timer timers;
 
@@ -86,6 +87,7 @@ namespace Oxide.Core.Plugins.Watchers
         private void LoadWatcherSymlink(string path)
         {
             StringBuilder str = StringPool.Take();
+            str.Capacity = 4096;
             try
             {
                 int count = Syscall.readlink(path, str);
@@ -124,7 +126,6 @@ namespace Oxide.Core.Plugins.Watchers
             {
                 StringPool.Return(str);
             }
-
         }
 
         /// <summary>
@@ -172,43 +173,47 @@ namespace Oxide.Core.Plugins.Watchers
             int length = e.FullPath.Length - watcher.Path.Length - Path.GetExtension(e.Name).Length - 1;
             string subPath = e.FullPath.Substring(watcher.Path.Length + 1, length);
 
-            if (!changeQueue.TryGetValue(subPath, out QueuedChange change))
+            QueuedChange change;
+            lock (changeQueueLock)
             {
-                change = new QueuedChange();
-                changeQueue[subPath] = change;
-            }
-            change.timer?.Destroy();
-            change.timer = null;
+                if (!changeQueue.TryGetValue(subPath, out change))
+                {
+                    change = new QueuedChange();
+                    changeQueue[subPath] = change;
+                }
+                change.timer?.Destroy();
+                change.timer = null;
 
-            switch (e.ChangeType)
-            {
-                case WatcherChangeTypes.Changed:
-                    if (change.type != WatcherChangeTypes.Created)
-                    {
-                        change.type = WatcherChangeTypes.Changed;
-                    }
-                    break;
+                switch (e.ChangeType)
+                {
+                    case WatcherChangeTypes.Changed:
+                        if (change.type != WatcherChangeTypes.Created)
+                        {
+                            change.type = WatcherChangeTypes.Changed;
+                        }
+                        break;
 
-                case WatcherChangeTypes.Created:
-                    if (change.type == WatcherChangeTypes.Deleted)
-                    {
-                        change.type = WatcherChangeTypes.Changed;
-                    }
-                    else
-                    {
-                        change.type = WatcherChangeTypes.Created;
-                    }
-                    break;
+                    case WatcherChangeTypes.Created:
+                        if (change.type == WatcherChangeTypes.Deleted)
+                        {
+                            change.type = WatcherChangeTypes.Changed;
+                        }
+                        else
+                        {
+                            change.type = WatcherChangeTypes.Created;
+                        }
+                        break;
 
-                case WatcherChangeTypes.Deleted:
-                    if (change.type == WatcherChangeTypes.Created)
-                    {
-                        changeQueue.Remove(subPath);
-                        return;
-                    }
+                    case WatcherChangeTypes.Deleted:
+                        if (change.type == WatcherChangeTypes.Created)
+                        {
+                            changeQueue.Remove(subPath);
+                            return;
+                        }
 
-                    change.type = WatcherChangeTypes.Deleted;
-                    break;
+                        change.type = WatcherChangeTypes.Deleted;
+                        break;
+                }
             }
 
             Interface.Oxide.NextTick(() =>
@@ -238,8 +243,11 @@ namespace Oxide.Core.Plugins.Watchers
                 change.timer?.Destroy();
                 change.timer = timers.Once(.2f, () =>
                 {
-                    change.timer = null;
-                    changeQueue.Remove(subPath);
+                    lock (changeQueueLock)
+                    {
+                        change.timer = null;
+                        changeQueue.Remove(subPath);
+                    }
 
                     if (Regex.Match(subPath, @"include\\", RegexOptions.IgnoreCase).Success)
                     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Oxide.Pooling
 {
-    internal class BaseArrayPoolProvider<T> : IArrayPoolProvider<T>
+    public class BaseArrayPoolProvider<T> : IArrayPoolProvider<T>
     {
         private readonly int maxSetCapacity;
         private readonly int maxArrayLength;
