@@ -22,9 +22,9 @@ namespace Oxide.Core.Plugins
         public Dictionary<string, Plugin> LoadedPlugins = new Dictionary<string, Plugin>();
 
         /// <summary>
-        /// Stores the last error a plugin had while loading
+        /// Stores the errors a plugin had while loading
         /// </summary>
-        public Dictionary<string, string> PluginErrors { get; } = new Dictionary<string, string>();
+        public Dictionary<string, HashSet<string>> PluginErrors { get; } = new Dictionary<string, HashSet<string>>();
 
         /// <summary>
         /// Stores the names of core plugins which should never be unloaded
@@ -140,6 +140,17 @@ namespace Oxide.Core.Plugins
         /// <param name="plugin"></param>
         public virtual void Unloading(Plugin plugin)
         {
+        }
+
+        public HashSet<string> GetPluginErrors(string name)
+        {
+            if (!PluginErrors.TryGetValue(name, out HashSet<string>? errors))
+            {
+                errors = new HashSet<string>();
+                PluginErrors[name] = errors;
+            }
+
+            return errors;
         }
     }
 }

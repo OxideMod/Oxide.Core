@@ -135,7 +135,7 @@ namespace Oxide.Core.Plugins
                 Interface.Oxide.LogException($"Failed to initialize plugin '{Name} v{Version}'", ex);
                 if (Loader != null)
                 {
-                    Loader.PluginErrors[Name] = ex.Message;
+                    Loader.GetPluginErrors(Name).Add(ex.Message);
                 }
             }
 

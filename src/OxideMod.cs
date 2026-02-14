@@ -509,7 +509,7 @@ namespace Oxide.Core
             {
                 if (plugin.Loader != null)
                 {
-                    plugin.Loader.PluginErrors[plugin.Name] = ex.Message;
+                    plugin.Loader.GetPluginErrors(plugin.Name).Add(ex.Message);
                 }
 
                 LogException($"Could not initialize plugin '{plugin.Name} v{plugin.Version}'", ex);
