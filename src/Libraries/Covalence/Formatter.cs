@@ -610,6 +610,7 @@ namespace Oxide.Core.Libraries.Covalence
             }
             finally
             {
+                sb.Length = 0;
                 stringPool.Return(sb);
             }
         }

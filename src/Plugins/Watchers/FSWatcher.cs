@@ -1,4 +1,4 @@
-﻿extern alias References;
+extern alias References;
 
 using Oxide.Core.Libraries;
 using System;
@@ -124,6 +124,7 @@ namespace Oxide.Core.Plugins.Watchers
             }
             finally
             {
+                str.Length = 0;
                 StringPool.Return(str);
             }
         }
