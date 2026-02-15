@@ -13,14 +13,14 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <TargetFrameworks>net35;net40;net45;net46;net48;netstandard2.0;netstandard2.1</TargetFrameworks>
-      <LangVersion>Latest</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <NoWarn>NU1701</NoWarn>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
-    <PackageReference Include="Oxide.Common" Version="2.0.44-develop" />
+    <PackageReference Include="Oxide.Common" Version="2.0.45-develop" />
     <PackageReference Include="Oxide.References" Version="2.0.*">
       <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
     </PackageReference>
