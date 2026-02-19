@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reflection;
+using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins
 {
@@ -22,9 +23,26 @@ namespace Oxide.Core.Plugins
 
             Parameters = Method.GetParameters();
 
-            if (Parameters.Length > 0)
+            int parameterCount = Parameters.Length;
+            if (parameterCount > 0)
             {
-                Name += $"({string.Join(", ", Parameters.Select(x => x.ParameterType.ToString()).ToArray())})";
+                List<string> parameterNames = PoolFactory<List<string>>.Shared.Take();
+                try
+                {
+                    for (int i = 0; i < parameterCount; i++)
+                    {
+                        ParameterInfo parameter = Parameters[i];
+                        string name = parameter.ParameterType.ToString();
+                        parameterNames.Add(name);
+                    }
+
+                    Name = $"{Name}({parameterNames.JoinValues(", ")})";
+                }
+                finally
+                {
+                    parameterNames.Clear();
+                    PoolFactory<List<string>>.Shared.Return(parameterNames);
+                }
             }
 
             IsBaseHook = Name.StartsWith("base_");
