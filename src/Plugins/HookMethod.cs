@@ -57,11 +57,14 @@ namespace Oxide.Core.Plugins
                 return true;
             }
 
-            for (int i = 0; i < args.Length; i++)
+            int argCount = args.Length;
+            for (int i = 0; i < argCount; i++)
             {
+                Type parameterType = Parameters[i].ParameterType;
+
                 if (args[i] == null)
                 {
-                    if (CanAssignNull(Parameters[i].ParameterType))
+                    if (CanAssignNull(parameterType))
                     {
                         continue;
                     }
@@ -69,11 +72,11 @@ namespace Oxide.Core.Plugins
                     return false;
                 }
 
+                Type argType = args[i].GetType();
                 if (exact)
                 {
-                    if (args[i].GetType() != Parameters[i].ParameterType &&
-                        args[i].GetType().MakeByRefType() != Parameters[i].ParameterType &&
-                        !CanConvertNumber(args[i], Parameters[i].ParameterType))
+                    if (argType != parameterType && argType.MakeByRefType() != parameterType &&
+                        !CanConvertNumber(args[i], parameterType))
                     {
                         exact = false;
                     }
@@ -84,23 +87,23 @@ namespace Oxide.Core.Plugins
                     continue;
                 }
 
-                if (args[i].GetType() == Parameters[i].ParameterType ||
-                    args[i].GetType().MakeByRefType() == Parameters[i].ParameterType ||
-                    Parameters[i].ParameterType.FullName == "System.Object")
+                if (argType == parameterType || argType.MakeByRefType() == parameterType ||
+                    parameterType.FullName == "System.Object")
                 {
                     continue;
                 }
 
-                if (args[i].GetType().IsValueType)
+                if (argType.IsValueType)
                 {
-                    if (!TypeDescriptor.GetConverter(Parameters[i].ParameterType).CanConvertFrom(args[i].GetType()) && !CanConvertNumber(args[i], Parameters[i].ParameterType))
+                    if (!TypeDescriptor.GetConverter(parameterType).CanConvertFrom(argType) &&
+                        !CanConvertNumber(args[i], parameterType))
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    if (!Parameters[i].ParameterType.IsInstanceOfType(args[i]))
+                    if (!parameterType.IsInstanceOfType(args[i]))
                     {
                         return false;
                     }
@@ -120,9 +123,15 @@ namespace Oxide.Core.Plugins
             return Nullable.GetUnderlyingType(type) != null;
         }
 
-        private bool IsNumber(object obj)
+        private bool IsNumber(object? obj)
         {
-            return obj != null && IsNumber(Nullable.GetUnderlyingType(obj.GetType()) ?? obj.GetType());
+            if (obj == null)
+            {
+                return false;
+            }
+
+            Type objectType = obj.GetType();
+            return IsNumber(Nullable.GetUnderlyingType(objectType) ?? objectType);
         }
 
         private bool IsNumber(Type type)
