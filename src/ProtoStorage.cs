@@ -1,9 +1,8 @@
-﻿extern alias References;
-
-using References::ProtoBuf;
+extern alias References;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using References::ProtoBuf;
 
 namespace Oxide.Core
 {
@@ -58,7 +57,7 @@ namespace Oxide.Core
                 {
                     Directory.CreateDirectory(directory);
                 }
-                
+
                 FileMode saveMode = File.Exists(path) ? FileMode.Truncate : FileMode.Create;
 
                 using (FileStream file = File.Open(path, saveMode))

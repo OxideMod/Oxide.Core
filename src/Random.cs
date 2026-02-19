@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core
+namespace Oxide.Core
 {
     public static class Random
     {

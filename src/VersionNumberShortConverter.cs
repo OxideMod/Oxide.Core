@@ -1,8 +1,6 @@
 extern alias References;
-
 using System;
 using System.Globalization;
-
 using References::Newtonsoft.Json;
 
 namespace Oxide.Core

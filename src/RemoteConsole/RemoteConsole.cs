@@ -1,14 +1,13 @@
 extern alias References;
-
+using System;
+using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
 using Oxide.Core.Configuration;
 using Oxide.Core.Libraries.Covalence;
 using References::WebSocketSharp;
 using References::WebSocketSharp.Net.WebSockets;
 using References::WebSocketSharp.Server;
-using System;
-using System.Linq;
-using System.Net;
-using System.Runtime.InteropServices;
 
 namespace Oxide.Core.RemoteConsole
 {

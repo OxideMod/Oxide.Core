@@ -1,4 +1,4 @@
-﻿namespace Oxide.Core
+namespace Oxide.Core
 {
     /// <summary>
     /// Represents a version in major.minor.patch form

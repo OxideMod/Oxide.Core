@@ -1,9 +1,8 @@
-﻿extern alias References;
-
-using References::Newtonsoft.Json;
+extern alias References;
 using System;
 using System.Globalization;
 using System.IO;
+using References::Newtonsoft.Json;
 
 namespace Oxide.Core.Configuration
 {
@@ -14,7 +13,8 @@ namespace Oxide.Core.Configuration
     {
         private static JsonSerializerSettings SerializerSettings = new JsonSerializerSettings()
         {
-            DefaultValueHandling = DefaultValueHandling.Populate, Culture = CultureInfo.InvariantCulture,
+            DefaultValueHandling = DefaultValueHandling.Populate,
+            Culture = CultureInfo.InvariantCulture,
             Formatting = Formatting.Indented,
             MissingMemberHandling = MissingMemberHandling.Ignore
         };

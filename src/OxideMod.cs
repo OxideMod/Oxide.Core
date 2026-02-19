@@ -1,14 +1,4 @@
-﻿extern alias References;
-
-using Oxide.Core.Configuration;
-using Oxide.Core.Extensions;
-using Oxide.Core.Libraries;
-using Oxide.Core.Libraries.Covalence;
-using Oxide.Core.Logging;
-using Oxide.Core.Plugins;
-using Oxide.Core.Plugins.Watchers;
-using Oxide.Core.ServerConsole;
-using References::Newtonsoft.Json;
+extern alias References;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,7 +8,16 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Oxide.Core.Configuration;
+using Oxide.Core.Extensions;
+using Oxide.Core.Libraries;
+using Oxide.Core.Libraries.Covalence;
+using Oxide.Core.Logging;
+using Oxide.Core.Plugins;
+using Oxide.Core.Plugins.Watchers;
+using Oxide.Core.ServerConsole;
 using Oxide.Pooling;
+using References::Newtonsoft.Json;
 using Timer = Oxide.Core.Libraries.Timer;
 
 namespace Oxide.Core

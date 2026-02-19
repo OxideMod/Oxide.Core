@@ -1,6 +1,6 @@
-﻿using Oxide.Core.Logging;
 using System;
 using System.Collections.Generic;
+using Oxide.Core.Logging;
 using Oxide.Pooling;
 
 namespace Oxide.Core.Plugins

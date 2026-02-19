@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 namespace Oxide.Core.Libraries.Covalence
@@ -260,7 +260,9 @@ namespace Oxide.Core.Libraries.Covalence
 
         public GenericPosition(float x, float y, float z)
         {
-            X = x; Y = y; Z = z;
+            X = x;
+            Y = y;
+            Z = z;
         }
 
         public override bool Equals(object obj)

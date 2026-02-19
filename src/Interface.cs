@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Oxide.Pooling;
 
 namespace Oxide.Core

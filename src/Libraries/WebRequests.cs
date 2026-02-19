@@ -1,4 +1,3 @@
-using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,6 +5,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Oxide.Core.Plugins;
 
 namespace Oxide.Core.Libraries
 {
@@ -380,7 +380,7 @@ namespace Oxide.Core.Libraries
         {
             // Initialize SSL
             ServicePointManager.Expect100Continue = false;
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.ServerCertificateValidationCallback = (_, _, _, _) => true;
             ServicePointManager.DefaultConnectionLimit = 200;
 
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);

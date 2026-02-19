@@ -1,15 +1,14 @@
-﻿extern alias References;
-
-using Oxide.Core.Extensions;
-using Oxide.Core.Libraries;
-using Oxide.Core.Plugins;
-using References::Newtonsoft.Json;
+extern alias References;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Oxide.Core.Extensions;
+using Oxide.Core.Libraries;
+using Oxide.Core.Plugins;
+using References::Newtonsoft.Json;
 
 namespace Oxide.Core
 {

@@ -1,7 +1,6 @@
-﻿extern alias References;
-
-using References::Newtonsoft.Json;
+extern alias References;
 using System;
+using References::Newtonsoft.Json;
 
 namespace Oxide.Core.RemoteConsole
 {

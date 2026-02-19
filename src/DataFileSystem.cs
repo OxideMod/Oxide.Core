@@ -1,11 +1,10 @@
-﻿extern alias References;
-
-using Oxide.Core.Configuration;
-using References::Newtonsoft.Json;
+extern alias References;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Oxide.Core.Configuration;
+using References::Newtonsoft.Json;
 
 namespace Oxide.Core
 {
@@ -101,7 +100,9 @@ namespace Oxide.Core
             T instance = default;
 
             if (ExistsDatafile(name))
+            {
                 instance = GetFile(name).ReadObject<T>();
+            }
 
             if (instance == null)
             {

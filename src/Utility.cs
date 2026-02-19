@@ -208,13 +208,13 @@ namespace Oxide.Core
                 {
                     case '/':
                     case '\\':
-                        {
-                            firstIndex = i + 1;
-                            goto End;
-                        }
+                    {
+                        firstIndex = i + 1;
+                        goto End;
+                    }
                 }
             }
-        End:
+End:
             return value.Substring(firstIndex, (lastIndex - firstIndex + 1));
         }
 

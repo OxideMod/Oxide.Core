@@ -32,7 +32,7 @@ namespace Oxide.Core.Libraries.Covalence
         public object Val;
         public List<Element> Body = new List<Element>();
 
-        public Element() {}
+        public Element() { }
 
         public Element(ElementType type, object val)
         {
@@ -43,7 +43,9 @@ namespace Oxide.Core.Libraries.Covalence
         private static Element Get(ElementType type, object val, bool shouldPool)
         {
             if (!shouldPool)
+            {
                 return new Element(type, val);
+            }
 
             Element e = TakeFromPool();
             e.Type = type;
@@ -225,13 +227,17 @@ namespace Oxide.Core.Libraries.Covalence
             private static bool IsValidColorCode(string val)
             {
                 if (val.Length != 6 && val.Length != 8)
+                {
                     return false;
+                }
 
                 for (int i = 0; i < val.Length; i++)
                 {
                     char c = val[i];
                     if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                    {
                         return false;
+                    }
                 }
 
                 return true;
@@ -253,7 +259,8 @@ namespace Oxide.Core.Libraries.Covalence
 
             private static object ParseSize(string val)
             {
-                if (int.TryParse(val, out int size)) { return size; }
+                if (int.TryParse(val, out int size))
+                { return size; }
                 return null;
             }
 
@@ -550,7 +557,9 @@ namespace Oxide.Core.Libraries.Covalence
             {
                 shouldPoolElements = default;
                 while (entries.Count > 0)
+                {
                     Entry.ReturnToPool(entries.Pop());
+                }
             }
         }
 
@@ -681,7 +690,9 @@ namespace Oxide.Core.Libraries.Covalence
             public static void ReturnToPool(T obj)
             {
                 if (obj == null || !obj.isFromPool)
+                {
                     return;
+                }
 
                 obj.Reset();
                 lock (_poolLock)
@@ -693,10 +704,14 @@ namespace Oxide.Core.Libraries.Covalence
             public static void ReturnToPool(List<T> objs)
             {
                 if (objs == null)
+                {
                     return;
+                }
 
                 for (int i = 0; i < objs.Count; i++)
+                {
                     ReturnToPool(objs[i]);
+                }
 
                 objs.Clear();
             }

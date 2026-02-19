@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -59,7 +59,7 @@ namespace Oxide.Core.Libraries.Covalence
 
             // Is it a chat command?
             string chatCommandPrefix = GetChatCommandPrefix(message);
-            if ( chatCommandPrefix == null )
+            if (chatCommandPrefix == null)
             {
                 return false;
             }
