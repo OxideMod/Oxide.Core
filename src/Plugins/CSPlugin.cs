@@ -2,6 +2,7 @@ using Oxide.Core.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Oxide.Pooling;
 using HarmonyLib;
 
@@ -87,25 +88,33 @@ namespace Oxide.Core.Plugins
 
             // Find all hooks in the plugin and any base classes derived from CSPlugin
             Type type = GetType();
-            List<Type> types = new List<Type> { type };
+            List<Type> types = new()
+            {
+                type
+            };
+
             while (type != typeof(CSPlugin))
             {
                 types.Add(type = type.BaseType);
             }
 
             // Add hooks implemented in base classes before user implemented methods
-            for (int i = types.Count - 1; i >= 0; i--)
+            int typeCount = types.Count;
+            for (int i = typeCount - 1; i >= 0; i--)
             {
-                foreach (MethodInfo method in types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance))
+                MethodInfo[] methods = types[i].GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                int methodCount = methods.Length;
+                for (int j = 0; j < methodCount; j++)
                 {
-                    object[] attr = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
-                    if (attr.Length < 1)
+                    MethodInfo method = methods[j];
+                    object[] customAttributes = method.GetCustomAttributes(typeof(HookMethodAttribute), true);
+                    if (customAttributes.Length < 1)
                     {
                         continue;
                     }
 
-                    HookMethodAttribute hookmethod = attr[0] as HookMethodAttribute;
-                    AddHookMethod(hookmethod?.Name, method);
+                    HookMethodAttribute hookMethodAttribute = (HookMethodAttribute)customAttributes[0];
+                    AddHookMethod(hookMethodAttribute?.Name, method);
                 }
             }
         }
@@ -251,13 +260,20 @@ namespace Oxide.Core.Plugins
                 {
                     returnvalue = InvokeMethod(h, hookArgs);
                 }
-                catch (TargetInvocationException ex)
+                catch (TargetInvocationException exception)
                 {
                     if (pooledArray)
                     {
                         ObjectArrayPool.Return(hookArgs);
                     }
-                    throw ex.InnerException ?? ex;
+
+                    Exception? innerException = exception.InnerException;
+                    if (innerException != null)
+                    {
+                        ExceptionDispatchInfo.Capture(innerException).Throw();
+                    }
+
+                    throw;
                 }
 
                 if (received != h.Parameters.Length)
