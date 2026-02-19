@@ -155,9 +155,8 @@ namespace Oxide.Core.Libraries
 
                 user.Groups = new HashSet<string>(groups, StringComparer.OrdinalIgnoreCase);
 
-                if (result.ContainsKey(entry.Key))
+                if (result.TryGetValue(entry.Key, out UserData? existing))
                 {
-                    UserData existing = result[entry.Key];
                     existing.Perms.UnionWith(user.Perms);
                     existing.Groups.UnionWith(user.Groups);
 
@@ -199,9 +198,8 @@ namespace Oxide.Core.Libraries
 
                 group.Perms = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
 
-                if (result.ContainsKey(entry.Key))
+                if (result.TryGetValue(entry.Key, out GroupData? existing))
                 {
-                    GroupData existing = result[entry.Key];
                     existing.Perms.UnionWith(group.Perms);
                     changed = true;
 
@@ -236,11 +234,10 @@ namespace Oxide.Core.Libraries
 
                 group.Perms = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
 
-                if (result.ContainsKey(entry.Key))
+                if (result.TryGetValue(entry.Key, out GroupData? existing))
                 {
-                    GroupData existing = result[entry.Key];
                     // Get a matching entry.key from result.keys
-                    var existingKey = result.Keys.FirstOrDefault(x => x.Equals(entry.Key, StringComparison.OrdinalIgnoreCase));
+                    string? existingKey = result.Keys.FirstOrDefault(x => x.Equals(entry.Key, StringComparison.OrdinalIgnoreCase));
 
                     existing.Perms.UnionWith(group.Perms);
 

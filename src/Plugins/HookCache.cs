@@ -30,7 +30,8 @@ namespace Oxide.Core.Plugins
             }
 
             HookCache nextCache;
-            if (args[index] == null)
+            object arg = args[index];
+            if (arg == null)
             {
                 if (!_cache.TryGetValue(NullKey, out nextCache))
                 {
@@ -40,12 +41,14 @@ namespace Oxide.Core.Plugins
             }
             else
             {
-                if (!_cache.TryGetValue(args[index].GetType().FullName, out nextCache))
+                string fullName = arg.GetType().FullName;
+                if (!_cache.TryGetValue(fullName, out nextCache))
                 {
                     nextCache = new HookCache();
-                    _cache.Add(args[index].GetType().FullName, nextCache);
+                    _cache.Add(fullName, nextCache);
                 }
             }
+
             //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {key} {index}");
             return nextCache.GetHookMethod(args, index + 1, out cache);
         }

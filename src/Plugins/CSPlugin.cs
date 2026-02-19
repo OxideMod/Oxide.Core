@@ -129,9 +129,9 @@ namespace Oxide.Core.Plugins
             base.HandleAddedToManager(manager);
 
             // Subscribe us
-            foreach (string hookname in Hooks.Keys)
+            foreach (string hookName in Hooks.Keys)
             {
-                Subscribe(hookname);
+                Subscribe(hookName);
             }
 
             try
@@ -149,8 +149,13 @@ namespace Oxide.Core.Plugins
             }
 
             // Find all classes with the AutoPatch attribute and apply the patches
-            foreach (Type nestedType in GetType().GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            Type[] nestedTypes = GetType().GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public |
+                                                          BindingFlags.NonPublic | BindingFlags.Static);
+
+            int nestedTypeCount = nestedTypes.Length;
+            for (int i = 0; i < nestedTypeCount; i++)
             {
+                Type nestedType = nestedTypes[i];
                 object[] attr = nestedType.GetCustomAttributes(typeof(AutoPatchAttribute), false);
                 if (attr.Length < 1)
                 {
@@ -159,22 +164,26 @@ namespace Oxide.Core.Plugins
 
                 try
                 {
-                    List<MethodInfo> harmonyMethods = HarmonyInstance.CreateClassProcessor(nestedType)?.Patch();
-
+                    List<MethodInfo>? harmonyMethods = HarmonyInstance.CreateClassProcessor(nestedType)?.Patch();
                     if (harmonyMethods == null || harmonyMethods.Count == 0)
                     {
-                        Interface.Oxide.LogWarning($"[{Title}] AutoPatch attribute found on '{nestedType.Name}' but no HarmonyPatch methods found. Skipping.");
+                        Interface.Oxide.LogWarning(
+                            $"[{Title}] AutoPatch attribute found on '{nestedType.Name}' but no HarmonyPatch methods found. Skipping.");
                         continue;
                     }
 
-                    foreach (MethodInfo method in harmonyMethods)
+                    int harmonyMethodCount = harmonyMethods.Count;
+                    for (int j = 0; j < harmonyMethodCount; j++)
                     {
-                        Interface.Oxide.LogInfo($"[{Title}] Automatically Harmony patched '{method?.Name ?? "unknown"}' method. ({nestedType.Name})");
+                        MethodInfo harmonyMethod = harmonyMethods[j];
+                        Interface.Oxide.LogInfo(
+                            $"[{Title}] Automatically Harmony patched '{harmonyMethod?.Name ?? "unknown"}' method. ({nestedType.Name})");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Interface.Oxide.LogException($"[{Title}] Failed to automatically Harmony patch '{nestedType.Name}'", ex);
+                    Interface.Oxide.LogException($"[{Title}] Failed to automatically Harmony patch '{nestedType.Name}'",
+                        ex);
                 }
             }
         }
@@ -211,19 +220,22 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         protected sealed override object OnCallHook(string name, object[] args)
         {
-            object returnvalue = null;
+            object returnValue = null;
             bool pooledArray = false;
 
             // Call all hooks that match the signature
-            foreach (HookMethod h in FindHooks(name, args))
+            List<HookMethod> hookMethods = FindHooks(name, args);
+            int hookMethodCount = hookMethods.Count;
+            for (int i = 0; i < hookMethodCount; i++)
             {
+                HookMethod hookMethod = hookMethods[i];
                 int received = args?.Length ?? 0;
                 object[] hookArgs;
 
-                if (received != h.Parameters.Length)
+                if (received != hookMethod.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(hookMethod.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -237,7 +249,7 @@ namespace Oxide.Core.Plugins
                         // Create additional parameters for arguments excluded in this hook call
                         for (int n = received; n < hookArgs.Length; n++)
                         {
-                            ParameterInfo parameter = h.Parameters[n];
+                            ParameterInfo parameter = hookMethod.Parameters[n];
                             if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
@@ -258,7 +270,7 @@ namespace Oxide.Core.Plugins
 
                 try
                 {
-                    returnvalue = InvokeMethod(h, hookArgs);
+                    returnValue = InvokeMethod(hookMethod, hookArgs);
                 }
                 catch (TargetInvocationException exception)
                 {
@@ -276,13 +288,13 @@ namespace Oxide.Core.Plugins
                     throw;
                 }
 
-                if (received != h.Parameters.Length)
+                if (received != hookMethod.Parameters.Length)
                 {
                     // A copy of the call arguments was used for this method call
-                    for (int n = 0; n < h.Parameters.Length; n++)
+                    for (int n = 0; n < hookMethod.Parameters.Length; n++)
                     {
                         // Copy output values for out and by reference arguments back to the calling args
-                        if (h.Parameters[n].IsOut || h.Parameters[n].ParameterType.IsByRef)
+                        if (hookMethod.Parameters[n].IsOut || hookMethod.Parameters[n].ParameterType.IsByRef)
                         {
                             args[n] = hookArgs[n];
                         }
@@ -295,7 +307,7 @@ namespace Oxide.Core.Plugins
                 }
             }
 
-            return returnvalue;
+            return returnValue;
         }
 
         protected List<HookMethod> FindHooks(string name, object[] args)
@@ -303,14 +315,15 @@ namespace Oxide.Core.Plugins
             // Get the full name of the hook `name(argument type 1, argument type 2, ..., argument type x)`
 
             // Check the cache if we already found a match for this hook
-            List<HookMethod> methods = HooksCache.GetHookMethod(name, args, out HookCache cache);
-            if (methods != null)
+            List<HookMethod> hookMethods = HooksCache.GetHookMethod(name, args, out HookCache cache);
+            if (hookMethods != null)
             {
-                return methods;
+                return hookMethods;
             }
+
             List<HookMethod> matches = new List<HookMethod>();
             // Get all hook methods that could match, return an empty list if none match
-            if (!Hooks.TryGetValue(name, out methods))
+            if (!Hooks.TryGetValue(name, out hookMethods))
             {
                 return matches;
             }
@@ -319,13 +332,15 @@ namespace Oxide.Core.Plugins
             HookMethod exactMatch = null;
             HookMethod overloadedMatch = null;
 
-            foreach (HookMethod h in methods)
+            int hookMethodCount = hookMethods.Count;
+            for (int i = 0; i < hookMethodCount; i++)
             {
+                HookMethod hookMethod = hookMethods[i];
                 // A base hook should always have a matching signature either directly or through inheritance
                 // and should always be called as core functionality depends on it.
-                if (h.IsBaseHook)
+                if (hookMethod.IsBaseHook)
                 {
-                    matches.Add(h);
+                    matches.Add(hookMethod);
                     continue;
                 }
 
@@ -335,10 +350,10 @@ namespace Oxide.Core.Plugins
 
                 bool pooledArray = false;
 
-                if (received != h.Parameters.Length)
+                if (received != hookMethod.Parameters.Length)
                 {
                     // The call argument count is different to the declared callback methods argument count
-                    hookArgs = ObjectArrayPool.Take(h.Parameters.Length);
+                    hookArgs = ObjectArrayPool.Take(hookMethod.Parameters.Length);
                     pooledArray = true;
 
                     if (received > 0 && hookArgs.Length > 0)
@@ -352,7 +367,7 @@ namespace Oxide.Core.Plugins
                         // Create additional parameters for arguments excluded in this hook call
                         for (int n = received; n < hookArgs.Length; n++)
                         {
-                            ParameterInfo parameter = h.Parameters[n];
+                            ParameterInfo parameter = hookMethod.Parameters[n];
                             if (parameter.DefaultValue != null && parameter.DefaultValue != DBNull.Value)
                             {
                                 // Use the default value that was provided by the method definition
@@ -371,16 +386,16 @@ namespace Oxide.Core.Plugins
                     hookArgs = args;
                 }
 
-                if (h.HasMatchingSignature(hookArgs, out bool isExactMatch))
+                if (hookMethod.HasMatchingSignature(hookArgs, out bool isExactMatch))
                 {
                     if (isExactMatch)
                     {
-                        exactMatch = h;
+                        exactMatch = hookMethod;
                         break;
                     }
 
                     // Should we determine the level and call the closest overloaded match? Performance impact?
-                    overloadedMatch = h;
+                    overloadedMatch = hookMethod;
                 }
 
                 if (pooledArray)

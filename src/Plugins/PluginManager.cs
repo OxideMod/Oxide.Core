@@ -117,12 +117,10 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public bool RemovePlugin(Plugin plugin)
         {
-            if (!loadedPlugins.ContainsKey(plugin.Name))
+            if (!loadedPlugins.Remove(plugin.Name))
             {
                 return false;
             }
-
-            loadedPlugins.Remove(plugin.Name);
 
             lock (hookSubscriptions)
             {
@@ -295,27 +293,29 @@ namespace Oxide.Core.Plugins
                             continue;
                         }
 
-                        if (value.GetType().IsValueType)
+                        Type valueType = value.GetType();
+                        if (valueType.IsValueType)
                         {
-                            if (!values[i].Equals(finalValue))
+                            if (!value.Equals(finalValue))
                             {
-                                hookConflicts.Add($"{plugin.Name} - {value} ({value.GetType().Name})");
+                                hookConflicts.Add($"{plugin.Name} - {value} ({valueType.Name})");
                             }
                         }
                         else
                         {
-                            if (values[i] != finalValue)
+                            if (value != finalValue)
                             {
-                                hookConflicts.Add($"{plugin.Name} - {value} ({value.GetType().Name})");
+                                hookConflicts.Add($"{plugin.Name} - {value} ({valueType.Name})");
                             }
                         }
                     }
                     if (hookConflicts.Count > 0)
                     {
                         hookConflicts.Add($"{finalPlugin.Name} ({finalValue} ({finalValue.GetType().Name}))");
-                        Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, string.Join(", ", hookConflicts.ToArray()));
+                        Logger.Write(LogType.Warning, "Calling hook {0} resulted in a conflict between the following plugins: {1}", hook, hookConflicts.JoinValues(", "));
                     }
                 }
+
                 ObjectPool.Return(values);
             }
             finally
@@ -381,7 +381,7 @@ namespace Oxide.Core.Plugins
             {
                 // TODO: Add better handling
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.Oxide.LogWarning($"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                Interface.Oxide.LogWarning($"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate:D}. Please ask the author to update to '{newHook}'");
             }
 
             return CallHook(oldHook, args);
