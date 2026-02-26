@@ -29,7 +29,8 @@ namespace Oxide.Core.Logging
         protected override void BeginBatchProcess()
         {
             // Open the writer
-            writer = new StreamWriter(new FileStream(GetLogFilename(DateTime.Now), FileMode.Append, FileAccess.Write));
+            writer = new StreamWriter(new FileStream(GetLogFilename(DateTime.Now), FileMode.Append, FileAccess.Write,
+                FileShare.ReadWrite));
         }
 
         /// <summary>
