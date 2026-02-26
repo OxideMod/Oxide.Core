@@ -16,7 +16,7 @@ using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Core.Plugins.Watchers;
 using Oxide.Core.ServerConsole;
-using Oxide.Pooling;
+using References::Cysharp.Text;
 using References::Newtonsoft.Json;
 using Timer = Oxide.Core.Libraries.Timer;
 
@@ -329,6 +329,133 @@ namespace Oxide.Core
         public void LogError(string format, params object[] args) => RootLogger.Write(LogType.Error, format, args);
 
         /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg"></param>
+        /// <typeparam name="T"></typeparam>
+        public void LogError<T>(string format, T arg) => RootLogger.Write(LogType.Error, ZString.Format(format, arg));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        public void LogError<T1, T2>(string format, T1 arg1, T2 arg2) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        public void LogError<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        public void LogError<T1, T2, T3, T4>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3, arg4));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        public void LogError<T1, T2, T3, T4, T5>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3, arg4, arg5));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        public void LogError<T1, T2, T3, T4, T5, T6>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        public void LogError<T1, T2, T3, T4, T5, T6, T7>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+
+        /// <summary>
+        /// Logs a formatted error message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <param name="arg8"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        /// <typeparam name="T8"></typeparam>
+        public void LogError<T1, T2, T3, T4, T5, T6, T7, T8>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) =>
+            RootLogger.Write(LogType.Error, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8));
+
+        /// <summary>
         /// Logs an exception to the root logger
         /// </summary>
         /// <param name="message"></param>
@@ -345,12 +472,266 @@ namespace Oxide.Core
         public void LogInfo(string format, params object[] args) => RootLogger.Write(LogType.Info, format, args);
 
         /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg"></param>
+        /// <typeparam name="T"></typeparam>
+        public void LogInfo<T>(string format, T arg) => RootLogger.Write(LogType.Info, ZString.Format(format, arg));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        public void LogInfo<T1, T2>(string format, T1 arg1, T2 arg2) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        public void LogInfo<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        public void LogInfo<T1, T2, T3, T4>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3, arg4));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        public void LogInfo<T1, T2, T3, T4, T5>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3, arg4, arg5));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        public void LogInfo<T1, T2, T3, T4, T5, T6>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        public void LogInfo<T1, T2, T3, T4, T5, T6, T7>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+
+        /// <summary>
+        /// Logs a formatted info message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <param name="arg8"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        /// <typeparam name="T8"></typeparam>
+        public void LogInfo<T1, T2, T3, T4, T5, T6, T7, T8>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) =>
+            RootLogger.Write(LogType.Info, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8));
+
+        /// <summary>
         /// Logs a formatted warning message to the root logger
         /// </summary>
         /// <param name="format"></param>
         /// <param name="args"></param>
         /// <returns></returns>
         public void LogWarning(string format, params object[] args) => RootLogger.Write(LogType.Warning, format, args);
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg"></param>
+        /// <typeparam name="T"></typeparam>
+        public void LogWarning<T>(string format, T arg) => RootLogger.Write(LogType.Warning, ZString.Format(format, arg));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        public void LogWarning<T1, T2>(string format, T1 arg1, T2 arg2) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        public void LogWarning<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        public void LogWarning<T1, T2, T3, T4>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3, arg4));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        public void LogWarning<T1, T2, T3, T4, T5>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3, arg4, arg5));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        public void LogWarning<T1, T2, T3, T4, T5, T6>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        public void LogWarning<T1, T2, T3, T4, T5, T6, T7>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+
+        /// <summary>
+        /// Logs a formatted warning message to the root logger
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
+        /// <param name="arg4"></param>
+        /// <param name="arg5"></param>
+        /// <param name="arg6"></param>
+        /// <param name="arg7"></param>
+        /// <param name="arg8"></param>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="T3"></typeparam>
+        /// <typeparam name="T4"></typeparam>
+        /// <typeparam name="T5"></typeparam>
+        /// <typeparam name="T6"></typeparam>
+        /// <typeparam name="T7"></typeparam>
+        /// <typeparam name="T8"></typeparam>
+        public void LogWarning<T1, T2, T3, T4, T5, T6, T7, T8>(string format, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) =>
+            RootLogger.Write(LogType.Warning, ZString.Format(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8));
 
         #endregion Logging
 
@@ -400,6 +781,7 @@ namespace Oxide.Core
             }
 
             float lastCall = Now;
+            // TODO: Causes dead lock if the plugin loader fails to load a plugin
             foreach (PluginLoader loader in extensionManager.GetPluginLoaders())
             {
                 // Wait until all async plugins have finished loading
