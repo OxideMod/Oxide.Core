@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
     <PackageReference Include="Oxide.Common" Version="2.0.47-develop" />
-    <PackageReference Include="Oxide.References" Version="2.0.*">
+    <PackageReference Include="Oxide.References" Version="2.0.3809-develop">
       <PrivateAssets>contentfiles;analyzers;build</PrivateAssets>
     </PackageReference>
     <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
