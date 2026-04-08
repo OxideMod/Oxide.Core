@@ -154,6 +154,14 @@ namespace Oxide.Core.Plugins
         /// <returns></returns>
         public IEnumerable<Plugin> GetPlugins() => loadedPlugins.Values;
 
+        internal bool AreAnyPluginsUsingHook(string hook)
+        {
+            lock (hookSubscriptions)
+            {
+                return hookSubscriptions.ContainsKey(hook);
+            }
+        }
+
         /// <summary>
         /// Subscribes the specified plugin to the specified hook
         /// </summary>

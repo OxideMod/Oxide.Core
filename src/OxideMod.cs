@@ -1022,6 +1022,11 @@ namespace Oxide.Core
 
         #endregion Extension Management
 
+        internal bool AreAnyPluginsUsingHook(string hook)
+        {
+            return RootPluginManager.AreAnyPluginsUsingHook(hook);
+        }
+
         /// <summary>
         /// Calls a hook
         /// </summary>

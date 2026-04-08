@@ -26,6 +26,11 @@ namespace Oxide.Core
             HookArrays = ArrayPool<object>.Shared;
         }
 
+        private static bool AreAnyPluginsUsingHook(string hook)
+        {
+            return Oxide.AreAnyPluginsUsingHook(hook);
+        }
+
         /// <summary>
         /// Initializes Oxide
         /// </summary>
@@ -105,10 +110,14 @@ namespace Oxide.Core
         /// <param name="hook"></param>
         /// <param name="obj1"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1)
+        public static object CallHook<T1>(string hook, T1 obj1)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(1);
             array[0] = obj1;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -138,11 +147,15 @@ namespace Oxide.Core
         /// <param name="obj1"></param>
         /// <param name="obj2"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2)
+        public static object CallHook<T1, T2>(string hook, T1 obj1, T2 obj2)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(2);
             array[0] = obj1;
             array[1] = obj2;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -175,12 +188,16 @@ namespace Oxide.Core
         /// <param name="obj2"></param>
         /// <param name="obj3"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3)
+        public static object CallHook<T1, T2, T3>(string hook, T1 obj1, T2 obj2, T3 obj3)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(3);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -216,13 +233,17 @@ namespace Oxide.Core
         /// <param name="obj3"></param>
         /// <param name="obj4"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4)
+        public static object CallHook<T1, T2, T3, T4>(string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(4);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -261,14 +282,19 @@ namespace Oxide.Core
         /// <param name="obj4"></param>
         /// <param name="obj5"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5)
+        public static object CallHook<T1, T2, T3, T4, T5>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(5);
             array[0] = obj1;
             array[1] = obj2;
             array[2] = obj3;
             array[3] = obj4;
             array[4] = obj5;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -310,8 +336,12 @@ namespace Oxide.Core
         /// <param name="obj5"></param>
         /// <param name="obj6"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6)
+        public static object CallHook<T1, T2, T3, T4, T5, T6>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5, T6 obj6)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(6);
             array[0] = obj1;
             array[1] = obj2;
@@ -319,6 +349,7 @@ namespace Oxide.Core
             array[3] = obj4;
             array[4] = obj5;
             array[5] = obj6;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -363,8 +394,12 @@ namespace Oxide.Core
         /// <param name="obj6"></param>
         /// <param name="obj7"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7)
+        public static object CallHook<T1, T2, T3, T4, T5, T6, T7>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5, T6 obj6, T7 obj7)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(7);
             array[0] = obj1;
             array[1] = obj2;
@@ -373,6 +408,7 @@ namespace Oxide.Core
             array[4] = obj5;
             array[5] = obj6;
             array[6] = obj7;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -420,8 +456,12 @@ namespace Oxide.Core
         /// <param name="obj7"></param>
         /// <param name="obj8"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8)
+        public static object CallHook<T1, T2, T3, T4, T5, T6, T7, T8>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5, T6 obj6, T7 obj7, T8 obj8)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(8);
             array[0] = obj1;
             array[1] = obj2;
@@ -431,6 +471,7 @@ namespace Oxide.Core
             array[5] = obj6;
             array[6] = obj7;
             array[7] = obj8;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -481,8 +522,12 @@ namespace Oxide.Core
         /// <param name="obj8"></param>
         /// <param name="obj9"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9)
+        public static object CallHook<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5, T6 obj6, T7 obj7, T8 obj8, T9 obj9)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(9);
             array[0] = obj1;
             array[1] = obj2;
@@ -493,6 +538,7 @@ namespace Oxide.Core
             array[6] = obj7;
             array[7] = obj8;
             array[8] = obj9;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
@@ -546,8 +592,12 @@ namespace Oxide.Core
         /// <param name="obj9"></param>
         /// <param name="obj10"></param>
         /// <returns></returns>
-        public static object CallHook(string hook, object obj1, object obj2, object obj3, object obj4, object obj5, object obj6, object obj7, object obj8, object obj9, object obj10)
+        public static object CallHook<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+            (string hook, T1 obj1, T2 obj2, T3 obj3, T4 obj4, T5 obj5, T6 obj6, T7 obj7, T8 obj8, T9 obj9, T10 obj10)
         {
+            if (!AreAnyPluginsUsingHook(hook))
+                return null;
+
             object[] array = HookArrays.Take(10);
             array[0] = obj1;
             array[1] = obj2;
@@ -559,6 +609,7 @@ namespace Oxide.Core
             array[7] = obj8;
             array[8] = obj9;
             array[9] = obj10;
+
             object ret = CallHook(hook, array);
             HookArrays.Return(array);
             return ret;
