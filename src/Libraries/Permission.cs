@@ -604,7 +604,7 @@ namespace Oxide.Core.Libraries
 
             if (parents)
             {
-                permissions.UnionWith(GetGroupPermissions(groupData.ParentGroup));
+                permissions.UnionWith(GetGroupPermissions(groupData.ParentGroup, true));
             }
 
             return permissions.ToArray();
