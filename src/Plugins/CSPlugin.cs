@@ -282,6 +282,8 @@ namespace Oxide.Core.Plugins
             return returnvalue;
         }
 
+        internal bool HasMatchingHook(string name, object[] args) => FindHooks(name, args).Count > 0;
+
         protected List<HookMethod> FindHooks(string name, object[] args)
         {
             // Get the full name of the hook `name(argument type 1, argument type 2, ..., argument type x)`

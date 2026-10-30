@@ -379,9 +379,22 @@ namespace Oxide.Core.Plugins
             float now = Interface.Oxide.Now;
             if (!lastDeprecatedWarningAt.TryGetValue(oldHook, out float lastWarningAt) || now - lastWarningAt > 3600f)
             {
-                // TODO: Add better handling
                 lastDeprecatedWarningAt[oldHook] = now;
-                Interface.Oxide.LogWarning($"'{subscriptions.Plugins[0].Name} v{subscriptions.Plugins[0].Version}' is using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                string users = null;
+                for (int i = 0; i < subscriptions.Plugins.Count; i++)
+                {
+                    Plugin plugin = subscriptions.Plugins[i];
+                    if (!plugin.IsCorePlugin && plugin is CSPlugin csPlugin && csPlugin.HasMatchingHook(oldHook, args))
+                    {
+                        string user = $"'{plugin.Name} v{plugin.Version}'";
+                        users = users == null ? user : users + ", " + user;
+                    }
+                }
+
+                if (users != null)
+                {
+                    Interface.Oxide.LogWarning($"{users} using deprecated hook '{oldHook}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHook}'");
+                }
             }
 
             return CallHook(oldHook, args);
