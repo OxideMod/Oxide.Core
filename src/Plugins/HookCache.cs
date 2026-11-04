@@ -4,55 +4,61 @@ namespace Oxide.Core.Plugins
 {
     public class HookCache
     {
-        private string NullKey = "null";
+        private static readonly object NullKey = new object();
 
-        public Dictionary<string, HookCache> _cache = new Dictionary<string, HookCache>();
+        // Copy-on-write for read perf
+        private volatile Dictionary<object, HookCache> _cache = new Dictionary<object, HookCache>();
 
-        public List<HookMethod> _methods = null;
+        private readonly object _writeLock = new object();
+
+        private volatile List<HookMethod> _methods;
 
         public List<HookMethod> GetHookMethod(string hookName, object[] args, out HookCache cache)
         {
-            //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {hookName}");
-            if (!_cache.TryGetValue(hookName, out HookCache nextCache))
-            {
-                nextCache = new HookCache();
-                _cache.Add(hookName, nextCache);
-            }
-            return nextCache.GetHookMethod(args, 0, out cache);
+            return GetOrAdd(hookName).GetHookMethod(args, 0, out cache);
         }
 
         public List<HookMethod> GetHookMethod(object[] args, int index, out HookCache cache)
         {
-            if (args == null || index >= args.Length)
+            HookCache node = this;
+            if (args != null)
             {
-                cache = this;
-                return _methods;
+                for (int i = index; i < args.Length; i++)
+                {
+                    object arg = args[i];
+                    node = node.GetOrAdd(arg == null ? NullKey : arg.GetType());
+                }
             }
 
-            HookCache nextCache;
-            if (args[index] == null)
-            {
-                if (!_cache.TryGetValue(NullKey, out nextCache))
-                {
-                    nextCache = new HookCache();
-                    _cache.Add(NullKey, nextCache);
-                }
-            }
-            else
-            {
-                if (!_cache.TryGetValue(args[index].GetType().FullName, out nextCache))
-                {
-                    nextCache = new HookCache();
-                    _cache.Add(args[index].GetType().FullName, nextCache);
-                }
-            }
-            //Interface.Oxide.ServerConsole.AddMessage($"GetHookMethod {key} {index}");
-            return nextCache.GetHookMethod(args, index + 1, out cache);
+            cache = node;
+            return node._methods;
         }
 
         public void SetupMethods(List<HookMethod> methods)
         {
             _methods = methods;
+        }
+
+        private HookCache GetOrAdd(object key)
+        {
+            if (_cache.TryGetValue(key, out HookCache next))
+            {
+                return next;
+            }
+
+            lock (_writeLock)
+            {
+                Dictionary<object, HookCache> current = _cache;
+                if (current.TryGetValue(key, out next))
+                {
+                    return next;
+                }
+
+                next = new HookCache();
+                Dictionary<object, HookCache> copy = new Dictionary<object, HookCache>(current) { { key, next } };
+                _cache = copy;
+                return next;
+            }
         }
     }
 }
