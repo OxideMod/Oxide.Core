@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+#if !NET35
+using System.Collections;
+#endif
+using System.Collections.Generic;
 
 namespace Oxide.Core.Plugins
 {
@@ -6,10 +9,14 @@ namespace Oxide.Core.Plugins
     {
         private static readonly object NullKey = new object();
 
-        // Copy-on-write for read perf
+#if NET35
+        // Old Mono's Hashtable is not safe to read during a write, so net35 copies on write instead
         private volatile Dictionary<object, HookCache> _cache = new Dictionary<object, HookCache>();
 
         private readonly object _writeLock = new object();
+#else
+        private readonly Hashtable _cache = new Hashtable();
+#endif
 
         private volatile List<HookMethod> _methods;
 
@@ -39,6 +46,7 @@ namespace Oxide.Core.Plugins
             _methods = methods;
         }
 
+#if NET35
         private HookCache GetOrAdd(object key)
         {
             if (_cache.TryGetValue(key, out HookCache next))
@@ -55,10 +63,30 @@ namespace Oxide.Core.Plugins
                 }
 
                 next = new HookCache();
-                Dictionary<object, HookCache> copy = new Dictionary<object, HookCache>(current) { { key, next } };
-                _cache = copy;
+                _cache = new Dictionary<object, HookCache>(current) { { key, next } };
                 return next;
             }
         }
+#else
+        private HookCache GetOrAdd(object key)
+        {
+            if (_cache[key] is HookCache next)
+            {
+                return next;
+            }
+
+            lock (_cache)
+            {
+                next = _cache[key] as HookCache;
+                if (next == null)
+                {
+                    next = new HookCache();
+                    _cache[key] = next;
+                }
+
+                return next;
+            }
+        }
+#endif
     }
 }
